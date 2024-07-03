@@ -117,8 +117,8 @@ project.tasks['check'].dependsOn integration
 
 sonarqube {
   properties {
-    property "sonar.projectName", "Reform :: spring-boot-template"
-    property "sonar.projectKey", "uk.gov.hmcts.reform:spring-boot-template"
+    property "sonar.projectName", "Reform :: opal-auth-service"
+    property "sonar.projectKey", "uk.gov.hmcts.reform:opal-auth-service"
   }
 }
 
@@ -176,10 +176,10 @@ dependencies {
   }
 }
 
-mainClassName = 'uk.gov.hmcts.reform.demo.Application'
+mainClassName = 'uk.gov.hmcts.reform.opal.Application'
 
 bootJar {
-  archiveFileName = "spring-boot-template.jar"
+  archiveFileName = "opal-auth-service.jar"
 
   manifest {
     attributes('Implementation-Version': project.version.toString())

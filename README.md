@@ -1,93 +1,4 @@
-# Spring Boot application template
-
-## Purpose
-
-The purpose of this template is to speed up the creation of new Spring applications within HMCTS
-and help keep the same standards across multiple teams. If you need to create a new app, you can
-simply use this one as a starting point and build on top of it.
-
-## What's inside
-
-The template is a working application with a minimal setup. It contains:
- * application skeleton
- * setup script to prepare project
- * common plugins and libraries
- * [HMCTS Java plugin](https://github.com/hmcts/gradle-java-plugin)
- * docker setup
- * automatically publishes API documentation to [hmcts/cnp-api-docs](https://github.com/hmcts/cnp-api-docs)
- * code quality tools already set up
- * MIT license and contribution information
- * Helm chart using chart-java.
-
-The application exposes health endpoint (http://localhost:4550/health) and metrics endpoint
-(http://localhost:4550/metrics).
-
-## Plugins
-
-The template contains the following plugins:
-
-  * HMCTS Java plugin
-
-    Applies code analysis tools with HMCTS default settings. See the [project repository](https://github.com/hmcts/gradle-java-plugin) for details.
-
-    Analysis tools include:
-
-    * checkstyle
-
-        https://docs.gradle.org/current/userguide/checkstyle_plugin.html
-
-        Performs code style checks on Java source files using Checkstyle and generates reports from these checks.
-        The checks are included in gradle's *check* task (you can run them by executing `./gradlew check` command).
-
-    * org.owasp.dependencycheck
-
-        https://jeremylong.github.io/DependencyCheck/dependency-check-gradle/index.html
-
-        Provides monitoring of the project's dependent libraries and creating a report
-        of known vulnerable components that are included in the build. To run it
-        execute `gradle dependencyCheck` command.
-
-  * jacoco
-
-    https://docs.gradle.org/current/userguide/jacoco_plugin.html
-
-    Provides code coverage metrics for Java code via integration with JaCoCo.
-    You can create the report by running the following command:
-
-    ```bash
-      ./gradlew jacocoTestReport
-    ```
-
-    The report will be created in build/reports subdirectory in your project directory.
-
-  * io.spring.dependency-management
-
-    https://github.com/spring-gradle-plugins/dependency-management-plugin
-
-    Provides Maven-like dependency management. Allows you to declare dependency management
-    using `dependency 'groupId:artifactId:version'`
-    or `dependency group:'group', name:'name', version:version'`.
-
-  * org.springframework.boot
-
-    http://projects.spring.io/spring-boot/
-
-    Reduces the amount of work needed to create a Spring application
-
-
-  * com.github.ben-manes.versions
-
-    https://github.com/ben-manes/gradle-versions-plugin
-
-    Provides a task to determine which dependencies have updates. Usage:
-
-    ```bash
-      ./gradlew dependencyUpdates -Drevision=release
-    ```
-
-## Setup
-
-Located in `./bin/init.sh`. Simply run and follow the explanation how to execute it.
+# opal-auth-service
 
 ## Building and deploying the application
 
@@ -116,7 +27,7 @@ Create docker image:
   docker-compose build
 ```
 
-Run the distribution (created in `build/install/spring-boot-template` directory)
+Run the distribution (created in `build/install/opal-auth-service` directory)
 by executing the following command:
 
 ```bash
@@ -124,12 +35,12 @@ by executing the following command:
 ```
 
 This will start the API container exposing the application's port
-(set to `4550` in this template app).
+(set to `4555` in this template app).
 
 In order to test if the application is up, you can call its health endpoint:
 
 ```bash
-  curl http://localhost:4550/health
+  curl http://localhost:4555/health
 ```
 
 You should get a response similar to this:

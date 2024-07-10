@@ -1,9 +1,9 @@
 apiVersion: v2
 appVersion: "1.0"
 description: A Helm chart for opal-auth-service App
-name: opal-opal-auth-service
+name: opal-auth-service
 home: https://github.com/hmcts/opal-auth-service
-version: 0.0.17
+version: 0.0.18
 maintainers:
   - name: HMCTS opal team
 dependencies:

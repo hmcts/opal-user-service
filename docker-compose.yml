@@ -1,7 +1,7 @@
 version: '2.1'
 
 services:
-  opal-auth-service:
+  opal-user-service:
     build:
       context: .
       args:

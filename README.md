@@ -1,4 +1,4 @@
-# opal-auth-service
+# opal-user-service
 
 ## Building and deploying the application
 
@@ -27,7 +27,7 @@ Create docker image:
   docker-compose build
 ```
 
-Run the distribution (created in `build/install/opal-auth-service` directory)
+Run the distribution (created in `build/install/opal-user-service` directory)
 by executing the following command:
 
 ```bash

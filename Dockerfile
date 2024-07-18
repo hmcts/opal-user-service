@@ -3,7 +3,7 @@ ARG APP_INSIGHTS_AGENT_VERSION=3.5.3
 FROM hmctspublic.azurecr.io/base/java:21-distroless
 
 COPY lib/applicationinsights.json /opt/app/
-COPY build/libs/opal-auth-service.jar /opt/app/
+COPY build/libs/opal-user-service.jar /opt/app/
 
 EXPOSE 4555
-CMD [ "opal-auth-service.jar" ]
+CMD [ "opal-user-service.jar" ]

@@ -1,19 +1,17 @@
 
 services:
-  postgres:
+  opal-user-db:
+    container_name: database
     image: postgres:15
+    restart: always
     environment:
-      POSTGRES_PASSWORD: postgres
+      - POSTGRES_DB=opal-user-db
+      - POSTGRES_USER=opal-user
+      - POSTGRES_PASSWORD=opal-user
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./bin:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - opal_user_db_data:/var/lib/postgresql/data
 
   opal-user-service:
     build:
@@ -22,7 +20,7 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
-    image: hmctspublic.azurecr.io/spring-boot/template
+    image: hmctspublic.azurecr.io/opal/user-service
     environment:
       # these environment variables are used by java-logging library
       - ROOT_APPENDER
@@ -40,4 +38,4 @@ services:
       - $SERVER_PORT:$SERVER_PORT
 
 volumes:
-  postgres_data:
+  opal_user_db_data:

@@ -2,14 +2,9 @@ package uk.gov.hmcts.reform.opal.openapi;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.opal.BaseIntegrationTest;
 
@@ -24,8 +19,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Built-in feature which saves service's swagger specs in temporary directory.
  * Each CI run on master should automatically save and upload (if updated) documentation.
  */
-@WebMvcTest
-class OpenAPIPublisherTest {
+@AutoConfigureMockMvc
+@TestPropertySource(properties = {
+    "spring.flyway.enabled=false"
+})
+class OpenAPIPublisherTest extends BaseIntegrationTest {
 
     @Autowired
     private MockMvc mvc;

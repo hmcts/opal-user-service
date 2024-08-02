@@ -24,28 +24,36 @@ spring:
   config:
     import: "optional:configtree:/mnt/secrets/opal/"
   application:
-    name: Spring Boot Template
-#  datasource:
-#    driver-class-name: org.postgresql.Driver
-#    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}${DB_OPTIONS:}
-#    username: ${DB_USER_NAME}
-#    password: ${DB_PASSWORD}
-#    properties:
-#      charSet: UTF-8
-#    hikari:
-#      minimumIdle: 2
-#      maximumPoolSize: 10
-#      idleTimeout: 10000
-#      poolName: {to-be-defined}HikariCP
-#      maxLifetime: 7200000
-#      connectionTimeout: 30000
-#  jpa:
-#    properties:
-#      hibernate:
-#        jdbc:
-#          lob:
-#            # silence the 'wall-of-text' - unnecessary exception throw about blob types
-#            non_contextual_creation: true
+    name: Opal User Service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${OPAL_USER_DB_HOST:localhost}:${OPAL_USER_DB_PORT:5432}/${OPAL_USER_DB_NAME:opal-user-db}${OPAL_USER_DB_OPTIONS:}
+    username: ${OPAL_USER_DB_USERNAME:opal-user}
+    password: ${OPAL_USER_DB_PASSWORD:opal-user}
+    properties:
+      charSet: UTF-8
+    hikari:
+      minimumIdle: 2
+      maximumPoolSize: 10
+      idleTimeout: 10000
+      poolName: OpalHikariCP
+      maxLifetime: 7200000
+      connectionTimeout: 30000
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            # silence the 'wall-of-text' - unnecessary exception throw about blob types
+            non_contextual_creation: true
+  flyway:
+    baseline-on-migrate: true
+
+dbMigration:
+  # When true, the app will run DB migration on startup.
+  # Otherwise, it will just check if all migrations have been applied (and fail to start if not).
+  runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
 
 azure:
   application-insights:

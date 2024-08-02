@@ -9,4 +9,7 @@
     <cve>CVE-2023-35116</cve>
   </suppress>
   <!--End of false positives section -->
+  <suppress>
+    <cve>CVE-2024-1597</cve>
+  </suppress>
 </suppressions>

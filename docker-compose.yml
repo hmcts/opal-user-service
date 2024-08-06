@@ -8,8 +8,9 @@ services:
       - POSTGRES_DB=opal-user-db
       - POSTGRES_USER=opal-user
       - POSTGRES_PASSWORD=opal-user
+      - PGPORT=5433
     ports:
-      - "5433:5432"
+      - "5433:5433"
     volumes:
       - opal_user_db_data:/var/lib/postgresql/data
 
@@ -34,6 +35,7 @@ services:
       - LOGBACK_REQUIRE_THREAD
       - LOGBACK_REQUIRE_ALERT_LEVEL=false
       - LOGBACK_REQUIRE_ERROR_CODE=false
+      - OPAL_USER_DB_HOST=opal-user-db
     ports:
       - $SERVER_PORT:$SERVER_PORT
 

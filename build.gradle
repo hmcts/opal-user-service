@@ -176,7 +176,7 @@ dependencies {
 
   implementation group: 'io.rest-assured', name: 'rest-assured'
 
-  implementation 'org.flywaydb:flyway-core'
+  implementation 'org.flywaydb:flyway-core:10.17.0'
   implementation 'org.postgresql:postgresql'
   runtimeOnly 'org.flywaydb:flyway-database-postgresql:10.17.0'
 

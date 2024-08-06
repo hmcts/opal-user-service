@@ -1,7 +1,7 @@
 
 services:
   opal-user-db:
-    container_name: database
+    container_name: opal-user-db
     image: postgres:15
     restart: always
     environment:
@@ -9,7 +9,7 @@ services:
       - POSTGRES_USER=opal-user
       - POSTGRES_PASSWORD=opal-user
     ports:
-      - "5433:5433"
+      - "5433:5432"
     volumes:
       - opal_user_db_data:/var/lib/postgresql/data
 

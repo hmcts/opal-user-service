@@ -12,11 +12,8 @@ plugins {
   id 'com.github.ben-manes.versions' version '0.51.0'
   id 'org.flywaydb.flyway' version '10.17.0'
   id 'org.sonarqube' version '5.0.0.4638'
-  /*
-    Applies analysis tools including checkstyle and OWASP Dependency checker.
-    See https://github.com/hmcts/gradle-java-plugin
- */
   id 'uk.gov.hmcts.java' version '0.12.63'
+  id 'net.serenity-bdd.serenity-gradle-plugin' version '4.1.14'
 }
 
 group = 'uk.gov.hmcts.reform'
@@ -48,8 +45,6 @@ sourceSets {
   }
 
 }
-
-
 
 configurations {
   functionalTestImplementation.extendsFrom testImplementation
@@ -83,14 +78,6 @@ test {
   failFast = true
 }
 
-
-// task functional(type: Test) {
-//   description = "Runs functional tests"
-//  group = "Verification"
-//  testClassesDirs = sourceSets.functionalTest.output.classesDirs
-//  classpath = sourceSets.functionalTest.runtimeClasspath
-// }
-
 task integration(type: Test) {
   description = "Runs integration tests"
   group = "Verification"
@@ -99,11 +86,79 @@ task integration(type: Test) {
   failFast = true
 }
 
-// task smoke(type: Test) {
-//   description = "Runs Smoke Tests"
-//   testClassesDirs = sourceSets.smokeTest.output.classesDirs
-//   classpath = sourceSets.smokeTest.runtimeClasspath
-// }
+task functionalOpal(type: Test) {
+
+  description = "Runs functional tests against Opal mode"
+  group = "Verification"
+  testClassesDirs = sourceSets.functionalTest.output.classesDirs
+  classpath = sourceSets.functionalTest.runtimeClasspath
+  reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/functional"))
+  testLogging.showStandardStreams = true
+  gradle.startParameter.continueOnFailure = true
+  systemProperty "cucumber.filter.tags", "@Opal and not @Smoke and not @Ignore"
+  systemProperty "test.mode", "opal"
+}
+task functionalLegacy(type: Test) {
+  description = "Runs functional tests against Legacy mode"
+  group = "Verification"
+  testClassesDirs = sourceSets.functionalTest.output.classesDirs
+  classpath = sourceSets.functionalTest.runtimeClasspath
+  reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/functional"))
+  gradle.startParameter.continueOnFailure = true
+  testLogging.showStandardStreams = true
+  systemProperty "cucumber.filter.tags", "@Legacy and not @Smoke and not @Ignore"
+  systemProperty "test.mode", "legacy"
+}
+task copyFunctionalReport(type: Copy) {
+  from("${rootDir}/target/site/serenity")
+  into("${rootDir}/functional-test-report")
+  logger.quiet("Functional Test Report available at - file://${rootDir}/functional-test-report/index.html")
+}
+
+task functional() {
+  description = "Runs functional tests"
+  group = "Verification"
+  gradle.startParameter.continueOnFailure = true
+  dependsOn('clearReports', 'functionalOpal', 'functionalLegacy', 'aggregate', 'copyFunctionalReport')
+  tasks.functionalOpal.mustRunAfter clearReports
+  tasks.functionalLegacy.mustRunAfter functionalOpal
+  tasks.aggregate.mustRunAfter functionalLegacy
+  tasks.copyFunctionalReport.mustRunAfter aggregate
+
+}
+task smokeOpal(type: Test) {
+  description = "Runs Smoke Tests"
+  group = "Verification"
+  testClassesDirs = sourceSets.functionalTest.output.classesDirs
+  classpath = sourceSets.functionalTest.runtimeClasspath
+  reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/smoke"))
+  testLogging.showStandardStreams = true
+  gradle.startParameter.continueOnFailure = true
+  systemProperty "cucumber.filter.tags", "@Smoke and not @Ignore"
+}
+task copySmokeReport(type: Copy) {
+  from("${rootDir}/target/site/serenity")
+  into("${rootDir}/smoke-test-report")
+  logger.quiet("Smoke Test Report available at - file://${rootDir}/smoke-test-report/index.html")
+}
+
+task smoke() {
+  description = "Runs Smoke Tests"
+  group = "Verification"
+  gradle.startParameter.continueOnFailure = true
+  dependsOn('clearReports', 'smokeOpal', 'aggregate', 'copySmokeReport')
+  tasks.smokeOpal.mustRunAfter clearReports
+  tasks.aggregate.mustRunAfter smokeOpal
+  tasks.copySmokeReport.mustRunAfter aggregate
+
+}
+
+def coverageExclusions = [
+  '**/uk/gov/hmcts/reform/opal/**/model/**',
+  '**/uk/gov/hmcts/reform/opal/**/config/**',
+  '**/uk/gov/hmcts/reform/opal/authentication/client/**',
+  '**/uk/gov/hmcts/reform/opal/**/exception/**'
+]
 
 jacocoTestReport {
   executionData(test, integration)
@@ -181,6 +236,16 @@ dependencies {
   testImplementation 'org.projectlombok:lombok:1.18.30'
   testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
 
+  implementation group: 'org.apache.xmlgraphics', name: 'fop', version: '2.9'
+  implementation group: 'org.apache.xmlgraphics', name: 'fop-core', version: '2.9'
+  implementation group: 'org.apache.xmlgraphics', name: 'fop-events', version: '2.9'
+  implementation group: 'org.apache.xmlgraphics', name: 'xmlgraphics-commons', version: '2.9'
+  implementation group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.32'
+  implementation group: 'net.sf.saxon', name: 'Saxon-HE', version: '12.5'
+
+  testImplementation 'com.github.fge:json-schema-validator:2.2.14'
+  testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
   testImplementation 'org.springframework.boot:spring-boot-devtools'
   testImplementation 'org.springframework.boot:spring-boot-testcontainers'
   testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
@@ -192,6 +257,8 @@ dependencies {
     exclude group: 'junit', module: 'junit'
     exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
   }
+  testImplementation 'org.junit.platform:junit-platform-suite:1.10.3'
+  testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.18.1'
 }
 
 mainClassName = 'uk.gov.hmcts.reform.opal.Application'

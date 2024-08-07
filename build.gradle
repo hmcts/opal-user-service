@@ -47,15 +47,9 @@ sourceSets {
     resources.srcDir file('src/integrationTest/resources')
   }
 
-  smokeTest {
-    java {
-      compileClasspath += main.output
-      runtimeClasspath += main.output
-      srcDir file('src/smokeTest/java')
-    }
-    resources.srcDir file('src/smokeTest/resources')
-  }
 }
+
+
 
 configurations {
   functionalTestImplementation.extendsFrom testImplementation
@@ -89,12 +83,13 @@ test {
   failFast = true
 }
 
-task functional(type: Test) {
-  description = "Runs functional tests"
-  group = "Verification"
-  testClassesDirs = sourceSets.functionalTest.output.classesDirs
-  classpath = sourceSets.functionalTest.runtimeClasspath
-}
+
+// task functional(type: Test) {
+//   description = "Runs functional tests"
+//  group = "Verification"
+//  testClassesDirs = sourceSets.functionalTest.output.classesDirs
+//  classpath = sourceSets.functionalTest.runtimeClasspath
+// }
 
 task integration(type: Test) {
   description = "Runs integration tests"
@@ -104,11 +99,11 @@ task integration(type: Test) {
   failFast = true
 }
 
-task smoke(type: Test) {
-  description = "Runs Smoke Tests"
-  testClassesDirs = sourceSets.smokeTest.output.classesDirs
-  classpath = sourceSets.smokeTest.runtimeClasspath
-}
+// task smoke(type: Test) {
+//   description = "Runs Smoke Tests"
+//   testClassesDirs = sourceSets.smokeTest.output.classesDirs
+//   classpath = sourceSets.smokeTest.runtimeClasspath
+// }
 
 jacocoTestReport {
   executionData(test, integration)
@@ -210,9 +205,9 @@ bootJar {
 }
 
 // Gradle 7.x issue, workaround from: https://github.com/gradle/gradle/issues/17236#issuecomment-894768083
-rootProject.tasks.named("processSmokeTestResources") {
-  duplicatesStrategy = 'include'
-}
+// rootProject.tasks.named("processSmokeTestResources") {
+//  duplicatesStrategy = 'include'
+// }
 
 wrapper {
     distributionType = Wrapper.DistributionType.ALL

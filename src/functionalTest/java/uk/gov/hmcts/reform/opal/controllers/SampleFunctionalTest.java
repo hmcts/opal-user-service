@@ -6,21 +6,20 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import static io.restassured.RestAssured.given;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 class SampleFunctionalTest {
-    protected static final String CONTENT_TYPE_VALUE = "application/json";
 
-    @Value("${TEST_URL:http://localhost:8080}")
-    private String testUrl;
+    private static final String TEST_URL = System.getenv().getOrDefault("TEST_URL", "http://localhost:4555");
+
+    protected static String getTestUrl() {
+        return TEST_URL;
+    }
 
     @BeforeEach
     public void setUp() {
-        RestAssured.baseURI = testUrl;
+        RestAssured.baseURI = getTestUrl();
         RestAssured.useRelaxedHTTPSValidation();
     }
 
@@ -29,11 +28,11 @@ class SampleFunctionalTest {
         Response response = given()
             .contentType(ContentType.JSON)
             .when()
-            .get()
+            .get("/health")
             .then()
             .extract().response();
 
         Assertions.assertEquals(200, response.statusCode());
-        Assertions.assertTrue(response.asString().startsWith("Welcome"));
+        Assertions.assertTrue(response.asString().contains("\"db\":{\"status\":\"UP\""));
     }
 }

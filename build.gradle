@@ -230,11 +230,11 @@ dependencies {
   implementation 'org.postgresql:postgresql'
   runtimeOnly 'org.flywaydb:flyway-database-postgresql:10.17.0'
 
-  implementation 'org.projectlombok:lombok:1.18.30'
-  annotationProcessor 'org.projectlombok:lombok:1.18.30'
+  implementation 'org.projectlombok:lombok:1.18.34'
+  annotationProcessor 'org.projectlombok:lombok:1.18.34'
 
-  testImplementation 'org.projectlombok:lombok:1.18.30'
-  testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+  testImplementation 'org.projectlombok:lombok:1.18.34'
+  testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 
   testImplementation 'com.github.fge:json-schema-validator:2.2.14'
   testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'

@@ -24,7 +24,7 @@ module "opal-user-db" {
   product       = var.product
   component     = var.component
   business_area = "sds"
-  collation = "en_US.utf8"
+  collation     = "en_US.utf8"
 
   pgsql_databases = [
     {

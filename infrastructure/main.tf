@@ -24,6 +24,7 @@ module "opal-user-db" {
   product       = var.product
   component     = var.component
   business_area = "sds"
+  collation     = "en_US.utf8"
 
   pgsql_databases = [
     {
@@ -31,7 +32,7 @@ module "opal-user-db" {
     }
   ]
 
-  pgsql_version = "15"
+  pgsql_version = "16"
 
   # The ID of the principal to be granted admin access to the database server.
   # On Jenkins it will be injected for you automatically as jenkins_AAD_objectId.

@@ -8,9 +8,9 @@ services:
       - POSTGRES_DB=opal-user-db
       - POSTGRES_USER=opal-user
       - POSTGRES_PASSWORD=opal-user
-      - PGPORT=5433
+      - PGPORT=5432
     ports:
-      - "5433:5433"
+      - "5433:5432"
     volumes:
       - opal_user_db_data:/var/lib/postgresql/data
 

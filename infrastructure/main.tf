@@ -67,7 +67,7 @@ resource "azurerm_key_vault_secret" "POSTGRES_HOST" {
 
 resource "azurerm_key_vault_secret" "POSTGRES_PORT" {
   name         = "${var.component}-POSTGRES-PORT"
-  value        = 5433
+  value        = 5432
   key_vault_id = data.azurerm_key_vault.key_vault.id
 }
 

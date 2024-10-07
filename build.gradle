@@ -251,7 +251,7 @@ dependencies {
     exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
   }
   testImplementation 'org.junit.platform:junit-platform-suite:1.11.1'
-  testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.19.0'
+  testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.20.0'
 }
 
 mainClassName = 'uk.gov.hmcts.reform.opal.Application'

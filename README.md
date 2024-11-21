@@ -1,8 +1,6 @@
 # opal-user-service
 
-## Building and deploying the application
-
-### Building the application
+## Building the application
 
 The project uses [Gradle](https://gradle.org) as a build tool. It already contains
 `./gradlew` wrapper script, so there's no need to install gradle.
@@ -13,7 +11,7 @@ To build the project execute the following command:
   ./gradlew build
 ```
 
-### Running the application
+## Running the application
 
 Create the image of the application by executing the following command:
 
@@ -37,6 +35,17 @@ by executing the following command:
 This will start the API container exposing the application's port
 (set to `4555` in this template app).
 The database is available on `jdbc:postgresql://localhost:5433/opal-user-db` with username and password `opal-user`.
+
+## Running within IntelliJ
+
+You can run the code for testing/debugging purposes within IntelliJ, but you will still need to run
+the `opal-user-db` database container in the background. The class to run is
+`uk.gov.hmcts.reform.opal.Application`, and you will need to provide the following envvar:
+```bash
+OPAL_USER_DB_PORT=5433
+```
+
+## Testing
 
 In order to test if the application is up, you can call its health endpoint:
 
@@ -83,4 +92,3 @@ There is no need to remove postgres and java or similar core images.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
-

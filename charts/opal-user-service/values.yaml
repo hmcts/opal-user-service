@@ -17,7 +17,10 @@ java:
         - name: user-service-POSTGRES-USER
           alias: OPAL_USER_DB_USERNAME
         - name: user-service-POSTGRES-DATABASE
-          alias: OPAL_USER_DB_NAME  
+          alias: OPAL_USER_DB_NAME
 
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true
+    OPAL_FRONTEND_URL: https://opal-frontend.{{ .Values.global.environment }}.platform.hmcts.net
+    TESTING_SUPPORT_ENDPOINTS_ENABLED: true
+    LAUNCH_DARKLY_ENABLED: true

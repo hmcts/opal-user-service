@@ -8,7 +8,7 @@ plugins {
   id 'application'
   id 'jacoco'
   id 'io.spring.dependency-management' version '1.1.6'
-  id 'org.springframework.boot' version '3.3.5'
+  id 'org.springframework.boot' version '3.3.0'
   id 'com.github.ben-manes.versions' version '0.51.0'
   id 'org.sonarqube' version '6.0.0.5145'
   id 'uk.gov.hmcts.java' version '0.12.63'
@@ -66,7 +66,7 @@ tasks.withType(JavaExec).configureEach {
   javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
 }
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
   useJUnitPlatform()
 
   testLogging {
@@ -164,18 +164,39 @@ jacocoTestReport {
   executionData(test, integration)
   reports {
     xml.required = true
-    csv.required = false
     html.required = true
+    csv.required = false
+    html.outputLocation.set(layout.buildDirectory.dir("jacocoHtml"))
   }
+  afterEvaluate {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+      fileTree(dir: it, exclude: jacocoExclusionArray(coverageExclusions)
+      )
+    }))
+  }
+}
+
+static String[] jacocoExclusionArray(ArrayList<String> exclusions) {
+  final def lst = new ArrayList<String>()
+
+  exclusions.stream().forEach { it.endsWith(".java") ? lst.add(it.replace(".java", ".class")) : lst.add(it) }
+
+  return lst.toArray()
 }
 
 project.tasks['sonarqube'].dependsOn jacocoTestReport
 project.tasks['check'].dependsOn integration
 
+jacocoTestReport.dependsOn check
+jacocoTestCoverageVerification.dependsOn jacocoTestReport
+
 sonarqube {
   properties {
     property "sonar.projectName", "Reform :: opal-user-service"
     property "sonar.projectKey", "uk.gov.hmcts.reform:opal-user-service"
+    property "sonar.gradle.skipCompile", "true"
+    property "sonar.exclusions", coverageExclusions.join(', ')
+    property 'sonar.coverage.exclusions', "**/entity/*,**/model/*,**/exception/*,**/config/**,**/repository/jpa/*,**/opal/dto/*"
   }
 }
 
@@ -191,6 +212,20 @@ dependencyUpdates {
   }
 }
 
+dependencyManagement {
+  imports {
+    mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2023.0.3'
+  }
+
+  imports {
+    mavenBom "org.springframework.integration:spring-integration-bom:6.3.5"
+  }
+
+  dependencies {
+    dependency group: 'com.google.guava', name: 'guava', version: '33.3.1-jre'
+  }
+}
+
 // https://jeremylong.github.io/DependencyCheck/dependency-check-gradle/configuration.html
 dependencyCheck {
   suppressionFile = 'config/owasp/suppressions.xml'
@@ -203,11 +238,14 @@ repositories {
 }
 
 ext {
-  log4JVersion = "2.24.1"
+  log4JVersion = "2.24.2"
   logbackVersion = "1.5.12"
+  serenityVersion = "4.2.8"
 }
 
 ext['snakeyaml.version'] = '2.0'
+ext['jackson.version'] = '2.16.1'
+ext['tomcat.version'] = '10.1.16'
 
 dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
@@ -215,26 +253,58 @@ dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-aop'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-json'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
+  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security'
+  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-oauth2-client'
+
+  implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-integration'
+  implementation group: 'org.springframework.integration', name: 'spring-integration-sftp'
+  implementation group: 'org.springframework.integration', name: 'spring-integration-file'
+
+
+  implementation group: 'org.springframework.security', name: 'spring-security-oauth2-authorization-server', version: '1.3.3'
+
+  implementation group: 'org.springframework', name: 'spring-aspects'
+
+  implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-netflix-archaius', version: '2.2.10.RELEASE'
+
   implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.6.0'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '6.1.7'
 
   implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: log4JVersion
   implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: log4JVersion
-  implementation group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
-  implementation group: 'ch.qos.logback', name: 'logback-core', version: logbackVersion
+  implementation group: 'com.google.guava', name: 'guava', version: '33.3.1-jre'
+
+  implementation group: 'com.launchdarkly', name: 'launchdarkly-java-server-sdk', version: '7.6.0'
+
+  implementation(group: 'com.networknt', name: 'json-schema-validator', version: '1.5.3');
+  implementation(group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0');
 
   implementation group: 'io.rest-assured', name: 'rest-assured'
-
-  implementation 'org.flywaydb:flyway-core:10.21.0'
-  implementation 'org.postgresql:postgresql'
+  implementation 'org.flywaydb:flyway-core'
   runtimeOnly 'org.flywaydb:flyway-database-postgresql:10.21.0'
+  implementation 'org.postgresql:postgresql'
 
-  implementation 'org.projectlombok:lombok:1.18.36'
-  annotationProcessor 'org.projectlombok:lombok:1.18.36'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.2'
+  compileOnly 'org.projectlombok:lombok:1.18.34'
+  annotationProcessor 'org.projectlombok:lombok:1.18.34'
+  annotationProcessor 'org.hibernate:hibernate-jpamodelgen:6.6.2.Final'
 
-  testImplementation 'org.projectlombok:lombok:1.18.36'
-  testAnnotationProcessor 'org.projectlombok:lombok:1.18.36'
+  testCompileOnly 'org.projectlombok:lombok:1.18.34'
+  testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+  integrationTestCompileOnly 'org.projectlombok:lombok:1.18.34'
+  integrationTestAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+
+  implementation group: 'org.apache.xmlgraphics', name: 'fop', version: '2.10'
+  implementation group: 'org.apache.xmlgraphics', name: 'fop-core', version: '2.10'
+  implementation group: 'org.apache.xmlgraphics', name: 'fop-events', version: '2.10'
+  implementation group: 'org.apache.xmlgraphics', name: 'xmlgraphics-commons', version: '2.10'
+  implementation group: 'org.apache.pdfbox', name: 'pdfbox', version: '2.0.32'
+  implementation group: 'net.sf.saxon', name: 'Saxon-HE', version: '12.5'
 
   testImplementation 'com.github.fge:json-schema-validator:2.2.14'
   testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
@@ -243,7 +313,6 @@ dependencies {
   testImplementation 'org.springframework.boot:spring-boot-testcontainers'
   testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
   testImplementation 'org.testcontainers:postgresql'
-
   testImplementation(platform('org.junit:junit-bom:5.11.3'))
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', {
@@ -252,9 +321,18 @@ dependencies {
   }
   testImplementation 'org.junit.platform:junit-platform-suite:1.11.3'
   testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.20.1'
+
+  testImplementation "net.serenity-bdd:serenity-core:${serenityVersion}"
+  testImplementation "net.serenity-bdd:serenity-rest-assured:${serenityVersion}"
+  testImplementation "net.serenity-bdd:serenity-report-resources:${serenityVersion}"
+
+  testImplementation "net.serenity-bdd:serenity-cucumber:${serenityVersion}"
+  testImplementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
 }
 
-mainClassName = 'uk.gov.hmcts.reform.opal.Application'
+application {
+  mainClass.set('uk.gov.hmcts.reform.opal.Application')
+}
 
 bootJar {
   archiveFileName = "opal-user-service.jar"
@@ -265,9 +343,13 @@ bootJar {
 }
 
 // Gradle 7.x issue, workaround from: https://github.com/gradle/gradle/issues/17236#issuecomment-894768083
-// rootProject.tasks.named("processSmokeTestResources") {
+//rootProject.tasks.named("processFunctionalTestResources`") {
 //  duplicatesStrategy = 'include'
-// }
+//}
+
+rootProject.tasks.named("processIntegrationTestResources") {
+  duplicatesStrategy = 'include'
+}
 
 wrapper {
     distributionType = Wrapper.DistributionType.ALL

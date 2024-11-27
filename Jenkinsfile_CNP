@@ -6,4 +6,51 @@ def type = "java"
 def product = "opal"
 def component = "user-service"
 
-withPipeline(type, product, component) {}
+withPipeline(type, product, component) {
+  afterAlways('functionalTest:dev') {
+    steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'functional-test-report/**/*'
+    steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'smoke-test-report/**/*'
+
+    publishHTML target: [
+      allowMissing         : true,
+      alwaysLinkToLastBuild: true,
+      keepAll              : true,
+      reportDir            : "functional-test-report/",
+      reportFiles          : "index.html",
+      reportName           : "Serenity Functional Test Report"
+    ]
+
+    publishHTML target: [
+      allowMissing         : true,
+      alwaysLinkToLastBuild: true,
+      keepAll              : true,
+      reportDir            : "smoke-test-report/",
+      reportFiles          : "index.html",
+      reportName           : "Serenity Smoke Test Report"
+    ]
+
+  }
+
+  afterAlways('functionalTest:stg') {
+    steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'functional-test-report/**/*'
+    steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'smoke-test-report/**/*'
+
+    publishHTML target: [
+      allowMissing         : true,
+      alwaysLinkToLastBuild: true,
+      keepAll              : true,
+      reportDir            : "functional-test-report/",
+      reportFiles          : "index.html",
+      reportName           : "Serenity Functional Test Report"
+    ]
+
+    publishHTML target: [
+      allowMissing         : true,
+      alwaysLinkToLastBuild: true,
+      keepAll              : true,
+      reportDir            : "smoke-test-report/",
+      reportFiles          : "index.html",
+      reportName           : "Serenity Smoke Test Report"
+    ]
+  }
+}

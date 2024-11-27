@@ -18,7 +18,9 @@ public class AssertTokenStepDef {
         DecodedJWT decodedToken = TokenUtils.parseToken(getToken());
 
         assertEquals(testUser, decodedToken.getClaim("unique_name").asString());
-        Serenity.recordReportData().withTitle("Token unique name").andContents(decodedToken.getClaim("unique_name").asString());
+        Serenity.recordReportData()
+            .withTitle("Token unique name")
+            .andContents(decodedToken.getClaim("unique_name").asString());
 
         log.info("Token unique name is: {}", decodedToken.getClaim("unique_name").asString());
     }

@@ -18,6 +18,14 @@ java:
           alias: OPAL_USER_DB_USERNAME
         - name: user-service-POSTGRES-DATABASE
           alias: OPAL_USER_DB_NAME
+        - name: AzureADTenantId
+          alias: AAD_TENANT_ID
+        - name: AzureADClientId
+          alias: AAD_CLIENT_ID
+        - name: AzureADClientSecret
+          alias: AAD_CLIENT_SECRET
+        - name: OpalTestUserPassword
+          alias: OPAL_TEST_USER_PASSWORD
 
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true

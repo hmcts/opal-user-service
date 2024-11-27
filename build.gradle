@@ -311,6 +311,7 @@ dependencies {
 
   testImplementation 'org.springframework.boot:spring-boot-devtools'
   testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+  testImplementation 'com.auth0:java-jwt:4.4.0'
   testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
   testImplementation 'org.testcontainers:postgresql'
   testImplementation(platform('org.junit:junit-bom:5.11.3'))
@@ -343,9 +344,9 @@ bootJar {
 }
 
 // Gradle 7.x issue, workaround from: https://github.com/gradle/gradle/issues/17236#issuecomment-894768083
-//rootProject.tasks.named("processFunctionalTestResources`") {
-//  duplicatesStrategy = 'include'
-//}
+rootProject.tasks.named("processFunctionalTestResources") {
+  duplicatesStrategy = 'include'
+}
 
 rootProject.tasks.named("processIntegrationTestResources") {
   duplicatesStrategy = 'include'

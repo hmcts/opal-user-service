@@ -9,7 +9,6 @@ def component = "user-service"
 withPipeline(type, product, component) {
   afterAlways('functionalTest:dev') {
     steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'functional-test-report/**/*'
-    steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'smoke-test-report/**/*'
 
     publishHTML target: [
       allowMissing         : true,
@@ -19,6 +18,10 @@ withPipeline(type, product, component) {
       reportFiles          : "index.html",
       reportName           : "Serenity Functional Test Report"
     ]
+  }
+
+  afterAlways('smoketest:dev') {
+    steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'smoke-test-report/**/*'
 
     publishHTML target: [
       allowMissing         : true,
@@ -28,12 +31,10 @@ withPipeline(type, product, component) {
       reportFiles          : "index.html",
       reportName           : "Serenity Smoke Test Report"
     ]
-
   }
 
   afterAlways('functionalTest:stg') {
     steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'functional-test-report/**/*'
-    steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'smoke-test-report/**/*'
 
     publishHTML target: [
       allowMissing         : true,
@@ -43,6 +44,10 @@ withPipeline(type, product, component) {
       reportFiles          : "index.html",
       reportName           : "Serenity Functional Test Report"
     ]
+
+  }
+  afterAlways('smoketest:stg') {
+    steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'smoke-test-report/**/*'
 
     publishHTML target: [
       allowMissing         : true,

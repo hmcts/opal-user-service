@@ -24,11 +24,6 @@ public class BearerTokenStepDef extends BaseStepDef {
         return fetchToken(user);
     }
 
-    @BeforeAll
-    public static void setDefaultToken() {
-        TOKEN.set(tokenCache.computeIfAbsent(DEFAULT_USER, BearerTokenStepDef::fetchAccessToken));
-    }
-
     private static String fetchToken(String user) {
         SerenityRest.given()
             .accept("*/*")

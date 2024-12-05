@@ -288,15 +288,15 @@ dependencies {
   implementation 'org.postgresql:postgresql'
 
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.2'
-  compileOnly 'org.projectlombok:lombok:1.18.34'
-  annotationProcessor 'org.projectlombok:lombok:1.18.34'
+  compileOnly 'org.projectlombok:lombok:1.18.36'
+  annotationProcessor 'org.projectlombok:lombok:1.18.36'
   annotationProcessor 'org.hibernate:hibernate-jpamodelgen:6.6.3.Final'
 
-  testCompileOnly 'org.projectlombok:lombok:1.18.34'
-  testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+  testCompileOnly 'org.projectlombok:lombok:1.18.36'
+  testAnnotationProcessor 'org.projectlombok:lombok:1.18.36'
 
-  integrationTestCompileOnly 'org.projectlombok:lombok:1.18.34'
-  integrationTestAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+  integrationTestCompileOnly 'org.projectlombok:lombok:1.18.36'
+  integrationTestAnnotationProcessor 'org.projectlombok:lombok:1.18.36'
 
 
   implementation group: 'org.apache.xmlgraphics', name: 'fop', version: '2.10'

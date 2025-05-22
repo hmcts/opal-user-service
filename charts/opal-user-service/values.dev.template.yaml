@@ -11,6 +11,16 @@ java:
       secrets:
         - name: app-insights-connection-string
           alias: app-insights-connection-string
+        - name: launch-darkly-sdk-key
+          alias: LAUNCH_DARKLY_SDK_KEY
+        - name: AzureADTenantId
+          alias: AAD_TENANT_ID
+        - name: AzureADClientId
+          alias: AAD_CLIENT_ID
+        - name: AzureADClientSecret
+          alias: AAD_CLIENT_SECRET
+        - name: OpalTestUserPassword
+          alias: OPAL_TEST_USER_PASSWORD
   environment:
     OPAL_USER_DB_HOST: "{{ .Release.Name }}-postgresql"
     OPAL_USER_DB_NAME: "{{ .Values.postgresql.auth.database}}"
@@ -19,5 +29,8 @@ java:
     OPAL_USER_DB_OPTIONS: "?stringtype=unspecified"
     OPAL_USER_DB_PORT: 5432
     RUN_DB_MIGRATION_ON_STARTUP: true
+    OPAL_FRONTEND_URL: https://opal-frontend.staging.platform.hmcts.net
+    TESTING_SUPPORT_ENDPOINTS_ENABLED: true
+    LAUNCH_DARKLY_ENABLED: false
   postgresql:
     enabled: true

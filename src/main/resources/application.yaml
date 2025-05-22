@@ -7,9 +7,9 @@ management:
   endpoint:
     health:
       show-details: "always"
-      # group:
-      #  readiness:
-      #   include: "db"
+      group:
+        readiness:
+          include: "db"
   endpoints:
     web:
       base-path: /
@@ -17,7 +17,7 @@ management:
         include: health, info, prometheus
 
 springdoc:
-  packagesToScan: uk.gov.hmcts.reform.auth-service.controllers
+  packagesToScan: uk.gov.hmcts.reform.auth-service.controllers,uk.gov.hmcts.reform.opal.controllers,uk.gov.hmcts.reform.opal.authentication.controller
   writer-with-order-by-keys: true
 
 spring:
@@ -25,6 +25,34 @@ spring:
     import: "optional:configtree:/mnt/secrets/opal/"
   application:
     name: Opal User Service
+  jackson:
+    serialization:
+      write_dates_as_timestamps: false
+  security:
+    oauth2:
+      client:
+        registration:
+          internal-azure-ad:
+            client-id: ${AAD_CLIENT_ID:00000000-0000-0000-0000-000000000000}
+            client-secret: ${AAD_CLIENT_SECRET:}
+            scope: api://${AAD_CLIENT_ID:00000000-0000-0000-0000-000000000000}/opalinternaluser
+            redirect-uri: ${opal.frontend.url}/sso/login-callback
+            logout-redirect-uri: ${opal.frontend.url}/sso/logout-callback
+            authorization-grant-type: authorization_code
+            response-type: code
+            response-mode: form_post
+            prompt: login
+            issuer-uri: https://sts.windows.net/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/
+            claims: preferred_username
+            provider: internal-azure-ad-provider
+        provider:
+          internal-azure-ad-provider:
+            authorization-uri: ${opal.azure.active-directory-justice-auth-uri}/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/oauth2/v2.0/authorize
+            token-uri: ${opal.azure.active-directory-justice-auth-uri}/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/oauth2/v2.0/token
+            jwk-set-uri: ${opal.azure.active-directory-justice-auth-uri}/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/discovery/v2.0/keys
+            logout-uri: ${opal.azure.active-directory-justice-auth-uri}/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/oauth2/v2.0/logout
+            reset-password-uri: ${opal.azure.active-directory-justice-auth-uri}/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/oauth2/v2.0/authorize
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${OPAL_USER_DB_HOST:localhost}:${OPAL_USER_DB_PORT:5432}/${OPAL_USER_DB_NAME:opal-user-db}${OPAL_USER_DB_OPTIONS:}
@@ -40,8 +68,10 @@ spring:
       maxLifetime: 7200000
       connectionTimeout: 30000
   jpa:
+    show-sql: false
     properties:
       hibernate:
+        format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
           lob:
@@ -59,3 +89,35 @@ dbMigration:
 azure:
   application-insights:
     instrumentation-key: ${opal.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
+
+app-mode: opal
+
+launchdarkly:
+  sdk-key: ${LAUNCH_DARKLY_SDK_KEY:}
+  offline-mode: ${LAUNCH_DARKLY_OFFLINE_MODE:false}
+  env: ${LAUNCH_DARKLY_ENV:default}
+  enabled: ${LAUNCH_DARKLY_ENABLED:true}
+
+opal:
+  frontend:
+    url: ${OPAL_FRONTEND_URL:http://localhost:4200}
+  azure:
+    active-directory-justice-auth-uri: https://login.microsoftonline.com
+  testing-support-endpoints:
+    enabled: ${TESTING_SUPPORT_ENDPOINTS_ENABLED:true}
+  test-user:
+    email: ${OPAL_TEST_USER_EMAIL:opal-test@HMCTS.NET}
+    password: ${OPAL_TEST_USER_PASSWORD}
+
+be-developer-config:
+  user-role-permissions: ${BE_DEV_ROLE_PERMISSIONS:}
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: INFO
+        type:
+          descriptor:
+            sql:
+              BasicBinder: WARN

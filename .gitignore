@@ -3,6 +3,10 @@
 !gradle/wrapper/gradle-wrapper.jar
 *.class
 bin/main/application.yaml
+/target
+
+### Generated Source ###
+/src/generated
 
 ### STS ###
 .apt_generated
@@ -23,3 +27,5 @@ bin/main/application.yaml
 
 applicationinsights-agent-*.jar
 *.log
+/functional-test-report/
+/smoke-test-report/

@@ -234,7 +234,9 @@ dependencyCheck {
 repositories {
   mavenLocal()
   mavenCentral()
-  maven { url 'https://jitpack.io' }
+  maven {
+    url 'https://pkgs.dev.azure.com/hmcts/Artifacts/_packaging/hmcts-lib/maven/v1'
+  }
 }
 
 ext {
@@ -245,7 +247,7 @@ ext {
 
 ext['snakeyaml.version'] = '2.0'
 ext['jackson.version'] = '2.16.1'
-ext['tomcat.version'] = '10.1.40'
+ext['tomcat.version'] = '10.1.42'
 
 dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
@@ -306,7 +308,8 @@ dependencies {
   implementation group: 'org.apache.pdfbox', name: 'pdfbox', version: '3.0.5'
   implementation group: 'net.sf.saxon', name: 'Saxon-HE', version: '12.7'
 
-  testImplementation 'com.github.fge:json-schema-validator:2.2.14'
+  implementation(group: 'com.networknt', name: 'json-schema-validator', version: '1.5.7');
+  implementation(group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0');
   testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
   testImplementation 'org.springframework.boot:spring-boot-devtools'

@@ -6,6 +6,10 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
 
   autoconfigure:
     exclude:

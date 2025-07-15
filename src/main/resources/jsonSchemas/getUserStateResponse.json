@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Get User State Response",
+  "description": "The complete state for a given user, including primary details and permissions per business unit.",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "integer",
+      "description": "The user's unique identifier."
+    },
+    "username": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Obtained from the Access Token."
+    },
+    "status": {
+      "type": "string",
+      "description": "The user's status."
+    },
+    "version": {
+      "type": "integer",
+      "description": "The version of the user object."
+    },
+    "business_unit_users": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "$ref": "#/definitions/BusinessUnitUser"
+      }
+    }
+  },
+  "required": [
+    "user_id",
+    "username",
+    "status",
+    "version"
+  ],
+  "definitions": {
+    "BusinessUnitUser": {
+      "type": "object",
+      "description": "Defines a user's role and permissions within a specific Business Unit.",
+      "properties": {
+        "business_unit_user_id": {
+          "type": "string",
+          "description": "The unique identifier for the business unit user relationship."
+        },
+        "business_unit_id": {
+          "type": "integer",
+          "description": "The unique identifier for the business unit."
+        },
+        "permissions": {
+          "type": "array",
+          "minItems": 0,
+          "description": "An array of permissions for the user within this business unit.",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
+        }
+      },
+      "required": [
+        "business_unit_user_id",
+        "business_unit_id"
+      ]
+    },
+    "Permission": {
+      "type": "object",
+      "description": "Defines a specific permission.",
+      "properties": {
+        "permission_id": {
+          "type": "integer",
+          "description": "The unique identifier for the permission."
+        },
+        "permission_name": {
+          "type": "string",
+          "description": "The name of the permission."
+        }
+      },
+      "required": [
+        "permission_id",
+        "permission_name"
+      ]
+    }
+  }
+}

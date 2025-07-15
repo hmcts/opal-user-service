@@ -21,9 +21,9 @@ public interface UserStateMapper {
     @Mapping(source = "userEntity.userId", target = "userId")
     @Mapping(source = "userEntity.username", target = "username")
     @Mapping(source = "businessUnitUsers", target = "businessUnitUsers")
-    @Mapping(target = "name", ignore = true)
-    @Mapping(target = "status", ignore = true)
-    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "name", ignore = true) // Name is not in db yet, get from auth till we have it in db
+    @Mapping(target = "status", ignore = true)//status is not in db yet, placeholder for future use
+    @Mapping(target = "version", ignore = true)//version is not in db yet, placeholder for future use
     UserStateDto toUserStateDto(UserEntity userEntity, List<BusinessUnitUserDto> businessUnitUsers);
 
     /**

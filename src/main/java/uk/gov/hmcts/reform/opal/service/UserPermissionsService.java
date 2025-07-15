@@ -60,7 +60,7 @@ public class UserPermissionsService {
                 List<UserEntitlementEntity> buuEntitlements = entitlementsByBuuId.get(buu.getBusinessUnitUserId());
                 return userStateMapper.toBusinessUnitUserDto(buu, buuEntitlements);
             })
-            .collect(Collectors.toList());
+            .toList();
 
         // 7. Pass the user entity and the BUU list to the mapper.
         return userStateMapper.toUserStateDto(userEntity, buuDtos);

@@ -44,6 +44,7 @@ public class GlobalExceptionHandler {
 
     public static final String DB_UNAVAILABLE_MESSAGE = "Opal Fines Database is currently unavailable";
     public static final String UNKNOWN = "'Unknown'";
+    public static final String INTERNAL_SERVER_ERROR = "Internal Server Error";
 
 
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
@@ -129,7 +130,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = createProblemDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "Internal Server Error",
+            INTERNAL_SERVER_ERROR,
             "A problem occurred while accessing data",
             "invalid-data-access",
             idaaue
@@ -144,7 +145,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = createProblemDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "Internal Server Error",
+            INTERNAL_SERVER_ERROR,
             "A problem occurred with the requested data resource",
             "invalid-resource-usage",
             idarue
@@ -229,7 +230,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = createProblemDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "Internal Server Error",
+            INTERNAL_SERVER_ERROR,
             "An unexpected error occurred while processing your request",
             "servlet-error",
             ex
@@ -256,7 +257,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = createProblemDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "Internal Server Error",
+            INTERNAL_SERVER_ERROR,
             "A database error occurred while processing your request",
             "database-error",
             psqlException
@@ -286,7 +287,7 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = createProblemDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "Internal Server Error",
+            INTERNAL_SERVER_ERROR,
             "A data access error occurred.",
             "lazy-initialization",
             lazyInitializationException
@@ -299,7 +300,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleJpaSystemException(JpaSystemException jpaSystemException) {
         ProblemDetail problemDetail = createProblemDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "Internal Server Error",
+            INTERNAL_SERVER_ERROR,
             "A persistence error occurred while processing your request",
             "jpa-system-error",
             jpaSystemException
@@ -356,10 +357,6 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("conflictReason", e.getConflictReason());
 
         return responseWithProblemDetail(HttpStatus.CONFLICT, problemDetail);
-    }
-
-    private Throwable getNonNullCause(Throwable t) {
-        return t.getCause() == null ? t : t.getCause();
     }
 
     private ProblemDetail createProblemDetail(HttpStatus status, String title, String detail,

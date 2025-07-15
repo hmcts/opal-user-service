@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.ResultActions;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
@@ -18,27 +19,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @Sql(scripts = "classpath:db.insertData/insert_user_state_data.sql", executionPhase = BEFORE_TEST_CLASS)
+@TestPropertySource(properties = {"spring.jpa.hibernate.ddl-auto=create-drop"})
 @DisplayName("UserPermissionsController Integration Test with Security")
 class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
 
     private static final String URL_BASE = "/users";
-
-
-
-    @Test
-    @DisplayName("DEBUG: Print actual JSON response")
-    void debug_printActualResponse() throws Exception {
-        String response = mockMvc.perform(get(URL_BASE + "/500000000/state"))
-            .andExpect(status().isOk())
-            .andReturn().getResponse().getContentAsString();
-
-        System.out.println(response);
-        System.out.println("=== END RESPONSE ===");
-
-        var jsonNode = objectMapper.readTree(response);
-        System.out.println("=== PRETTY PRINTED ===");
-        System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode));
-    }
 
     @Test
     @DisplayName("Should return 200 and full user state for a user with permissions")

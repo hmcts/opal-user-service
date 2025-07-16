@@ -5,9 +5,15 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
+import java.util.Optional;
+
 @Repository
-public interface UserRepository extends JpaRepository<UserEntity, String>,
+public interface UserRepository extends JpaRepository<UserEntity, Long>,
     JpaSpecificationExecutor<UserEntity> {
 
     UserEntity findByUsername(String username);
+
+    Optional<UserEntity> findOptionalByUsername(String username);
+
+
 }

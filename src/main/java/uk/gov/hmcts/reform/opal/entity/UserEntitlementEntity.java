@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.opal.entity;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -44,12 +43,12 @@ public class UserEntitlementEntity {
     @Column(name = "user_entitlement_id")
     private Long userEntitlementId;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_unit_user_id", nullable = false)
     @EqualsAndHashCode.Exclude
     private BusinessUnitUserEntity businessUnitUser;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "application_function_id", nullable = false)
     @EqualsAndHashCode.Exclude
     private ApplicationFunctionEntity applicationFunction;

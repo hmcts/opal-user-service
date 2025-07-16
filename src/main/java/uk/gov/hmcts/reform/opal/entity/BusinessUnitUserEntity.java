@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.opal.entity;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -37,12 +36,12 @@ public class BusinessUnitUserEntity {
     @Column(name = "business_unit_user_id", length = 6)
     private String businessUnitUserId;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_unit_id", nullable = false)
     @EqualsAndHashCode.Exclude
     private BusinessUnitEntity businessUnit;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @EqualsAndHashCode.Exclude
     private UserEntity user;

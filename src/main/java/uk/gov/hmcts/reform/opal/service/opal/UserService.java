@@ -32,7 +32,7 @@ public class UserService implements UserServiceInterface {
 
     @Override
     public UserEntity getUser(String userId) {
-        return userRepository.getReferenceById(userId);
+        return userRepository.getReferenceById(Long.valueOf(userId));
     }
 
     @Override

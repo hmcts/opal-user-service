@@ -7,17 +7,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.opal.authentication.model.SecurityToken;
 import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authorisation.service.AuthorisationService;
-import uk.gov.hmcts.reform.opal.dto.AppMode;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
-import uk.gov.hmcts.reform.opal.service.DynamicConfigService;
 
 @RestController
 @RequestMapping("/testing-support")
@@ -28,22 +24,10 @@ public class TestingSupportController {
 
     private static final String X_USER_EMAIL = "X-User-Email";
 
-    private final DynamicConfigService dynamicConfigService;
     private final FeatureToggleService featureToggleService;
     private final AccessTokenService accessTokenService;
     private final AuthorisationService authorisationService;
-
-    @GetMapping("/app-mode")
-    @Operation(summary = "Retrieves the value for app mode.")
-    public ResponseEntity<AppMode> getAppMode() {
-        return ResponseEntity.ok(dynamicConfigService.getAppMode());
-    }
-
-    @PutMapping("/app-mode")
-    @Operation(summary = "Updates the value for app mode.")
-    public ResponseEntity<AppMode> updateMode(@RequestBody AppMode mode) {
-        return ResponseEntity.accepted().body(this.dynamicConfigService.updateAppMode(mode));
-    }
+    
 
     @GetMapping("/launchdarkly/bool/{featureKey}")
     public ResponseEntity<Boolean> isFeatureEnabled(@PathVariable String featureKey) {

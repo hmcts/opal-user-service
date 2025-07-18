@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -16,17 +15,13 @@ import uk.gov.hmcts.reform.opal.authorisation.model.BusinessUnitUser;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permission;
 import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.authorisation.service.AuthorisationService;
-import uk.gov.hmcts.reform.opal.dto.AppMode;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
-import uk.gov.hmcts.reform.opal.service.DynamicConfigService;
 
 import java.util.Set;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -41,21 +36,18 @@ class TestingSupportControllerTest {
         .userName("name")
         .userId(123L)
         .businessUnitUser(Set.of(BusinessUnitUser.builder()
-                          .businessUnitId((short) 123)
-                          .businessUnitUserId("BU123")
-                          .permissions(Set.of(
-                              Permission.builder()
-                                  .permissionId(1L)
-                                  .permissionName("Notes")
-                                  .build()))
-                          .build()))
+            .businessUnitId((short) 123)
+            .businessUnitUserId("BU123")
+            .permissions(Set.of(
+                Permission.builder()
+                    .permissionId(1L)
+                    .permissionName("Notes")
+                    .build()))
+            .build()))
         .build();
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockBean
-    private DynamicConfigService dynamicConfigService;
 
     @MockBean
     private FeatureToggleService featureToggleService;
@@ -66,31 +58,6 @@ class TestingSupportControllerTest {
     @MockBean
     private AuthorisationService authorisationService;
 
-    @Test
-    void testGetAppMode() throws Exception {
-        AppMode appMode = AppMode.builder().mode("test").build();
-
-        when(dynamicConfigService.getAppMode()).thenReturn(appMode);
-
-        mockMvc.perform(get("/testing-support/app-mode"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.mode").value("test"));
-    }
-
-    @Test
-    void testUpdateMode() throws Exception {
-        AppMode appMode = AppMode.builder().mode("test").build();
-
-        when(dynamicConfigService.updateAppMode(any(AppMode.class))).thenReturn(appMode);
-
-        mockMvc.perform(put("/testing-support/app-mode")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(new ObjectMapper().writeValueAsString(appMode)))
-            .andExpect(status().isAccepted())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.mode").value("test"));
-    }
 
     @Test
     void testIsFeatureEnabled() throws Exception {
@@ -133,14 +100,14 @@ class TestingSupportControllerTest {
             .andExpect(jsonPath("$.user_state.user_name").value("name"))
             .andExpect(jsonPath("$.user_state.user_id").value("123"))
             .andExpect(jsonPath("$.user_state.business_unit_user[0].business_unit_id")
-                           .value("123"))
+                .value("123"))
             .andExpect(jsonPath("$.user_state.business_unit_user[0].business_unit_user_id")
-                           .value("BU123"))
+                .value("BU123"))
             .andExpect(jsonPath("$.user_state.business_unit_user[0].permissions[0].permission_id")
-                           .value("1"))
+                .value("1"))
             .andExpect(
                 jsonPath("$.user_state.business_unit_user[0].permissions[0].permission_name")
-                           .value("Notes"));
+                    .value("Notes"));
 
     }
 
@@ -158,21 +125,21 @@ class TestingSupportControllerTest {
         when(authorisationService.getSecurityToken("testAccessToken")).thenReturn(securityToken);
 
         mockMvc.perform(get("/testing-support/token/user")
-                            .header("X-User-Email", "test@example.com"))
+                .header("X-User-Email", "test@example.com"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.access_token").value("testToken"))
             .andExpect(jsonPath("$.user_state.user_name").value("name"))
             .andExpect(jsonPath("$.user_state.user_id").value("123"))
             .andExpect(jsonPath("$.user_state.business_unit_user[0].business_unit_id")
-                           .value("123"))
+                .value("123"))
             .andExpect(jsonPath("$.user_state.business_unit_user[0].business_unit_user_id")
-                           .value("BU123"))
+                .value("BU123"))
             .andExpect(jsonPath("$.user_state.business_unit_user[0].permissions[0].permission_id")
-                           .value("1"))
+                .value("1"))
             .andExpect(
                 jsonPath("$.user_state.business_unit_user[0].permissions[0].permission_name")
-                           .value("Notes"));
+                    .value("Notes"));
     }
 
     @Test
@@ -182,7 +149,7 @@ class TestingSupportControllerTest {
         when(accessTokenService.extractPreferredUsername(token)).thenReturn("testUser");
 
         mockMvc.perform(get("/testing-support/token/parse")
-                            .header("Authorization", token))
+                .header("Authorization", token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").value("testUser"));
     }
@@ -201,20 +168,20 @@ class TestingSupportControllerTest {
         when(authorisationService.getSecurityToken("testAccessToken")).thenReturn(securityToken);
 
         mockMvc.perform(get("/testing-support/token/user")
-                            .header("X-User-Email", "test@example.com"))
+                .header("X-User-Email", "test@example.com"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.access_token").value("testToken"))
             .andExpect(jsonPath("$.user_state.user_name").value("name"))
             .andExpect(jsonPath("$.user_state.user_id").value("123"))
             .andExpect(jsonPath("$.user_state.business_unit_user[0].business_unit_id")
-                           .value("123"))
+                .value("123"))
             .andExpect(jsonPath("$.user_state.business_unit_user[0].business_unit_user_id")
-                           .value("BU123"))
+                .value("BU123"))
             .andExpect(jsonPath("$.user_state.business_unit_user[0].permissions[0].permission_id")
-                           .value("1"))
+                .value("1"))
             .andExpect(
                 jsonPath("$.user_state.business_unit_user[0].permissions[0].permission_name")
-                           .value("Notes"));
+                    .value("Notes"));
     }
 }

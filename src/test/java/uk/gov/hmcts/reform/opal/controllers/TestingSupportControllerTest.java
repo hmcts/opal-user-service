@@ -10,20 +10,16 @@ import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.reform.opal.authentication.model.SecurityToken;
 import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authorisation.service.AuthorisationService;
-import uk.gov.hmcts.reform.opal.dto.AppMode;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
-import uk.gov.hmcts.reform.opal.service.DynamicConfigService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(
     classes =
         {
             TestingSupportController.class,
-            DynamicConfigService.class,
             FeatureToggleService.class
         },
     properties = {
@@ -39,9 +35,6 @@ class TestingSupportControllerTest {
     private TestingSupportController controller;
 
     @MockBean
-    private DynamicConfigService configService;
-
-    @MockBean
     private FeatureToggleService featureToggleService;
 
     @MockBean
@@ -50,28 +43,6 @@ class TestingSupportControllerTest {
     @MockBean
     private AuthorisationService authorisationService;
 
-    @Test
-    void getAppMode() {
-        AppMode mode = AppMode.builder().mode("opal").build();
-        when(configService.getAppMode()).thenReturn(mode);
-
-        ResponseEntity<AppMode> response = controller.getAppMode();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("opal", response.getBody().getMode());
-    }
-
-    @Test
-    void updateMode() {
-        AppMode mode = AppMode.builder().mode("legacy").build();
-        when(configService.updateAppMode(any())).thenReturn(mode);
-
-        ResponseEntity<AppMode> response = controller.updateMode(mode);
-
-        assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
-        assertEquals("legacy", response.getBody().getMode());
-
-    }
 
     @Test
     void isFeatureEnabled() {

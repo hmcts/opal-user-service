@@ -214,7 +214,7 @@ dependencyUpdates {
 
 dependencyManagement {
   imports {
-    mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2023.0.6'
+    mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2025.0.0'
   }
 
   imports {
@@ -269,8 +269,6 @@ dependencies {
 
   implementation group: 'org.springframework', name: 'spring-aspects'
 
-  implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-netflix-archaius', version: '2.2.10.RELEASE'
-
   implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.6.0'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '6.1.9'
@@ -320,13 +318,13 @@ dependencies {
   testImplementation 'com.auth0:java-jwt:4.5.0'
   testImplementation 'org.testcontainers:junit-jupiter:1.21.3'
   testImplementation 'org.testcontainers:postgresql'
-  testImplementation(platform('org.junit:junit-bom:5.13.3'))
+  testImplementation(platform('org.junit:junit-bom:5.13.4'))
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', {
     exclude group: 'junit', module: 'junit'
     exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
   }
-  testImplementation 'org.junit.platform:junit-platform-suite:1.13.3'
+  testImplementation 'org.junit.platform:junit-platform-suite:1.13.4'
   testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.23.0'
 
   testImplementation "net.serenity-bdd:serenity-core:${serenityVersion}"
@@ -376,4 +374,11 @@ task migratePostgresDatabase(type: org.flywaydb.gradle.task.FlywayMigrateTask) {
     url = "jdbc:postgresql://${dburl}"
   }
   println "Flyway jbdc property 'url' (derived from System property 'FLYWAY_URL'?) is: ${url}"
+}
+
+tasks.register('runAllStyleChecks') {
+  dependsOn 'checkstyleMain'
+  dependsOn 'checkstyleTest'
+  dependsOn 'checkstyleIntegrationTest'
+  dependsOn 'checkstyleFunctionalTest'
 }

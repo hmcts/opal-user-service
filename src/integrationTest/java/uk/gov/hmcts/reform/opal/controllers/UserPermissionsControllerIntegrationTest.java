@@ -99,7 +99,8 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
         ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithPermissions + "/state"));
         
         actions.andExpect(status().isOk())
-            .andExpect(jsonPath("$['business_unit_users'][?(@['business_unit_id']==68)]['permissions']", hasSize(1)))
+            .andExpect(jsonPath(
+                "$['business_unit_users'][?(@['business_unit_id']==68)]['permissions']", hasSize(1)))
             .andExpect(jsonPath(
                 "$['business_unit_users'][?(@['business_unit_id']==68)]['permissions'][0]['permission_name']")
                 .value("Account Enquiry - Account Notes"));
@@ -113,7 +114,8 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
         ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithPermissions + "/state"));
         
         actions.andExpect(status().isOk())
-            .andExpect(jsonPath("$['business_unit_users'][?(@['business_unit_id']==70)]['permissions'][*]['permission_name']",
+            .andExpect(jsonPath(
+                "$['business_unit_users'][?(@['business_unit_id']==70)]['permissions'][*]['permission_name']",
                         containsInAnyOrder("Account Enquiry - Account Notes", "Account Enquiry")));
     }
 }

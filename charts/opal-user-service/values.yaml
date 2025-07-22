@@ -32,3 +32,7 @@ java:
     OPAL_FRONTEND_URL: https://opal-frontend.{{ .Values.global.environment }}.platform.hmcts.net
     TESTING_SUPPORT_ENDPOINTS_ENABLED: true
     LAUNCH_DARKLY_ENABLED: true
+  postgresql:
+    enabled: false
+    image:
+      tag: '17.5.0'

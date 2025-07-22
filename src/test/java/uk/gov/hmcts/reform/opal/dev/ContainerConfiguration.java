@@ -1,0 +1,35 @@
+package uk.gov.hmcts.reform.opal.dev;
+
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Ports;
+import org.springframework.boot.devtools.restart.RestartScope;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Bean;
+import org.testcontainers.containers.PostgreSQLContainer;
+
+@TestConfiguration(proxyBeanMethods = false)
+public class ContainerConfiguration {
+
+    @Bean
+    @ServiceConnection
+    @RestartScope
+    PostgreSQLContainer<?> databaseContainer() {
+        return new PostgreSQLContainer<>("postgres:17.5")
+            .withCreateContainerCmdModifier(cmd -> {
+                cmd.withName("test-container-opal-user-db");
+                cmd.withHostConfig(
+                    new HostConfig().withPortBindings(
+                        new PortBinding(Ports.Binding.bindPort(5433), new ExposedPort(5432))
+                    )
+                );
+            })
+            .withExposedPorts(5432)
+            .withDatabaseName("opal-user-db")
+            .withUsername("opal-user")
+            .withPassword("opal-user")
+            .withReuse(true);
+    }
+}

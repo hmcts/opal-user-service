@@ -33,6 +33,6 @@ java:
     TESTING_SUPPORT_ENDPOINTS_ENABLED: true
     LAUNCH_DARKLY_ENABLED: true
   postgresql:
-    enabled: true
+    enabled: false
     image:
       tag: '17.5.0'

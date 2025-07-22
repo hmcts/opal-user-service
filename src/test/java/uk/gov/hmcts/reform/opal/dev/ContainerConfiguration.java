@@ -13,7 +13,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @TestConfiguration(proxyBeanMethods = false)
 public class ContainerConfiguration {
 
-    private static final int DB_HOST_PORT = 5433;
+    private static final int DB_HOST_PORT = 5432;
     private static final int DB_EXPOSED_PORT = 5433;
     private static final PortBinding DB_PORT_BINDING =
         new PortBinding(Ports.Binding.bindPort(DB_HOST_PORT), new ExposedPort(DB_EXPOSED_PORT));

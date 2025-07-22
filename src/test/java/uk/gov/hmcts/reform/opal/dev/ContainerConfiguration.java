@@ -13,19 +13,20 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @TestConfiguration(proxyBeanMethods = false)
 public class ContainerConfiguration {
 
-    private static final int DB_HOST_PORT = 5432;
-    private static final int DB_EXPOSED_PORT = 5433;
-    private static final PortBinding DB_PORT_BINDING =
-        new PortBinding(Ports.Binding.bindPort(DB_HOST_PORT), new ExposedPort(DB_EXPOSED_PORT));
-
     @Bean
     @ServiceConnection
     @RestartScope
     PostgreSQLContainer<?> databaseContainer() {
         return new PostgreSQLContainer<>("postgres:17.5")
-            .withCreateContainerCmdModifier(cmd ->
-                cmd.withHostConfig(new HostConfig().withPortBindings(DB_PORT_BINDING)))
-            .withExposedPorts(DB_EXPOSED_PORT)
+            .withCreateContainerCmdModifier(cmd -> {
+                cmd.withName("test-container-opal-user-db");
+                cmd.withHostConfig(
+                    new HostConfig().withPortBindings(
+                        new PortBinding(Ports.Binding.bindPort(5433), new ExposedPort(5432))
+                    )
+            );
+            })
+            .withExposedPorts(5432)
             .withDatabaseName("opal-user-db")
             .withUsername("opal-user")
             .withPassword("opal-user")

@@ -24,7 +24,7 @@ public class ContainerConfiguration {
                     new HostConfig().withPortBindings(
                         new PortBinding(Ports.Binding.bindPort(5433), new ExposedPort(5432))
                     )
-            );
+                );
             })
             .withExposedPorts(5432)
             .withDatabaseName("opal-user-db")

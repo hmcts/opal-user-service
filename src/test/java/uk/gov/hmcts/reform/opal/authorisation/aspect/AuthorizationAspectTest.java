@@ -9,8 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.hmcts.reform.opal.authentication.aspect.UserStateAspectService;
 import uk.gov.hmcts.reform.opal.authentication.exception.MissingRequestHeaderException;
 import uk.gov.hmcts.reform.opal.authorisation.model.BusinessUnitUser;
@@ -49,19 +49,19 @@ class AuthorizationAspectTest {
         .businessUnitUser(Set.of(BUSINESS_UNIT_USER))
         .build();
 
-    @MockBean
+    @MockitoBean
     UserStateService userStateService;
 
-    @MockBean
+    @MockitoBean
     AuthorizationAspectService authorizationAspectService;
 
-    @MockBean
+    @MockitoBean
     ProceedingJoinPoint joinPoint;
 
-    @MockBean
+    @MockitoBean
     AuthorizedAnyBusinessUnitUserHasPermission authorizedAnyBusinessUnitUserHasPermission;
 
-    @MockBean
+    @MockitoBean
     AuthorizedBusinessUnitUserHasPermission authorizedBusinessUnitUserHasPermission;
 
     @Autowired
@@ -93,7 +93,7 @@ class AuthorizationAspectTest {
             when(authorizedAnyBusinessUnitUserHasPermission.value()).thenReturn(Permissions.ACCOUNT_ENQUIRY);
 
             Object result = authorizationAspect.checkAuthorization(joinPoint,
-                                                                   authorizedAnyBusinessUnitUserHasPermission
+                authorizedAnyBusinessUnitUserHasPermission
             );
 
             assertNotNull(result);

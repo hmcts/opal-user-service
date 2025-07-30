@@ -11,7 +11,6 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.MethodParameter;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -25,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -48,8 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GlobalExceptionHandlerTest {
 
 
-
-    @MockBean
+    @MockitoBean
     MissingRequestHeaderException missingRequestHeaderException;
 
 

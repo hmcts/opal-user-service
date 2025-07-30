@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.repository.query.FluentQuery;
 import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.dto.search.UserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
@@ -59,7 +58,8 @@ class UserServiceTest {
     @Test
     void testSearchUsers() {
         // Arrange
-        JpaSpecificationExecutor.SpecificationFluentQuery ffq = Mockito.mock(JpaSpecificationExecutor.SpecificationFluentQuery.class);
+        JpaSpecificationExecutor.SpecificationFluentQuery ffq =
+            Mockito.mock(JpaSpecificationExecutor.SpecificationFluentQuery.class);
 
         UserEntity userEntity = UserEntity.builder().build();
         Page<UserEntity> mockPage = new PageImpl<>(List.of(userEntity), Pageable.unpaged(), 999L);

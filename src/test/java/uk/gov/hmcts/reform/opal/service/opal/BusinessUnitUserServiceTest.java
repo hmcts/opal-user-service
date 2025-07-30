@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.repository.query.FluentQuery;
 import uk.gov.hmcts.reform.opal.authorisation.model.BusinessUnitUser;
 import uk.gov.hmcts.reform.opal.dto.search.BusinessUnitUserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;

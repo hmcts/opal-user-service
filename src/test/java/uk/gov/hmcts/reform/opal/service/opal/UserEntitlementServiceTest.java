@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.repository.query.FluentQuery;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permission;
 import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.dto.search.UserEntitlementSearchDto;
@@ -61,11 +60,12 @@ class UserEntitlementServiceTest {
     @Test
     void testSearchUserEntitlements() {
         // Arrange
-        JpaSpecificationExecutor.SpecificationFluentQuery ffq = Mockito.mock(JpaSpecificationExecutor.SpecificationFluentQuery.class);
+        JpaSpecificationExecutor.SpecificationFluentQuery ffq =
+            Mockito.mock(JpaSpecificationExecutor.SpecificationFluentQuery.class);
 
         UserEntitlementEntity userEntitlementEntity = UserEntitlementEntity.builder().build();
         Page<UserEntitlementEntity> mockPage = new PageImpl<>(List.of(userEntitlementEntity),
-                                                              Pageable.unpaged(), 999L);
+            Pageable.unpaged(), 999L);
         when(userEntitlementRepository.findBy(any(Specification.class), any())).thenAnswer(iom -> {
             iom.getArgument(1, Function.class).apply(ffq);
             return mockPage;
@@ -105,15 +105,15 @@ class UserEntitlementServiceTest {
         // Arrange
         UserEntitlementEntity entitlement = UserEntitlementEntity.builder()
             .businessUnitUser(BusinessUnitUserEntity.builder()
-                                  .businessUnitUserId("BUU_001")
-                                  .user(UserEntity.builder()
-                                            .userId(123L).username("John Smith").build())
-                                  .businessUnit(BusinessUnitEntity.builder()
-                                            .businessUnitId((short)101).build())
-                                  .build())
+                .businessUnitUserId("BUU_001")
+                .user(UserEntity.builder()
+                    .userId(123L).username("John Smith").build())
+                .businessUnit(BusinessUnitEntity.builder()
+                    .businessUnitId((short) 101).build())
+                .build())
             .applicationFunction(ApplicationFunctionEntity.builder()
-                                  .applicationFunctionId(23L)
-                                  .functionName("Read_Notes").build())
+                .applicationFunctionId(23L)
+                .functionName("Read_Notes").build())
             .build();
         List<UserEntitlementEntity> list = List.of(entitlement);
         when(userEntitlementRepository.findAll(any(Specification.class))).thenReturn(list);

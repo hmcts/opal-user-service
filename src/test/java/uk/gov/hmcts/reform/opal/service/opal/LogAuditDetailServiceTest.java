@@ -11,7 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.repository.query.FluentQuery;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import uk.gov.hmcts.reform.opal.authorisation.model.LogActions;
 import uk.gov.hmcts.reform.opal.dto.AddLogAuditDetailDto;
 import uk.gov.hmcts.reform.opal.dto.search.LogAuditDetailSearchDto;
@@ -62,7 +62,8 @@ class LogAuditDetailServiceTest {
     @Test
     void testSearchLogAuditDetails() {
         // Arrange
-        FluentQuery.FetchableFluentQuery ffq = Mockito.mock(FluentQuery.FetchableFluentQuery.class);
+        JpaSpecificationExecutor.SpecificationFluentQuery ffq =
+            Mockito.mock(JpaSpecificationExecutor.SpecificationFluentQuery.class);
 
         LogAuditDetailEntity logAuditDetailEntity = LogAuditDetailEntity.builder().build();
         Page<LogAuditDetailEntity> mockPage = new PageImpl<>(List.of(logAuditDetailEntity), Pageable.unpaged(), 999L);

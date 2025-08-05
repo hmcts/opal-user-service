@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 import static uk.gov.hmcts.reform.opal.authorisation.aspect.AuthorizationAspectService.AUTHORIZATION;
 
 @Component
-@Slf4j(topic = "UserStateAspectService")
+@Slf4j(topic = "opal.UserStateAspectService")
 @RequiredArgsConstructor
 public class UserStateAspectService {
 

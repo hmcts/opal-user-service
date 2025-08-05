@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-@Slf4j
+@Slf4j(topic = "opal.SessionCache")
 public class SessionCache {
 
     private final Map<String, Session> cache = new ConcurrentHashMap<>();

@@ -20,7 +20,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j(topic = "UserService")
+@Slf4j(topic = "opal.UserService")
 @Qualifier("userService")
 public class UserService implements UserServiceInterface {
 

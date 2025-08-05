@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.opal.authorisation.service;
 
-import groovy.util.logging.Slf4j;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.opal.authentication.model.SecurityToken;
 import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
@@ -10,7 +10,7 @@ import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
 import java.util.Optional;
 
-@Slf4j
+@Slf4j(topic = "opal.AuthorisationService")
 @Service
 @RequiredArgsConstructor
 public class AuthorisationService {

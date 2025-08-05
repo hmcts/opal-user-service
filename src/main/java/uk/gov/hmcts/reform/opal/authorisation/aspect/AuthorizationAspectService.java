@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 
-@Slf4j
+@Slf4j(topic = "opal.AuthorizationAspectService")
 @Component
 public class AuthorizationAspectService {
 

@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.opal.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import uk.gov.hmcts.reform.opal.authorisation.service.AuthorisationService;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 
 @RestController
+@Slf4j(topic = "opal.TestingSupportController")
 @RequestMapping("/testing-support")
 @RequiredArgsConstructor
 @Tag(name = "Testing Support Controller")
@@ -27,7 +29,7 @@ public class TestingSupportController {
     private final FeatureToggleService featureToggleService;
     private final AccessTokenService accessTokenService;
     private final AuthorisationService authorisationService;
-    
+
 
     @GetMapping("/launchdarkly/bool/{featureKey}")
     public ResponseEntity<Boolean> isFeatureEnabled(@PathVariable String featureKey) {

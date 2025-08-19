@@ -18,7 +18,7 @@ import uk.gov.hmcts.reform.opal.authentication.service.AuthenticationService;
 import java.net.URI;
 import java.util.Optional;
 
-@Slf4j
+@Slf4j(topic = "opal.AuthenticationInternalUserController")
 @RestController
 @RequestMapping("/internal-user")
 @RequiredArgsConstructor

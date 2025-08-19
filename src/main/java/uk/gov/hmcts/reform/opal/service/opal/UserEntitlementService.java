@@ -30,7 +30,7 @@ import static java.util.stream.Collectors.toSet;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j(topic = "UserEntitlementService")
+@Slf4j(topic = "opal.UserEntitlementService")
 @Qualifier("userEntitlementService")
 public class UserEntitlementService implements UserEntitlementServiceInterface {
 

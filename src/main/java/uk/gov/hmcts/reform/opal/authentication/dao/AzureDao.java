@@ -16,7 +16,7 @@ import uk.gov.hmcts.reform.opal.authentication.model.OAuthProviderRawResponse;
 import java.io.IOException;
 
 @Component
-@Slf4j
+@Slf4j(topic = "opal.AzureDao")
 @RequiredArgsConstructor
 public class AzureDao {
 

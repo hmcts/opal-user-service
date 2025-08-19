@@ -37,7 +37,7 @@ import uk.gov.hmcts.reform.opal.exception.OpalApiException;
 import java.io.IOException;
 import java.util.Map;
 
-@Slf4j(topic = "SecurityConfig")
+@Slf4j(topic = "opal.SecurityConfig")
 @Configuration
 @EnableWebSecurity
 //@EnableWebSecurity(debug = true)

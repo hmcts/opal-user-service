@@ -21,7 +21,7 @@ import java.net.URISyntaxException;
 
 
 @Component
-@Slf4j(topic = "OAuthClient")
+@Slf4j(topic = "opal.OAuthClient")
 public class OAuthClient {
     @SneakyThrows({URISyntaxException.class, IOException.class})
     public HTTPResponse fetchAccessToken(AuthProviderConfigurationProperties providerConfigurationProperties,

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-@Slf4j
+@Slf4j(topic = "opal.FeatureToggleApi")
 @Service
 public class FeatureToggleApi {
 

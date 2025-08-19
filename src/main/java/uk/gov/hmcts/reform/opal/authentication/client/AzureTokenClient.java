@@ -13,7 +13,7 @@ import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenRequest;
 import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenResponse;
 
 
-@Slf4j(topic = "AzureTokenClient")
+@Slf4j(topic = "opal.AzureTokenClient")
 @Service
 @RequiredArgsConstructor
 public class AzureTokenClient {

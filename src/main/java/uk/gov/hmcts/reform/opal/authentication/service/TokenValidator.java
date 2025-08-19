@@ -24,7 +24,7 @@ import java.util.HashSet;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
+@Slf4j(topic = "opal.TokenValidator")
 public class TokenValidator {
 
     public JwtValidationResult validate(String accessToken,

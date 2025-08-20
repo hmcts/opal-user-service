@@ -3,7 +3,7 @@ appVersion: "1.0"
 description: A Helm chart for opal-user-service App
 name: opal-user-service
 home: https://github.com/hmcts/opal-user-service
-version: 0.0.36
+version: 0.0.37
 maintainers:
   - name: HMCTS opal team
 dependencies:

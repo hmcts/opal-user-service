@@ -13,7 +13,7 @@ import uk.gov.hmcts.reform.opal.service.opal.LogAuditDetailService;
 
 @Aspect
 @Component
-@Slf4j
+@Slf4j(topic = "opal.LogAuditDetailsAspect")
 @RequiredArgsConstructor
 public class LogAuditDetailsAspect {
 

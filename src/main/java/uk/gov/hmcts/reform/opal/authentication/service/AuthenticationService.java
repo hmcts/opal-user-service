@@ -20,7 +20,7 @@ import uk.gov.hmcts.reform.opal.exception.OpalApiException;
 import java.net.URI;
 import java.util.Objects;
 
-@Slf4j
+@Slf4j(topic = "opal.AuthenticationService")
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {

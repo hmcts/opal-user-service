@@ -114,6 +114,7 @@ be-developer-config:
 
 logging:
   level:
+    opal: INFO
     org:
       hibernate:
         SQL: INFO

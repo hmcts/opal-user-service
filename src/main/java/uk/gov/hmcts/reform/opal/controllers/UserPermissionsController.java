@@ -58,15 +58,18 @@ public class UserPermissionsController {
     }
 
     private String extractClaimAsString(Authentication authentication, String claimName) {
+        log.debug(":extractClaimAsString: claim name: {}", claimName);
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
             Jwt jwt = jwtAuth.getToken();
             String claimValue = jwt.getClaimAsString(claimName);
             if (claimValue != null) {
                 return claimValue;
             } else {
+                log.debug(":extractClaimAsString: claim not found: {}", claimName);
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Claim not found: " + claimName);
             }
         }
+        log.warn(":extractClaimAsString: Authentication not of type Jwt.");
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Claim not found: " + claimName);
     }
 

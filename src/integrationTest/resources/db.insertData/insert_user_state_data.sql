@@ -1,8 +1,8 @@
 -- Insert users from Flyway script V20240729_003
-INSERT INTO users (user_id, username, password, description)
+INSERT INTO users (user_id, token_preferred_username, password, description)
 VALUES (500000000, 'opal-test@HMCTS.NET', 'password', 'User with 7 business units');
 
-INSERT INTO users (user_id, username, password, description)
+INSERT INTO users (user_id, token_preferred_username, password, description)
 VALUES (500000001, 'opal-test-2@HMCTS.NET', NULL, 'User with no business units');
 
 -- Insert business units that are referenced in the business_unit_users script

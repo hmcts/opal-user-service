@@ -33,7 +33,7 @@ public class UserEntity {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "username", length = 100)
+    @Column(name = "token_preferred_username", length = 100)
     @EqualsAndHashCode.Exclude
     private String username;
 

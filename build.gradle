@@ -279,7 +279,7 @@ dependencies {
 
   implementation group: 'com.launchdarkly', name: 'launchdarkly-java-server-sdk', version: '7.10.2'
 
-  implementation(group: 'com.networknt', name: 'json-schema-validator', version: '1.5.8');
+  implementation(group: 'com.networknt', name: 'json-schema-validator', version: '1.5.9');
   implementation(group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0');
 
   implementation group: 'io.rest-assured', name: 'rest-assured'
@@ -309,7 +309,7 @@ dependencies {
   implementation group: 'org.apache.pdfbox', name: 'pdfbox', version: '3.0.5'
   implementation group: 'net.sf.saxon', name: 'Saxon-HE', version: '12.8'
 
-  implementation(group: 'com.networknt', name: 'json-schema-validator', version: '1.5.8');
+  implementation(group: 'com.networknt', name: 'json-schema-validator', version: '1.5.9');
   implementation(group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0');
   testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
   testImplementation 'org.springframework.security:spring-security-test'

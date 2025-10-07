@@ -78,7 +78,7 @@ test {
   failFast = true
 }
 
-task integration(type: Test) {
+tasks.register('integration', Test) {
   description = "Runs integration tests"
   group = "Verification"
   testClassesDirs = sourceSets.integrationTest.output.classesDirs
@@ -86,7 +86,7 @@ task integration(type: Test) {
   failFast = true
 }
 
-task functionalOpal(type: Test) {
+tasks.register('functionalOpal', Test) {
 
   description = "Runs functional tests against Opal mode"
   group = "Verification"
@@ -98,7 +98,7 @@ task functionalOpal(type: Test) {
   systemProperty "cucumber.filter.tags", "@Opal and not @Smoke and not @Ignore"
   systemProperty "test.mode", "opal"
 }
-task functionalLegacy(type: Test) {
+tasks.register('functionalLegacy', Test) {
   description = "Runs functional tests against Legacy mode"
   group = "Verification"
   testClassesDirs = sourceSets.functionalTest.output.classesDirs
@@ -109,13 +109,13 @@ task functionalLegacy(type: Test) {
   systemProperty "cucumber.filter.tags", "@Legacy and not @Smoke and not @Ignore"
   systemProperty "test.mode", "legacy"
 }
-task copyFunctionalReport(type: Copy) {
+tasks.register('copyFunctionalReport', Copy) {
   from("${rootDir}/target/site/serenity")
   into("${rootDir}/functional-test-report")
   logger.quiet("Functional Test Report available at - file://${rootDir}/functional-test-report/index.html")
 }
 
-task functional() {
+tasks.register('functional') {
   description = "Runs functional tests"
   group = "Verification"
   gradle.startParameter.continueOnFailure = true
@@ -126,7 +126,7 @@ task functional() {
   tasks.copyFunctionalReport.mustRunAfter aggregate
 
 }
-task smokeOpal(type: Test) {
+tasks.register('smokeOpal', Test) {
   description = "Runs Smoke Tests"
   group = "Verification"
   testClassesDirs = sourceSets.functionalTest.output.classesDirs
@@ -136,13 +136,13 @@ task smokeOpal(type: Test) {
   gradle.startParameter.continueOnFailure = true
   systemProperty "cucumber.filter.tags", "@Smoke and not @Ignore"
 }
-task copySmokeReport(type: Copy) {
+tasks.register('copySmokeReport', Copy) {
   from("${rootDir}/target/site/serenity")
   into("${rootDir}/smoke-test-report")
   logger.quiet("Smoke Test Report available at - file://${rootDir}/smoke-test-report/index.html")
 }
 
-task smoke() {
+tasks.register('smoke') {
   description = "Runs Smoke Tests"
   group = "Verification"
   gradle.startParameter.continueOnFailure = true
@@ -375,7 +375,7 @@ flyway {
   baselineVersion = '000'
 }
 
-task migratePostgresDatabase(type: org.flywaydb.gradle.task.FlywayMigrateTask) {
+tasks.register('migratePostgresDatabase', org.flywaydb.gradle.task.FlywayMigrateTask) {
   baselineOnMigrate = true
   if (project.hasProperty("dburl")) {
     url = "jdbc:postgresql://${dburl}"

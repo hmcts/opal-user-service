@@ -16,6 +16,13 @@ plugins {
   id 'net.serenity-bdd.serenity-gradle-plugin' version '4.2.34'
 }
 
+ext {
+  log4JVersion = "2.25.2"
+  logbackVersion = "1.5.12"
+  serenityVersion = "4.2.34"
+  cucumberVersion = "7.23.0" // Serenity (Integration Tests) currently break if this is > 7.23.0
+}
+
 group = 'uk.gov.hmcts.reform'
 version = '0.0.1'
 
@@ -56,6 +63,16 @@ configurations {
   smokeTestImplementation.extendsFrom testImplementation
   smokeTestRuntimeOnly.extendsFrom runtimeOnly
 }
+
+
+configurations.all {
+  resolutionStrategy {
+    force "io.cucumber:cucumber-core:${cucumberVersion}"
+    force "io.cucumber:cucumber-java:${cucumberVersion}"
+    force "io.cucumber:cucumber-junit:${cucumberVersion}"
+  }
+}
+
 
 tasks.withType(JavaCompile) {
   options.compilerArgs << "-Xlint:unchecked" << "-Werror"
@@ -235,14 +252,8 @@ repositories {
   mavenLocal()
   mavenCentral()
   maven {
-    url 'https://pkgs.dev.azure.com/hmcts/Artifacts/_packaging/hmcts-lib/maven/v1'
+    url = 'https://pkgs.dev.azure.com/hmcts/Artifacts/_packaging/hmcts-lib/maven/v1'
   }
-}
-
-ext {
-  log4JVersion = "2.25.2"
-  logbackVersion = "1.5.12"
-  serenityVersion = "4.2.34"
 }
 
 ext['snakeyaml.version'] = '2.0'
@@ -327,7 +338,7 @@ dependencies {
     exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
   }
   testImplementation 'org.junit.platform:junit-platform-suite:6.0.0'
-  testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.23.0'
+  testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
 
   testImplementation "net.serenity-bdd:serenity-core:${serenityVersion}"
   testImplementation "net.serenity-bdd:serenity-rest-assured:${serenityVersion}"

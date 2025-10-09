@@ -57,16 +57,6 @@ configurations {
   smokeTestRuntimeOnly.extendsFrom runtimeOnly
 }
 
-configurations.configureEach {
-  resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-    if (details.requested.group == 'org.flywaydb' &&
-      details.requested.name.contains('flyway-core')) {
-      details.useVersion '11.13.2'
-      details.because 'Fix for Flyway PluginRegister.getExact error'
-    }
-  }
-}
-
 tasks.withType(JavaCompile) {
   options.compilerArgs << "-Xlint:unchecked" << "-Werror"
 }
@@ -293,8 +283,10 @@ dependencies {
   implementation(group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0');
 
   implementation group: 'io.rest-assured', name: 'rest-assured'
-  implementation 'org.flywaydb:flyway-core'
-  runtimeOnly 'org.flywaydb:flyway-database-postgresql:11.13.2'
+  implementation 'org.flywaydb:flyway-core:11.13.2'
+  runtimeOnly 'org.flywaydb:flyway-database-postgresql:11.13.2', {
+    exclude group: 'org.flywaydb', module: 'flyway-core'
+  }
   implementation 'org.postgresql:postgresql'
 
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.2'

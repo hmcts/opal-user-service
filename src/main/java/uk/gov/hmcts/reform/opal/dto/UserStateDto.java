@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserStateDto {
+public class UserStateDto implements ToJsonString {
 
     @JsonProperty("user_id")
     private Long userId;
@@ -28,7 +28,7 @@ public class UserStateDto {
     private String status;
 
     @JsonProperty("version")
-    private Integer version;
+    private Long version;
 
     @JsonProperty("business_unit_users")
     private List<BusinessUnitUserDto> businessUnitUsers;

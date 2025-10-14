@@ -15,7 +15,7 @@ import static uk.gov.hmcts.reform.opal.TestContainerConfig.POSTGRES_CONTAINER;
 @SpringBootTest
 @ActiveProfiles("integration")
 @ContextConfiguration(classes = {TestContainerConfig.class})
-@AutoConfigureMockMvc(addFilters = true)
+@AutoConfigureMockMvc()
 public class AbstractIntegrationTest {
     @Autowired
     protected MockMvc mockMvc;

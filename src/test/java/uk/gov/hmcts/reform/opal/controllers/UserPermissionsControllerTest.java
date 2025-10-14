@@ -18,6 +18,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -44,8 +46,7 @@ class UserPermissionsControllerTest {
         returnedDto.setUserId(123L);
         returnedDto.setUsername(expectedUsername);
 
-        given(userPermissionsService.getUserState(expectedUsername))
-            .willReturn(returnedDto);
+        given(userPermissionsService.getUserState(anyLong(), any())).willReturn(returnedDto);
 
         Map<String, Object> claims = Map.of(
             "preferred_username", expectedUsername,
@@ -60,6 +61,23 @@ class UserPermissionsControllerTest {
         // Assert
         assertNotNull(result);
         assertEquals(expectedUsername, result.getUsername());
-        verify(userPermissionsService).getUserState(expectedUsername);
+        verify(userPermissionsService).getUserState(anyLong(), any());
+    }
+
+    @Test
+    void testAddUser() {
+        // Arrange
+        UserStateDto returnedDto = new UserStateDto();
+        returnedDto.setUserId(123L);
+        returnedDto.setUsername("opal-test@HMCTS.NET");
+        given(userPermissionsService.createUser(any())).willReturn(returnedDto);
+
+        // Act
+        ResponseEntity<UserStateDto> response = controller.addUser("bearer token-value");
+        UserStateDto result = response.getBody();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("opal-test@HMCTS.NET", result.getUsername());
     }
 }

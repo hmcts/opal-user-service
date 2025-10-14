@@ -4,23 +4,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
+import uk.gov.hmcts.reform.opal.util.Versioned;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserStateDto implements ToJsonString {
+public class UserDto implements Versioned, ToJsonString {
 
     @JsonProperty("user_id")
     private Long userId;
 
-    //users.username
+    @JsonProperty("subject")
+    private String subject;
+
     @JsonProperty("username")
     private String username;
 
-    //Obtained from the Access Token (via Spring Security) until stored in the Database under
-    // TDIA: User Service - Matching Key and JIT Provisioning, and only applies when id is 0 (zero) until then.
     @JsonProperty("name")
     private String name;
 
@@ -30,6 +29,4 @@ public class UserStateDto implements ToJsonString {
     @JsonProperty("version")
     private Long version;
 
-    @JsonProperty("business_unit_users")
-    private List<BusinessUnitUserDto> businessUnitUsers;
 }

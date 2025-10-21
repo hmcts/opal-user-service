@@ -7,9 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenResponse;
-import uk.gov.hmcts.reform.opal.authentication.model.SecurityToken;
 import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
-import uk.gov.hmcts.reform.opal.authorisation.service.AuthorisationService;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -40,10 +38,6 @@ class TestingSupportControllerTest {
     @MockitoBean
     private AccessTokenService accessTokenService;
 
-    @MockitoBean
-    private AuthorisationService authorisationService;
-
-
     @Test
     void isFeatureEnabled() {
         when(featureToggleService.isFeatureEnabled("my-feature")).thenReturn(true);
@@ -70,15 +64,16 @@ class TestingSupportControllerTest {
         AccessTokenResponse expectedResponse = AccessTokenResponse.builder().accessToken(TEST_TOKEN).build();
         when(accessTokenService.getTestUserToken())
             .thenReturn(expectedResponse);
-        SecurityToken securityToken = SecurityToken.builder().accessToken(TEST_TOKEN).build();
-        when(authorisationService.getSecurityToken(TEST_TOKEN)).thenReturn(securityToken);
 
         // Call the controller method
-        ResponseEntity<SecurityToken> responseEntity = controller.getToken();
+        ResponseEntity<TestingSupportController.TestingSupportTokenResponse> responseEntity = controller.getToken();
 
         // Verify the response
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(securityToken, responseEntity.getBody());
+        assertEquals(
+            new TestingSupportController.TestingSupportTokenResponse(TEST_TOKEN),
+            responseEntity.getBody()
+        );
     }
 
     @Test
@@ -101,15 +96,16 @@ class TestingSupportControllerTest {
         when(accessTokenService.getTestUserToken(TEST_USER_EMAIL))
             .thenReturn(expectedResponse);
 
-        SecurityToken securityToken = SecurityToken.builder().accessToken(TEST_TOKEN).build();
-        when(authorisationService.getSecurityToken(TEST_TOKEN)).thenReturn(securityToken);
-
         // Act
-        ResponseEntity<SecurityToken> response = controller.getTokenForUser(TEST_USER_EMAIL);
+        ResponseEntity<TestingSupportController.TestingSupportTokenResponse> response =
+            controller.getTokenForUser(TEST_USER_EMAIL);
 
         // Verify the response
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(securityToken, response.getBody());
+        assertEquals(
+            new TestingSupportController.TestingSupportTokenResponse(TEST_TOKEN),
+            response.getBody()
+        );
     }
 
     @Test

@@ -11,9 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.opal.authentication.model.SecurityToken;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
-import uk.gov.hmcts.reform.opal.authorisation.service.AuthorisationService;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 
 @RestController
@@ -28,8 +27,6 @@ public class TestingSupportController {
 
     private final FeatureToggleService featureToggleService;
     private final AccessTokenService accessTokenService;
-    private final AuthorisationService authorisationService;
-
 
     @GetMapping("/launchdarkly/bool/{featureKey}")
     public ResponseEntity<Boolean> isFeatureEnabled(@PathVariable String featureKey) {
@@ -43,22 +40,24 @@ public class TestingSupportController {
 
     @GetMapping("/token/test-user")
     @Operation(summary = "Retrieves the token for default test user")
-    public ResponseEntity<SecurityToken> getToken() {
+    public ResponseEntity<TestingSupportTokenResponse> getToken() {
         var accessTokenResponse = this.accessTokenService.getTestUserToken();
-        var securityToken = authorisationService.getSecurityToken(accessTokenResponse.getAccessToken());
-        return ResponseEntity.ok(securityToken);
+        return ResponseEntity.ok(new TestingSupportTokenResponse(accessTokenResponse.getAccessToken()));
     }
 
     @GetMapping("/token/user")
     @Operation(summary = "Retrieves the token for a given user")
-    public ResponseEntity<SecurityToken> getTokenForUser(@RequestHeader(value = X_USER_EMAIL) String userEmail) {
+    public ResponseEntity<TestingSupportTokenResponse> getTokenForUser(
+        @RequestHeader(value = X_USER_EMAIL) String userEmail
+    ) {
         var accessTokenResponse = this.accessTokenService.getTestUserToken(userEmail);
-        var securityToken = authorisationService.getSecurityToken(accessTokenResponse.getAccessToken());
-        return ResponseEntity.ok(securityToken);
+        return ResponseEntity.ok(new TestingSupportTokenResponse(accessTokenResponse.getAccessToken()));
     }
 
     @GetMapping("/token/parse")
     public ResponseEntity<String> parseToken(@RequestHeader("Authorization") String authorization) {
         return ResponseEntity.ok(this.accessTokenService.extractPreferredUsername(authorization));
     }
+
+    record TestingSupportTokenResponse(@JsonProperty("access_token") String accessToken) { }
 }

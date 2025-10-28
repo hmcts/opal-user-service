@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.JWTCreator.Builder;
 import com.auth0.jwt.algorithms.Algorithm;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -11,17 +11,21 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.ResultActions;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.dto.ToJsonString;
+import uk.gov.hmcts.reform.opal.service.JsonSchemaValidationService;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,9 +47,13 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
 
     private static final String URL_BASE = "/users";
     private static final String SQL_USER_QUERY = "SELECT * FROM users WHERE user_id = ?";
+    private static final String GET_USER_STATE_RESPONSE_JSON = "getUserStateResponse.json";
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @MockitoSpyBean
+    private JsonSchemaValidationService jsonSchemaValidationService;
 
     @Test
     @DisplayName("Should return 200 and full user state for a user with permissions [PO-857]")
@@ -160,21 +168,8 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
     @Test
     void testAddUser() throws Exception {
 
-        JWTCreator.Builder builder = JWT.create()
-            .withHeader(Map.of("typ", "JWT", "alg", "RS256"))
-            .withSubject("Fines")
-            .withIssuer("Opal")
-            .withExpiresAt(Instant.now().plusSeconds(3600))
-            .withIssuedAt(Instant.now().minusSeconds(3600))
-            .withClaim("name", "john.smith")
-            .withClaim("preferred_username", "j.s@example.com");
-
-        KeyPair keyPair = generateKeyPair();
-        String bearerToken = builder
-            .sign(Algorithm.RSA256((RSAPublicKey)keyPair.getPublic(), (RSAPrivateKey)keyPair.getPrivate()));
-
         ResultActions actions = mockMvc.perform(
-            post(URL_BASE).header("Authorization", "Bearer " + bearerToken));
+            post(URL_BASE).header("Authorization", "Bearer " + createSignedToken()));
 
         String body = actions.andReturn().getResponse().getContentAsString();
         log.info(":testAddUser: Response body:\n{}", ToJsonString.toPrettyJson(body));
@@ -182,17 +177,82 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
         actions.andExpect(status().isCreated())
             .andExpect(jsonPath("$['user_id']").value(1))
             .andExpect(jsonPath("$['username']").value("j.s@example.com"))
+            .andExpect(jsonPath("$['subject']").value("QeJjwoWnY-kBmMfm"))
             .andExpect(jsonPath("$['name']").value("john.smith"))
             .andExpect(jsonPath("$['status']").value("CREATED"))
             .andExpect(jsonPath("$['version']").value(0));
+
+        jsonSchemaValidationService.validateOrError(body, GET_USER_STATE_RESPONSE_JSON);
 
         Map<String, Object> rowData = jdbcTemplate.queryForMap(SQL_USER_QUERY, 1L);
         log.info(":testAddUser: Inserted into Users table:\n{}", rowData);
         assertEquals(1L, rowData.get("user_id"));
         assertEquals("j.s@example.com", rowData.get("token_preferred_username"));
+        assertEquals("QeJjwoWnY-kBmMfm", rowData.get("token_subject"));
         assertEquals("john.smith", rowData.get("token_name"));
         assertEquals("CREATED", rowData.get("status"));
         assertEquals(0L, rowData.get("version_number"));
+    }
+
+    @Test
+    void testUpdateUser() throws Exception {
+
+        // Check Data in DB before update
+        Map<String, Object> rowData = jdbcTemplate.queryForMap(SQL_USER_QUERY, 500000002L);
+        log.info(":testUpdateUser: Inserted into Users table:\n{}", rowData);
+        assertEquals(500000002L, rowData.get("user_id"));
+        assertEquals("update-user@HMCTS.NET", rowData.get("token_preferred_username"));
+        assertEquals("BmMfmuTT9pEdG", rowData.get("token_subject"));
+        assertNull(rowData.get("token_name"));
+        assertEquals("CREATED", rowData.get("status"));
+        assertEquals(0L, rowData.get("version_number"));
+
+        // Act
+        ResultActions actions = mockMvc.perform(
+            put(URL_BASE + "/500000002")
+                .header("Authorization", "Bearer " + createSignedToken())
+                .header("If-Match", "0"));
+
+        String body = actions.andReturn().getResponse().getContentAsString();
+        log.info(":testUpdateUser: Response body:\n{}", ToJsonString.toPrettyJson(body));
+
+        // Assert
+        actions.andExpect(status().isOk())
+            .andExpect(jsonPath("$['user_id']").value(500000002L))
+            .andExpect(jsonPath("$['username']").value("j.s@example.com"))
+            .andExpect(jsonPath("$['name']").value("john.smith"))
+            .andExpect(jsonPath("$['status']").value("CREATED"))
+            .andExpect(jsonPath("$['version']").value(0));
+
+        jsonSchemaValidationService.validateOrError(body, GET_USER_STATE_RESPONSE_JSON);
+
+        // Check data in DB after update
+        rowData = jdbcTemplate.queryForMap(SQL_USER_QUERY, 500000002L);
+        log.info(":testUpdateUser: Inserted into Users table:\n{}", rowData);
+        assertEquals(500000002L, rowData.get("user_id"));
+        assertEquals("j.s@example.com", rowData.get("token_preferred_username"));
+        assertEquals("QeJjwoWnY-kBmMfm", rowData.get("token_subject"));
+        assertEquals("john.smith", rowData.get("token_name"));
+        assertEquals("CREATED", rowData.get("status"));
+        assertEquals(1L, rowData.get("version_number"));
+    }
+
+    private String createSignedToken() throws NoSuchAlgorithmException {
+        Builder builder = createJwtBuilder();
+        KeyPair keyPair = generateKeyPair();
+        return builder
+            .sign(Algorithm.RSA256((RSAPublicKey)keyPair.getPublic(), (RSAPrivateKey)keyPair.getPrivate()));
+    }
+
+    private Builder createJwtBuilder() {
+        return JWT.create()
+            .withHeader(Map.of("typ", "JWT", "alg", "RS256"))
+            .withSubject("QeJjwoWnY-kBmMfm")
+            .withIssuer("Opal")
+            .withExpiresAt(Instant.now().plusSeconds(3600))
+            .withIssuedAt(Instant.now().minusSeconds(3600))
+            .withClaim("name", "john.smith")
+            .withClaim("preferred_username", "j.s@example.com");
     }
 
     private KeyPair generateKeyPair() throws NoSuchAlgorithmException {

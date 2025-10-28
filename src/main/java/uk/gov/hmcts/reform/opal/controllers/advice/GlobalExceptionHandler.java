@@ -74,6 +74,8 @@ public class GlobalExceptionHandler {
             ex
         );
 
+        problemDetail.setProperty("reason", ex.getMessage());
+
         return responseWithProblemDetail(HttpStatus.NOT_ACCEPTABLE, problemDetail);
     }
 
@@ -165,6 +167,9 @@ public class GlobalExceptionHandler {
             "entity-not-found",
             entityNotFoundException
         );
+
+        problemDetail.setProperty("reason", entityNotFoundException.getMessage());
+
 
         return responseWithProblemDetail(HttpStatus.NOT_FOUND, problemDetail);
     }

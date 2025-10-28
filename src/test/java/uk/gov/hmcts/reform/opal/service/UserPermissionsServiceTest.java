@@ -36,9 +36,11 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -72,7 +74,9 @@ class UserPermissionsServiceTest {
     private UserPermissionsService service;
 
     private static final long USER_ID = 42L;
-    private static final String USERNAME = "opal-user";
+    private static final String TOKEN_PREFERRED_USERNAME = "opal-user@hmcts.net";
+    private static final String TOKEN_NAME = "John Smith";
+    private static final String TOKEN_SUBJECT = "Opal";
     private UserEntity userEntity;
     private UserStateDto userDto;
 
@@ -80,11 +84,14 @@ class UserPermissionsServiceTest {
     void setUp() {
         userEntity = new UserEntity();
         userEntity.setUserId(USER_ID);
-        userEntity.setUsername(USERNAME);
+        userEntity.setUsername(TOKEN_PREFERRED_USERNAME);
+        userEntity.setTokenName(TOKEN_NAME);
+        userEntity.setTokenSubject(TOKEN_SUBJECT);
+        userEntity.setVersion(4L);
 
         userDto = new UserStateDto();
         userDto.setUserId(USER_ID);
-        userDto.setUsername(USERNAME);
+        userDto.setUsername(TOKEN_PREFERRED_USERNAME);
     }
 
     @Test
@@ -108,30 +115,30 @@ class UserPermissionsServiceTest {
     @Test
     @DisplayName("getUserState(String) delegates to getUserState(Long) after lookup")
     void getUserState_stringDelegatesToLong() {
-        when(userRepository.findOptionalByUsername(USERNAME))
+        when(userRepository.findOptionalByUsername(TOKEN_PREFERRED_USERNAME))
             .thenReturn(java.util.Optional.of(userEntity));
         doReturn(userDto).when(service).getUserState(USER_ID);
 
-        UserStateDto result = service.getUserState(USERNAME);
+        UserStateDto result = service.getUserState(TOKEN_PREFERRED_USERNAME);
 
         assertEquals(userDto, result);
-        verify(userRepository).findOptionalByUsername(USERNAME);
+        verify(userRepository).findOptionalByUsername(TOKEN_PREFERRED_USERNAME);
         verify(service).getUserState(USER_ID);
     }
 
     @Test
     @DisplayName("getUserState(String) throws when username not found")
     void getUserState_stringNotFound_throws() {
-        when(userRepository.findOptionalByUsername(USERNAME))
+        when(userRepository.findOptionalByUsername(TOKEN_PREFERRED_USERNAME))
             .thenReturn(java.util.Optional.empty());
 
         EntityNotFoundException ex = assertThrows(
             EntityNotFoundException.class,
-            () -> service.getUserState(USERNAME)
+            () -> service.getUserState(TOKEN_PREFERRED_USERNAME)
         );
-        assertEquals("User not found with username: " + USERNAME, ex.getMessage());
+        assertEquals("User not found with username: " + TOKEN_PREFERRED_USERNAME, ex.getMessage());
 
-        verify(userRepository).findOptionalByUsername(USERNAME);
+        verify(userRepository).findOptionalByUsername(TOKEN_PREFERRED_USERNAME);
     }
 
     @Test
@@ -149,8 +156,37 @@ class UserPermissionsServiceTest {
         // Assert
         assertNotNull(response);
         log.info(":testAddUser: response: \n{}", response.toPrettyJson());
-        assertEquals("opal-user", response.getUsername());
-        assertEquals(42, response.getUserId());
+        assertEquals(42L, response.getUserId());
+        assertEquals("opal-user@hmcts.net", response.getUsername());
+        assertEquals("Opal", response.getSubject());
+        assertNull(response.getStatus());
+        assertEquals("John Smith", response.getName());
+        assertEquals(4L, response.getVersion());
+    }
+
+
+    @Test
+    void testUpdateUser() throws Exception {
+        // Arrange
+        String bearerToken = createJwtToken();
+        JWT parsedJwt = tokenValidator.parse(bearerToken);
+
+        when(tokenService.extractClaims(any())).thenReturn(parsedJwt.getJWTClaimsSet());
+        when(userRepository.findById(any())).thenReturn(Optional.of(userEntity));
+        when(userRepository.save(any())).thenReturn(userEntity);
+
+        // Act
+        UserDto response = service.updateUser(1L, bearerToken, service, "\"4\"");
+
+        // Assert
+        assertNotNull(response);
+        log.info(":testUpdateUser: response: \n{}", response.toPrettyJson());
+        assertEquals(42L, response.getUserId());
+        assertEquals("j.s@example.com", response.getUsername());
+        assertEquals("Fines", response.getSubject());
+        assertNull(response.getStatus());
+        assertEquals("john.smith", response.getName());
+        assertEquals(4L, response.getVersion());
     }
 
     @Test

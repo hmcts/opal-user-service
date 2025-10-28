@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -24,6 +27,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+@Slf4j
 @ExtendWith(MockitoExtension.class)
 class UserPermissionsControllerTest {
 
@@ -78,6 +82,29 @@ class UserPermissionsControllerTest {
         UserDto result = response.getBody();
 
         // Assert
+        assertNotNull(result);
+        assertEquals("opal-test@HMCTS.NET", result.getUsername());
+    }
+
+    @Test
+    void testUpdateUser() {
+        // Arrange
+        UserDto returnedDto = new UserDto();
+        returnedDto.setUserId(123L);
+        returnedDto.setUsername("opal-test@HMCTS.NET");
+        returnedDto.setVersion(7L);
+        given(userPermissionsService.updateUser(any(), any(), any(), any())).willReturn(returnedDto);
+
+        // Act
+        ResponseEntity<UserDto> response = controller.updateUser(1L, "bearer token-value", "if-match");
+        log.info(":testUpdateUser: response: {}", response);
+        final HttpHeaders headers = response.getHeaders();
+        final UserDto result = response.getBody();
+
+        // Assert
+        assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+        assertNotNull(headers);
+        assertEquals("\"7\"", headers.getETag());
         assertNotNull(result);
         assertEquals("opal-test@HMCTS.NET", result.getUsername());
     }

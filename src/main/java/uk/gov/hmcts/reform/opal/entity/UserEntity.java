@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.opal.util.Versioned;
 
 
 @Entity
@@ -33,7 +34,7 @@ import lombok.NoArgsConstructor;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "userId")
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class UserEntity {
+public class UserEntity implements Versioned {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_id_seq_generator")

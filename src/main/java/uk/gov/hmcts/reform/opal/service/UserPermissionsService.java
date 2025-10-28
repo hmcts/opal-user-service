@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.opal.service;
 
+import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
+
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserStatus;
+import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
@@ -35,14 +38,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.UserPermissionsService")
-public class UserPermissionsService {
+public class UserPermissionsService implements UserPermissionsProxy {
 
     //The name claim of the authorised user.
     private static final String NAME_CLAIM = "name";
 
     //The claim used to map the authorised user to the user entity.
     private static final String PREFERRED_USERNAME_CLAIM = "preferred_username";
-    private static final String SUB_CLAIM = "sub";
 
     private final UserEntitlementRepository userEntitlementRepository;
     private final UserRepository userRepository;
@@ -51,52 +53,55 @@ public class UserPermissionsService {
     private final AccessTokenService tokenService;
 
     @Transactional(readOnly = true)
-    public UserStateDto getUserState(Long userId, Authentication authentication) {
+    public UserStateDto getUserState(Authentication authentication, UserPermissionsProxy proxy) {
+        Jwt jwt = getJwtToken(authentication);
+        String subject = extractSubject(jwt);
+        UserEntity user = proxy.getUser(subject);
+
+        String username = extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
+        compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:");
+        String name = extractClaim(jwt, NAME_CLAIM);
+        compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:");
+
+        log.debug(":getUserState: found User: {}", username);
+
+        return  proxy.buildUserState(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserStateDto getUserState(Long userId, Authentication authentication, UserPermissionsProxy proxy) {
         log.debug(":getUserState: userId: {}", userId);
-
         if (userId == 0) {
-
-            String username = extractClaimAsString(authentication, PREFERRED_USERNAME_CLAIM);
-            String name = extractClaimAsString(authentication, NAME_CLAIM);
-
-            log.debug(":getUserState: userId is 0, using username: {}", username);
-
-            UserStateDto userStateDto = getUserState(username);
-            userStateDto.setName(name);
-            return userStateDto;
-
+            return proxy.getUserState(authentication, proxy);
         } else {
-            return getUserState(userId);
+            return proxy.buildUserState(proxy.getUser(userId));
         }
     }
 
-    public UserStateDto getUserState(Long userId) {
+    @Transactional(readOnly = true)
+    public UserStateDto buildUserState(UserEntity user) {
 
         // 1. Get all entitlements for the user.
-        Set<UserEntitlementEntity> entitlements = userEntitlementRepository.findAllByUserIdWithFullJoins(userId);
+        Set<UserEntitlementEntity> entitlements = userEntitlementRepository
+            .findAllByUserIdWithFullJoins(user.getUserId());
 
         // 2. If the set is empty, check if the user actually exists.
         if (entitlements.isEmpty()) {
-            UserEntity userEntity = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
             // User exists but has no entitlements, so return the DTO with an empty list.
-            return userStateMapper.toUserStateDto(userEntity, Collections.emptyList());
+            return userStateMapper.toUserStateDto(user, Collections.emptyList());
         }
 
-        // 3. Get the UserEntity from an arbitrary element in the set.
-        UserEntity userEntity = entitlements.iterator().next().getBusinessUnitUser().getUser();
-
-        // 4. Group entitlements by the BusinessUnitUser's ID (a String)
+        // 3. Group entitlements by the BusinessUnitUser's ID (a String)
         Map<String, List<UserEntitlementEntity>> entitlementsByBuuId = entitlements.stream()
             .collect(Collectors.groupingBy(UserEntitlementEntity::getBusinessUnitUserId));
 
-        // 5. Create a map of the BusinessUnitUserEntity objects, keyed by their ID.
+        // 4. Create a map of the BusinessUnitUserEntity objects, keyed by their ID.
         Map<String, BusinessUnitUserEntity> buuMap = entitlements.stream()
             .map(UserEntitlementEntity::getBusinessUnitUser)
             .distinct()
             .collect(Collectors.toMap(BusinessUnitUserEntity::getBusinessUnitUserId, Function.identity()));
 
-        // 6. Build the list of BusinessUnitUserDto objects.
+        // 5. Build the list of BusinessUnitUserDto objects.
         List<BusinessUnitUserDto> buuDtos = buuMap.values().stream()
             .map(buu -> {
                 List<UserEntitlementEntity> buuEntitlements = entitlementsByBuuId.get(buu.getBusinessUnitUserId());
@@ -104,24 +109,38 @@ public class UserPermissionsService {
             })
             .toList();
 
-        // 7. Pass the user entity and the BUU list to the mapper.
-        return userStateMapper.toUserStateDto(userEntity, buuDtos);
+        // 6. Pass the user entity and the BUU list to the mapper.
+        return userStateMapper.toUserStateDto(user, buuDtos);
     }
 
-    public UserStateDto getUserState(String username) {
+    private void compare(String fromToken, String fromDb, Long userId, String reason) {
+        if (!fromToken.equals(fromDb)) {
+            throw new ResourceConflictException("User", userId, reason + " token: " + fromToken + ", db: " + fromDb);
+        }
+    }
 
-        UserEntity userEntity = userRepository.findOptionalByUsername(username)
-            .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
+    @Transactional(readOnly = true)
+    public UserEntity getUser(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+    }
 
-        return this.getUserState(userEntity.getUserId());
-
+    @Transactional(readOnly = true)
+    public UserEntity getUser(String subject) {
+        return userRepository.findByTokenSubject(subject)
+            .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
     }
 
     @Transactional
-    public UserDto createUser(String authHeaderValue) {
+    public UserDto addUser(String authHeaderValue) {
         log.debug(":createUser:");
 
         JWTClaimsSet claimSet = tokenService.extractClaims(authHeaderValue);
+
+        userRepository.findByTokenSubject(claimSet.getSubject()).ifPresent(u -> {
+            throw new ResourceConflictException(
+                "User", u.getUserId(), "User with subject already exists: " + claimSet.getSubject());
+        });
 
         UserEntity userEntity = userRepository
             .saveAndFlush(UserEntity.builder()
@@ -136,20 +155,76 @@ public class UserPermissionsService {
         return userMapper.toUserDto(userEntity);
     }
 
-    public String extractClaimAsString(Authentication authentication, String claimName) {
-        log.debug(":extractClaimAsString: claim name: {}", claimName);
-        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
-            Jwt jwt = jwtAuth.getToken();
-            String claimValue = jwt.getClaimAsString(claimName);
-            if (claimValue != null) {
-                return claimValue;
-            } else {
-                log.debug(":extractClaimAsString: claim not found: {}", claimName);
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Claim not found: " + claimName);
-            }
+    @Transactional
+    public UserDto updateUser(Long userId, String authHeaderValue, UserPermissionsProxy proxy, String ifMatch) {
+        log.debug(":updatedUser: userId: {}", userId);
+
+        if (userId == 0) {
+            return proxy.updateUser(authHeaderValue, proxy, ifMatch);
         } else {
-            log.warn(":extractClaimAsString: Authentication not of type Jwt: " + authentication.getClass().getName());
+
+            JWTClaimsSet claimSet = tokenService.extractClaims(authHeaderValue);
+
+            UserEntity existingUser = proxy.getUser(userId);
+            verifyIfMatch(existingUser, ifMatch, userId, "updateUser");
+
+            existingUser.setUsername(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString());
+            existingUser.setTokenSubject(claimSet.getSubject()); // TODO Tech Debt - subject should be unique in DB.
+            existingUser.setTokenName(claimSet.getClaim(NAME_CLAIM).toString());
+
+            UserEntity updatedUser = userRepository.saveAndFlush(existingUser);
+
+            log.debug(":updatedUser: name: {}, user id: {}", updatedUser.getTokenName(), updatedUser.getUserId());
+            return userMapper.toUserDto(updatedUser);
+        }
+    }
+
+    @Transactional
+    public UserDto updateUser(String authHeaderValue, UserPermissionsProxy proxy, String ifMatch) {
+        log.debug(":updatedUser:");
+
+        JWTClaimsSet claimSet = tokenService.extractClaims(authHeaderValue);
+        String subject = claimSet.getSubject();
+
+        UserEntity existingUser = proxy.getUser(subject);
+        verifyIfMatch(existingUser, ifMatch, existingUser.getUserId(), "updateUser");
+
+        existingUser.setUsername(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString());
+        existingUser.setTokenName(claimSet.getClaim(NAME_CLAIM).toString());
+
+        UserEntity updatedUser = userRepository.saveAndFlush(existingUser);
+
+        log.debug(":updatedUser: name: {}, user id: {}", updatedUser.getTokenName(), updatedUser.getUserId());
+        return userMapper.toUserDto(updatedUser);
+    }
+
+    public Jwt getJwtToken(Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            return jwtAuth.getToken();
+        } else {
+            log.warn(":getJwtToken: Authentication not of type Jwt: " + authentication.getClass().getName());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication Token not of type Jwt.");
         }
     }
+
+    public String extractClaim(final Jwt jwt, String claimName) {
+        String claimValue = jwt.getClaimAsString(claimName);
+        if (claimValue != null) {
+            return claimValue;
+        } else {
+            log.debug(":ClaimAction.extract: claim not found: {}", claimName);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Claim not found: " + claimName);
+        }
+    }
+
+    public String extractSubject(final Jwt jwt) {
+        String subject = jwt.getSubject();
+        if (subject != null) {
+            return subject;
+        } else {
+            log.debug(":SubjectAction.extract: subject not found.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Subject not found.");
+        }
+    }
+
 }

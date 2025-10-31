@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.opal.service;
 
+import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
+
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +37,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.UserPermissionsService")
-public class UserPermissionsService {
+public class UserPermissionsService implements UserPermissionsProxy {
 
     //The name claim of the authorised user.
     private static final String NAME_CLAIM = "name";
@@ -117,6 +119,12 @@ public class UserPermissionsService {
 
     }
 
+    @Transactional(readOnly = true)
+    public UserEntity getUser(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+    }
+
     @Transactional
     public UserDto createUser(String authHeaderValue) {
         log.debug(":createUser:");
@@ -134,6 +142,25 @@ public class UserPermissionsService {
 
         log.debug(":createUser: name: {}, new id: {}", userEntity.getTokenName(), userEntity.getUserId());
         return userMapper.toUserDto(userEntity);
+    }
+
+    @Transactional
+    public UserDto updateUser(Long userId, String authHeaderValue, UserPermissionsProxy proxy, String ifMatch) {
+        log.debug(":updatedUser:");
+
+        JWTClaimsSet claimSet = tokenService.extractClaims(authHeaderValue);
+
+        UserEntity existingUser = proxy.getUser(userId);
+        verifyIfMatch(existingUser, ifMatch, userId, "updateUser");
+
+        existingUser.setUsername(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString());
+        existingUser.setTokenSubject(claimSet.getSubject());
+        existingUser.setTokenName(claimSet.getClaim(NAME_CLAIM).toString());
+
+        UserEntity updatedUser = userRepository.save(existingUser);
+
+        log.debug(":updatedUser: name: {}, new id: {}", updatedUser.getTokenName(), updatedUser.getUserId());
+        return userMapper.toUserDto(updatedUser);
     }
 
     public String extractClaimAsString(Authentication authentication, String claimName) {

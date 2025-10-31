@@ -116,6 +116,9 @@ logging:
   level:
     opal: INFO
     org:
+      springframework:
+        security: WARN
+        security.oauth2: WARN
       hibernate:
         SQL: INFO
         type:

@@ -2,8 +2,10 @@
 INSERT INTO users (user_id, token_preferred_username, password, description)
 VALUES (500000000, 'opal-test@HMCTS.NET', 'password', 'User with 7 business units');
 
-INSERT INTO users (user_id, token_preferred_username, password, description)
-VALUES (500000001, 'opal-test-2@HMCTS.NET', NULL, 'User with no business units');
+INSERT INTO users (user_id, token_preferred_username, token_subject, status, description, token_name, version_number)
+VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', NULL, 'User with no business units', NULL, 0),
+       (500000002, 'update-user@HMCTS.NET', 'BmMfmuTT9pEdG', 'CREATED', 'User for testing \`update\`', NULL, 0),
+       (500000003, 'test-user@HMCTS.NET', 'jjqwGAERGW43', 'active', 'Test User for testing', 'Pablo', 2);
 
 -- Insert business units that are referenced in the business_unit_users script
 INSERT INTO business_units (business_unit_id, business_unit_name, business_unit_code, business_unit_type)

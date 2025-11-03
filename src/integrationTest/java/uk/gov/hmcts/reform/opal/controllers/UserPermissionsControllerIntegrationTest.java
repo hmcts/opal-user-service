@@ -104,6 +104,26 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @DisplayName("Should return 200")
+    void getUserState_existingUser() throws Exception {
+        long userIdWithoutPermissions = 500000003L;
+
+        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithoutPermissions + "/state"));
+
+        String body = actions.andReturn().getResponse().getContentAsString();
+        log.info(":getUserState_existingUser: Response body:\n{}", ToJsonString.toPrettyJson(body));
+
+        actions.andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$['user_id']").value(500000003))
+            .andExpect(jsonPath("$['username']").value("test-user@HMCTS.NET"))
+            .andExpect(jsonPath("$['name']").value("Pablo"))
+            .andExpect(jsonPath("$['status']").value("active"))
+            .andExpect(jsonPath("$['version']").value(2))
+            .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
+    }
+
+    @Test
     @DisplayName("Should return 404 Not Found for a user that does not exist [PO-857]")
     void getUserState_whenUserDoesNotExist_returns404() throws Exception {
         long nonExistentUserId = 999999999L;

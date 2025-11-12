@@ -34,11 +34,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -72,7 +73,9 @@ class UserPermissionsServiceTest {
     private UserPermissionsService service;
 
     private static final long USER_ID = 42L;
-    private static final String USERNAME = "opal-user";
+    private static final String TOKEN_PREFERRED_USERNAME = "opal-user@hmcts.net";
+    private static final String TOKEN_NAME = "John Smith";
+    private static final String TOKEN_SUBJECT = "hcv732JFVWhf3Fd";
     private UserEntity userEntity;
     private UserStateDto userDto;
 
@@ -80,58 +83,60 @@ class UserPermissionsServiceTest {
     void setUp() {
         userEntity = new UserEntity();
         userEntity.setUserId(USER_ID);
-        userEntity.setUsername(USERNAME);
+        userEntity.setUsername(TOKEN_PREFERRED_USERNAME);
+        userEntity.setTokenName(TOKEN_NAME);
+        userEntity.setTokenSubject(TOKEN_SUBJECT);
+        userEntity.setVersion(4L);
 
         userDto = new UserStateDto();
         userDto.setUserId(USER_ID);
-        userDto.setUsername(USERNAME);
+        userDto.setUsername(TOKEN_PREFERRED_USERNAME);
     }
 
     @Test
     @DisplayName("getUserState(Long) throws when no entitlements and user missing")
-    void getUserState_longNoEntitlements_throws() {
-        when(userEntitlementRepository.findAllByUserIdWithFullJoins(USER_ID))
-            .thenReturn(Collections.emptySet());
+    void buildUserState_longNoEntitlements_throws() {
         when(userRepository.findById(USER_ID))
             .thenReturn(java.util.Optional.empty());
 
         EntityNotFoundException ex = assertThrows(
             EntityNotFoundException.class,
-            () -> service.getUserState(USER_ID)
+            () -> service.getUserState(USER_ID, null, service)
         );
-        assertEquals("User not found with ID: " + USER_ID, ex.getMessage());
+        assertEquals("User not found with id: " + USER_ID, ex.getMessage());
 
-        verify(userEntitlementRepository).findAllByUserIdWithFullJoins(USER_ID);
         verify(userRepository).findById(USER_ID);
     }
 
     @Test
     @DisplayName("getUserState(String) delegates to getUserState(Long) after lookup")
-    void getUserState_stringDelegatesToLong() {
-        when(userRepository.findOptionalByUsername(USERNAME))
-            .thenReturn(java.util.Optional.of(userEntity));
-        doReturn(userDto).when(service).getUserState(USER_ID);
+    void getUserState_jwtAuthPrinciple() {
+        // Arrange
+        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
+        when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.of(userEntity));
+        doReturn(userDto).when(service).buildUserState(any());
 
-        UserStateDto result = service.getUserState(USERNAME);
+        UserStateDto result = service.getUserState(jwtAuthToken, service);
 
         assertEquals(userDto, result);
-        verify(userRepository).findOptionalByUsername(USERNAME);
-        verify(service).getUserState(USER_ID);
+        verify(userRepository).findByTokenSubject(any());
+        verify(service).buildUserState(any());
     }
 
     @Test
     @DisplayName("getUserState(String) throws when username not found")
-    void getUserState_stringNotFound_throws() {
-        when(userRepository.findOptionalByUsername(USERNAME))
-            .thenReturn(java.util.Optional.empty());
+    void getUserState_jwtAuthPrinciple_throws() {
+        // Arrange
+        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
+        when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.empty());
 
         EntityNotFoundException ex = assertThrows(
             EntityNotFoundException.class,
-            () -> service.getUserState(USERNAME)
+            () -> service.getUserState(jwtAuthToken, service)
         );
-        assertEquals("User not found with username: " + USERNAME, ex.getMessage());
+        assertEquals("User not found with subject: lkkljnwb7D1DFs", ex.getMessage());
 
-        verify(userRepository).findOptionalByUsername(USERNAME);
+        verify(userRepository).findByTokenSubject(any());
     }
 
     @Test
@@ -144,13 +149,65 @@ class UserPermissionsServiceTest {
         when(userRepository.saveAndFlush(any())).thenReturn(userEntity);
 
         // Act
-        UserDto response = service.createUser(bearerToken);
+        UserDto response = service.addUser(bearerToken);
 
         // Assert
         assertNotNull(response);
         log.info(":testAddUser: response: \n{}", response.toPrettyJson());
-        assertEquals("opal-user", response.getUsername());
-        assertEquals(42, response.getUserId());
+        assertEquals(42L, response.getUserId());
+        assertEquals("opal-user@hmcts.net", response.getUsername());
+        assertEquals("hcv732JFVWhf3Fd", response.getSubject());
+        assertNull(response.getStatus());
+        assertEquals("John Smith", response.getName());
+        assertEquals(4L, response.getVersion());
+    }
+
+    @Test
+    void testUpdateUser() throws Exception {
+        // Arrange
+        String bearerToken = createJwtToken();
+        JWT parsedJwt = tokenValidator.parse(bearerToken);
+
+        when(tokenService.extractClaims(any())).thenReturn(parsedJwt.getJWTClaimsSet());
+        when(userRepository.findById(any())).thenReturn(Optional.of(userEntity));
+        when(userRepository.saveAndFlush(any())).thenReturn(userEntity);
+
+        // Act
+        UserDto response = service.updateUser(1L, bearerToken, service, "\"4\"");
+
+        // Assert
+        assertNotNull(response);
+        log.info(":testUpdateUser: response: \n{}", response.toPrettyJson());
+        assertEquals(42L, response.getUserId());
+        assertEquals("j.s@example.com", response.getUsername());
+        assertEquals("hcv732JFVWhf3Fd", response.getSubject());
+        assertNull(response.getStatus());
+        assertEquals("john.smith", response.getName());
+        assertEquals(4L, response.getVersion());
+    }
+
+    @Test
+    void testUpdateUser_2() throws Exception {
+        // Arrange
+        String bearerToken = createJwtToken();
+        JWT parsedJwt = tokenValidator.parse(bearerToken);
+
+        when(tokenService.extractClaims(any())).thenReturn(parsedJwt.getJWTClaimsSet());
+        when(userRepository.findByTokenSubject(any())).thenReturn(Optional.of(userEntity));
+        when(userRepository.saveAndFlush(any())).thenReturn(userEntity);
+
+        // Act
+        UserDto response = service.updateUser(bearerToken, service, "\"4\"");
+
+        // Assert
+        assertNotNull(response);
+        log.info(":testUpdateUser: response: \n{}", response.toPrettyJson());
+        assertEquals(42L, response.getUserId());
+        assertEquals("j.s@example.com", response.getUsername());
+        assertEquals("hcv732JFVWhf3Fd", response.getSubject());
+        assertNull(response.getStatus());
+        assertEquals("john.smith", response.getName());
+        assertEquals(4L, response.getVersion());
     }
 
     @Test
@@ -159,25 +216,28 @@ class UserPermissionsServiceTest {
         JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
 
         // Act & Assert
-        String claim = service.extractClaimAsString(jwtAuthToken, "preferred_username");
-        assertEquals("j.s@example.com", claim);
+        String claim = service.extractClaim(jwtAuthToken.getToken(), "preferred_username");
+        assertEquals("opal-user@hmcts.net", claim);
 
-        claim = service.extractClaimAsString(jwtAuthToken, "name");
-        assertEquals("john.smith", claim);
+        claim = service.extractClaim(jwtAuthToken.getToken(), "name");
+        assertEquals("John Smith", claim);
 
-        claim = service.extractClaimAsString(jwtAuthToken, "sub");
-        assertEquals("Fines", claim);
+        claim = service.extractClaim(jwtAuthToken.getToken(), "sub");
+        assertEquals("lkkljnwb7D1DFs", claim);
+
+        claim = service.extractSubject(jwtAuthToken.getToken());
+        assertEquals("lkkljnwb7D1DFs", claim);
     }
 
     @Test
     void testExtractClaimAsString_fail_noClaimName() {
         // Arrange
-        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
+        Jwt jwt = createJwtAuthenticatedToken().getToken();
 
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.extractClaimAsString(jwtAuthToken, "")
+            () -> service.extractClaim(jwt, "")
         );
         assertEquals("401 UNAUTHORIZED \"Claim not found: \"", ex.getMessage());
     }
@@ -185,25 +245,24 @@ class UserPermissionsServiceTest {
     @Test
     void testExtractClaimAsString_fail_missingClaim() {
         // Arrange
-        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
-
+        Jwt jwt = createJwtAuthenticatedToken().getToken();
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.extractClaimAsString(jwtAuthToken, "not_a_claim")
+            () -> service.extractClaim(jwt, "not_a_claim")
         );
         assertEquals("401 UNAUTHORIZED \"Claim not found: not_a_claim\"", ex.getMessage());
     }
 
     @Test
-    void testExtractClaimAsString_fail_incorrectAuthenticationToken() {
+    void testgetJwtToken_fail_incorrectAuthenticationToken() {
         // Arrange
         TestingAuthenticationToken testToken = new TestingAuthenticationToken(null, null);
 
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.extractClaimAsString(testToken, "preferred_username")
+            () -> service.getJwtToken(testToken)
         );
         assertEquals("401 UNAUTHORIZED \"Authentication Token not of type Jwt.\"", ex.getMessage());
     }
@@ -212,7 +271,7 @@ class UserPermissionsServiceTest {
     private String createJwtToken() throws NoSuchAlgorithmException {
         JWTCreator.Builder builder = com.auth0.jwt.JWT.create()
             .withHeader(Map.of("typ", "JWT", "alg", "RS256"))
-            .withSubject("Fines")
+            .withSubject("hcv732JFVWhf3Fd")
             .withIssuer("Opal")
             .withExpiresAt(Instant.now().plusSeconds(3600))
             .withIssuedAt(Instant.now().minusSeconds(3600))
@@ -233,9 +292,9 @@ class UserPermissionsServiceTest {
     private JwtAuthenticationToken createJwtAuthenticatedToken() {
         Jwt jwt = Jwt.withTokenValue("mock-token")
             .header("alg", "RS256")
-            .claim("sub", "Fines")
-            .claim("preferred_username", "j.s@example.com")
-            .claim("name", "john.smith")
+            .claim("sub", "lkkljnwb7D1DFs")
+            .claim("preferred_username", "opal-user@hmcts.net")
+            .claim("name", "John Smith")
             .issuedAt(Instant.now().minusSeconds(3600))
             .expiresAt(Instant.now().plusSeconds(3600))
             .build();

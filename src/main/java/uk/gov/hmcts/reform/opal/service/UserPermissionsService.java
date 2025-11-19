@@ -26,6 +26,7 @@ import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
+import uk.gov.hmcts.reform.opal.util.Versioned;
 
 import java.util.Collections;
 import java.util.List;
@@ -59,9 +60,9 @@ public class UserPermissionsService implements UserPermissionsProxy {
         UserEntity user = proxy.getUser(subject);
 
         String username = extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
-        compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:");
+        compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
         String name = extractClaim(jwt, NAME_CLAIM);
-        compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:");
+        compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
 
         log.debug(":getUserState: found User: {}", username);
 
@@ -113,9 +114,10 @@ public class UserPermissionsService implements UserPermissionsProxy {
         return userStateMapper.toUserStateDto(user, buuDtos);
     }
 
-    private void compare(String fromToken, String fromDb, Long userId, String reason) {
+    private void compare(String fromToken, String fromDb, Long userId, String reason, Versioned versioned) {
         if (!fromToken.equals(fromDb)) {
-            throw new ResourceConflictException("User", userId, reason + " token: " + fromToken + ", db: " + fromDb);
+            throw new ResourceConflictException("User", userId,
+                                                reason + " token: " + fromToken + ", db: " + fromDb, versioned);
         }
     }
 
@@ -139,7 +141,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
 
         userRepository.findByTokenSubject(claimSet.getSubject()).ifPresent(u -> {
             throw new ResourceConflictException(
-                "User", u.getUserId(), "User with subject already exists: " + claimSet.getSubject());
+                "User", u.getUserId(), "User with subject already exists: " + claimSet.getSubject(), u);
         });
 
         UserEntity userEntity = userRepository

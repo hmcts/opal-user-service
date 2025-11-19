@@ -11,5 +11,7 @@
   <!--End of false positives section -->
   <suppress>
     <cve>CVE-2024-1597</cve>
+    <!-- We do not use the mail api-->
+    <cve>CVE-2025-7962</cve>
   </suppress>
 </suppressions>

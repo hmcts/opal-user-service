@@ -41,6 +41,7 @@ import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -445,7 +446,8 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void testHandleResourceConflictException() {
-        ResourceConflictException e = new ResourceConflictException("DraftAccount", "123", "BusinessUnits mismatch");
+        ResourceConflictException e = new ResourceConflictException(
+            "DraftAccount", "123", "BusinessUnits mismatch", null);
         ResponseEntity<ProblemDetail> response = globalExceptionHandler.handleResourceConflictException(e);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
@@ -462,6 +464,20 @@ class GlobalExceptionHandlerTest {
 
         assertTrue(response.getHeaders().getContentType().toString()
                        .contains(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
+        assertNull(response.getHeaders().getETag());
+    }
+
+    @Test
+    void handleResourceConflict_withVersioned() {
+        ResourceConflictException ex = new ResourceConflictException("DraftAccount", "123", "BU mismatch", () -> 666L);
+        ResponseEntity<ProblemDetail> r = globalExceptionHandler.handleResourceConflictException(ex);
+
+        assertEquals(HttpStatus.CONFLICT, r.getStatusCode());
+        ProblemDetail pd = r.getBody();
+        assertEquals("DraftAccount", pd.getProperties().get("resourceType"));
+        assertEquals("123", pd.getProperties().get("resourceId"));
+        assertEquals("BU mismatch", pd.getProperties().get("conflictReason"));
+        assertEquals("\"666\"", r.getHeaders().getETag());
     }
 
     public static void sampleMethod(Integer testParam) {

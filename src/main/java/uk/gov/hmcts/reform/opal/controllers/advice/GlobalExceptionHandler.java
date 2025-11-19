@@ -1,6 +1,8 @@
 package uk.gov.hmcts.reform.opal.controllers.advice;
 
 
+import static uk.gov.hmcts.reform.opal.util.VersionUtils.createETag;
+
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceException;
 import jakarta.persistence.QueryTimeoutException;
@@ -17,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
@@ -29,6 +32,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import uk.gov.hmcts.reform.opal.exception.OpalApiException;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
+import uk.gov.hmcts.reform.opal.util.Versioned;
 
 import java.net.ConnectException;
 import java.net.URI;
@@ -361,7 +365,7 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("resourceId", e.getResourceId());
         problemDetail.setProperty("conflictReason", e.getConflictReason());
 
-        return responseWithProblemDetail(HttpStatus.CONFLICT, problemDetail);
+        return responseWithProblemDetail(HttpStatus.CONFLICT, problemDetail, e.getVersioned());
     }
 
     private ProblemDetail createProblemDetail(HttpStatus status, String title, String detail,
@@ -380,9 +384,13 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ProblemDetail> responseWithProblemDetail(HttpStatus status, ProblemDetail problemDetail) {
-        return ResponseEntity.status(status)
-            .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-            .body(problemDetail);
+        return responseWithProblemDetail(status, problemDetail, null);
     }
 
+    private ResponseEntity<ProblemDetail> responseWithProblemDetail(HttpStatus status, ProblemDetail problemDetail,
+                                                                    Versioned versioned) {
+        BodyBuilder builder = ResponseEntity.status(status).contentType(MediaType.APPLICATION_PROBLEM_JSON);
+        Optional.ofNullable(versioned).ifPresent(v -> builder.eTag(createETag(v)));
+        return builder.body(problemDetail);
+    }
 }

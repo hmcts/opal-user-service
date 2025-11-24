@@ -215,6 +215,7 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
                  toPrettyJson(body));
 
         actions.andExpect(status().isConflict())
+            .andExpect(header().string("ETag", "\"2\""))
             .andExpect(jsonPath("$['conflictReason']").value(
                 "Preferred Username mismatch: token: different@HMCTS.NET, db: test-user@HMCTS.NET"));
     }
@@ -231,6 +232,7 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
                  toPrettyJson(body));
 
         actions.andExpect(status().isConflict())
+            .andExpect(header().string("ETag", "\"2\""))
             .andExpect(jsonPath("$['conflictReason']").value("Name mismatch: token: Peter, db: Pablo"));
     }
 

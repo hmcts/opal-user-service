@@ -1,3 +1,5 @@
+import org.flywaydb.gradle.task.FlywayMigrateTask
+
 buildscript {
   dependencies {
     classpath("org.flywaydb:flyway-database-postgresql:11.19.0")
@@ -65,7 +67,7 @@ configurations {
 }
 
 
-configurations.all {
+configurations.configureEach {
   resolutionStrategy {
     force "io.cucumber:cucumber-core:${cucumberVersion}"
     force "io.cucumber:cucumber-java:${cucumberVersion}"
@@ -74,7 +76,7 @@ configurations.all {
 }
 
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
   options.compilerArgs << "-Xlint:unchecked" << "-Werror"
 }
 
@@ -201,8 +203,12 @@ static String[] jacocoExclusionArray(ArrayList<String> exclusions) {
   return lst.toArray()
 }
 
-project.tasks['sonarqube'].dependsOn jacocoTestReport
-project.tasks['check'].dependsOn integration
+tasks.named("sonarqube") {
+  dependsOn(tasks.named("jacocoTestReport"))
+}
+tasks.named("check") {
+  dependsOn(tasks.named("integration"))
+}
 
 jacocoTestReport.dependsOn check
 jacocoTestCoverageVerification.dependsOn jacocoTestReport
@@ -387,7 +393,7 @@ flyway {
   baselineVersion = '000'
 }
 
-tasks.register('migratePostgresDatabase', org.flywaydb.gradle.task.FlywayMigrateTask) {
+tasks.register('migratePostgresDatabase', FlywayMigrateTask) {
   baselineOnMigrate = true
   if (project.hasProperty("dburl")) {
     url = "jdbc:postgresql://${dburl}"

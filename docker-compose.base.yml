@@ -23,3 +23,6 @@ services:
       - "${LOGGING_PORT:-4555}:4555"
     networks:
       - default
+    depends_on:
+      - opal-db
+      - redis

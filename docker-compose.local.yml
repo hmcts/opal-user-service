@@ -1,6 +1,3 @@
-include:
-  - path: ../opal-fines-service/docker-compose.master.yml
-  - path: ../opal-logging-service/docker-compose.master.yml
 services:
   opal-user-service:
     image: opal-user-service:local

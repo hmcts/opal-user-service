@@ -3,6 +3,8 @@ include:
 
 services:
   opal-user-service:
+    env_file:
+      - ../opal-shared-infrastructure/docker-files/.env.shared
     environment:
       # these environment variables are used by java-logging library
       - ROOT_APPENDER

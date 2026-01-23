@@ -1,0 +1,28 @@
+include:
+  - path: ../opal-shared-infrastructure/docker-compose.yml
+
+services:
+  opal-user-service:
+    environment:
+      # these environment variables are used by java-logging library
+      - ROOT_APPENDER
+      - JSON_CONSOLE_PRETTY_PRINT
+      - ROOT_LOGGING_LEVEL
+      - REFORM_SERVICE_TYPE
+      - REFORM_SERVICE_NAME
+      - REFORM_TEAM
+      - REFORM_ENVIRONMENT
+      - LOGBACK_DATE_FORMAT
+      - LOGBACK_REQUIRE_THREAD
+      - LOGBACK_REQUIRE_ALERT_LEVEL=false
+      - LOGBACK_REQUIRE_ERROR_CODE=false
+      - OPAL_USER_DB_HOST=opal-db
+      - OPAL_USER_DB_USERNAME=opal-db-user
+      - OPAL_USER_DB_PASSWORD=opal-db-password
+    ports:
+      - "${LOGGING_PORT:-4555}:4555"
+    networks:
+      - default
+    depends_on:
+      - opal-db
+      - redis

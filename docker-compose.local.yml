@@ -1,0 +1,9 @@
+services:
+  opal-user-service:
+    image: opal-user-service:local
+    build:
+      context: .
+      args:
+        - http_proxy
+        - https_proxy
+        - no_proxy

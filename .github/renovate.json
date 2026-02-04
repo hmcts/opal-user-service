@@ -25,10 +25,6 @@
       "enabled": false
     },
     {
-      "matchManagers": ["gradle-wrapper"],
-      "matchUpdateTypes": ["minor", "patch"]
-    },
-    {
       "matchManagers": ["gradle"],
       "matchPackageNames": ["org.hibernate.orm:hibernate-jpamodelgen"],
       "matchUpdateTypes": ["minor", "patch"]

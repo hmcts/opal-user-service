@@ -48,4 +48,4 @@ docker compose -p opal-user-master \
   up --build -d
 ```
 ## Alternatively
-install and used the scripts described in [the Scripts readme](scripts/scripts-readme.md) to start the services.
+install and use the scripts described in [the Scripts readme](../opal-fines-service/scripts/scripts-readme.md) in the `opal-fines-service` to start the services.

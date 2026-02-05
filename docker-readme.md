@@ -6,7 +6,7 @@ Start a development environment for Opal Services.
 
 - Docker and Docker Compose installed on your machine.
 - Clone the following repositories to the same parent directory:
-    - [opal-fines-service](https://github.com/hmcts/opal-fines-service) 
+    - [opal-fines-service](https://github.com/hmcts/opal-fines-service)
     - [opal-user-service](https://github.com/hmcts/opal-user-service) (this repository)
     - [opal-logging-service](https://github.com/hmcts/opal-logging-service)
     - [opal-shared-infrastructure](https://github.com/hmcts/opal-shared-infrastructure)
@@ -47,3 +47,5 @@ docker compose -p opal-user-master \
   -f ../opal-logging-service/docker-compose.master.yml \
   up --build -d
 ```
+## Alternatively
+install and used the scripts described in [the Scripts readme](scripts/scripts-readme.md) to start the services.

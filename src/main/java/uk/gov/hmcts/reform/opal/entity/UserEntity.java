@@ -61,7 +61,7 @@ public class UserEntity implements Versioned {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
-    @Column(name = "token_subject", length = 100)
+    @Column(name = "token_subject", length = 100, unique = true)
     private String tokenSubject;
 
     @Column(name = "token_name", length = 100)

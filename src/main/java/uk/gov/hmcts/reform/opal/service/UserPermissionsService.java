@@ -139,11 +139,6 @@ public class UserPermissionsService implements UserPermissionsProxy {
 
         JWTClaimsSet claimSet = tokenService.extractClaims(authHeaderValue);
 
-        userRepository.findByTokenSubject(claimSet.getSubject()).ifPresent(u -> {
-            throw new ResourceConflictException(
-                "User", u.getUserId(), "User with subject already exists: " + claimSet.getSubject(), u);
-        });
-
         UserEntity userEntity = userRepository
             .saveAndFlush(UserEntity.builder()
                               .username(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString())

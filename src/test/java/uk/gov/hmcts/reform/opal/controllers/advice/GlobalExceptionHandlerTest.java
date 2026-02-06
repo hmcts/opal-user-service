@@ -5,6 +5,7 @@ import jakarta.persistence.PersistenceException;
 import jakarta.persistence.QueryTimeoutException;
 import org.hibernate.LazyInitializationException;
 import org.hibernate.PropertyValueException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.postgresql.util.PSQLException;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.MethodParameter;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpInputMessage;
@@ -39,6 +41,7 @@ import java.net.ConnectException;
 import java.net.URI;
 import java.util.NoSuchElementException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -478,6 +481,38 @@ class GlobalExceptionHandlerTest {
         assertEquals("123", pd.getProperties().get("resourceId"));
         assertEquals("BU mismatch", pd.getProperties().get("conflictReason"));
         assertEquals("\"666\"", r.getHeaders().getETag());
+    }
+
+    @Test
+    void handleDataIntegrityViolationException() {
+        ConstraintViolationException cve = new ConstraintViolationException("message", null,
+            ConstraintViolationException.ConstraintKind.OTHER, "constraint-name");
+        DataIntegrityViolationException ex = new DataIntegrityViolationException("msg", cve);
+
+        ResponseEntity<ProblemDetail> r = globalExceptionHandler.handleDataIntegrityViolationException(ex);
+
+        assertEquals(HttpStatus.CONFLICT, r.getStatusCode());
+        ProblemDetail pd = r.getBody();
+        assertNotNull(pd);
+        assertThat(pd.getTitle()).isEqualTo("Conflict");
+        assertThat(pd.getDetail()).isEqualTo("Data integrity violation with the requested resource");
+        assertThat(pd.getType().toString()).isEqualTo("https://hmcts.gov.uk/problems/resource-conflict");
+        assertThat(pd.getProperties().get("constraintViolated")).isEqualTo("constraint-name");
+    }
+
+    @Test
+    void handleDataIntegrityViolationException_withoutNestedConstraintViolationException() {
+        DataIntegrityViolationException ex = new DataIntegrityViolationException("msg", new Exception());
+
+        ResponseEntity<ProblemDetail> r = globalExceptionHandler.handleDataIntegrityViolationException(ex);
+
+        assertEquals(HttpStatus.CONFLICT, r.getStatusCode());
+        ProblemDetail pd = r.getBody();
+        assertNotNull(pd);
+        assertThat(pd.getTitle()).isEqualTo("Conflict");
+        assertThat(pd.getDetail()).isEqualTo("Data integrity violation with the requested resource");
+        assertThat(pd.getType().toString()).isEqualTo("https://hmcts.gov.uk/problems/resource-conflict");
+        assertThat(pd.getProperties()).isNull();
     }
 
     public static void sampleMethod(Integer testParam) {

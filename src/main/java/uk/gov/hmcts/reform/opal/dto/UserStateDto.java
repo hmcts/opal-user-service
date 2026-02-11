@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.opal.util.Versioned;
@@ -9,6 +10,7 @@ import uk.gov.hmcts.reform.opal.util.Versioned;
 import java.util.List;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserStateDto implements Versioned, ToJsonString {

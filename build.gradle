@@ -280,7 +280,7 @@ ext['tomcat.version'] = '10.1.43'
 
 dependencies {
 
-  implementation 'uk.gov.hmcts:opal-common-lib:0.1.9'
+  implementation 'uk.gov.hmcts:opal-common-lib:0.2.3'
 
   implementation 'org.springframework.boot:spring-boot-starter-web'
   implementation 'org.springframework.boot:spring-boot-starter-actuator'

@@ -27,7 +27,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-@Slf4j
+@Slf4j(topic = "opal.UserPermissionsControllerTest")
 @ExtendWith(MockitoExtension.class)
 class UserPermissionsControllerTest {
 
@@ -43,31 +43,61 @@ class UserPermissionsControllerTest {
     }
 
     @Test
-    @DisplayName("getUserState with userId=0 uses principal name with preferred_username claim")
-    void getUserState_whenUserIdZero_invokesServiceWithPreferredUsernameClaim() {
+    @DisplayName("Should get UserState when userId=0 uses principal name with preferred_username claim")
+    void testGetUserState_userIdZero() {
         // Arrange
         String expectedUsername = "opal-test@HMCTS.NET";
-        UserStateDto returnedDto = new UserStateDto();
-        returnedDto.setUserId(123L);
-        returnedDto.setUsername(expectedUsername);
 
-        given(userPermissionsService.getUserState(anyLong(), any(), any())).willReturn(returnedDto);
+        UserStateDto returnedDto = UserStateDto.builder()
+            .userId(123L)
+            .username(expectedUsername)
+            .build();
 
-        Map<String, Object> claims = Map.of(
-            "preferred_username", expectedUsername,
-            "name","Test User",
-            "sub", "ohE52BNHaghsWf34");
-        Jwt jwt = new Jwt("token", null, null, Map.of("alg", "none"), claims);
-        Authentication auth = new JwtAuthenticationToken(jwt);
+        given(userPermissionsService.getUserState(anyLong(), any(), any(), any())).willReturn(returnedDto);
+
+        Authentication auth = createAuthentication(expectedUsername);
 
         // Act
-        ResponseEntity<UserStateDto> response = controller.getUserState(0L, auth);
+        ResponseEntity<UserStateDto> response = controller.getUserState(0L, auth, null);
         UserStateDto result = response.getBody();
 
         // Assert
         assertNotNull(result);
         assertEquals(expectedUsername, result.getUsername());
-        verify(userPermissionsService).getUserState(anyLong(), any(), any());
+        verify(userPermissionsService).getUserState(anyLong(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Should get UserState when userId=0 uses principal name with preferred_username claim")
+    void testGetUserState_noUserId() {
+        // Arrange
+        String expectedUsername = "opal-test@HMCTS.NET";
+
+        UserStateDto returnedDto = UserStateDto.builder()
+            .userId(123L)
+            .username(expectedUsername)
+            .build();
+
+        given(userPermissionsService.getUserState(any(), any(), any())).willReturn(returnedDto);
+        Authentication auth = createAuthentication(expectedUsername);
+
+        // Act
+        ResponseEntity<UserStateDto> response = controller.getUserState(auth, null);
+        UserStateDto result = response.getBody();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedUsername, result.getUsername());
+        verify(userPermissionsService).getUserState(any(), any(), any());
+    }
+
+    private JwtAuthenticationToken createAuthentication(String preferredName) {
+        Map<String, Object> claims = Map.of(
+            "preferred_username", preferredName,
+            "name", "Test User",
+            "sub", "ohE52BNHaghsWf34");
+        Jwt jwt = new Jwt("token", null, null, Map.of("alg", "none"), claims);
+        return new JwtAuthenticationToken(jwt);
     }
 
     @Test
@@ -88,7 +118,7 @@ class UserPermissionsControllerTest {
     }
 
     @Test
-    void testUpdateUser() {
+    void testUpdateUser_withId() {
         // Arrange
         UserDto returnedDto = new UserDto();
         returnedDto.setUserId(123L);
@@ -111,7 +141,7 @@ class UserPermissionsControllerTest {
     }
 
     @Test
-    void testUpdateUser_2() {
+    void testUpdateUser_withoutId() {
         // Arrange
         UserDto returnedDto = new UserDto();
         returnedDto.setUserId(123L);

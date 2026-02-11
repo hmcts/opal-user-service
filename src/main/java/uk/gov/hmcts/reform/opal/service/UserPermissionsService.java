@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.opal.service;
 
+import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
 import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
 
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -13,6 +14,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
@@ -31,6 +33,7 @@ import uk.gov.hmcts.reform.opal.util.Versioned;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -52,9 +55,11 @@ public class UserPermissionsService implements UserPermissionsProxy {
     private final UserStateMapper userStateMapperImplementation;
     private final UserMapper userMapper;
     private final AccessTokenService tokenService;
+    private final SecurityEventLoggingService securityEventLoggingService;
+
 
     @Transactional(readOnly = true)
-    public UserStateDto getUserState(Authentication authentication, UserPermissionsProxy proxy) {
+    public UserStateDto getUserState(Authentication authentication, UserPermissionsProxy proxy, Boolean newLogin) {
         Jwt jwt = getJwtToken(authentication);
         String subject = extractSubject(jwt);
         UserEntity user = proxy.getUser(subject);
@@ -65,18 +70,41 @@ public class UserPermissionsService implements UserPermissionsProxy {
         compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
 
         log.debug(":getUserState: found User: {}", username);
-
-        return  proxy.buildUserState(user);
+        UserStateDto dto = proxy.buildUserState(user);
+        if (Optional.ofNullable(newLogin).orElse(false)) {
+            logUserAuthenticationEvent(dto.getUserId());
+        }
+        return dto;
     }
 
     @Transactional(readOnly = true)
-    public UserStateDto getUserState(Long userId, Authentication authentication, UserPermissionsProxy proxy) {
+    public UserStateDto getUserState(Long userId, Authentication authentication, UserPermissionsProxy proxy,
+                                     Boolean newLogin) {
         log.debug(":getUserState: userId: {}", userId);
         if (userId == 0) {
-            return proxy.getUserState(authentication, proxy);
+            return proxy.getUserState(authentication, proxy, newLogin);
         } else {
-            return proxy.buildUserState(proxy.getUser(userId));
+            UserStateDto dto = proxy.buildUserState(proxy.getUser(userId));
+            if (Optional.ofNullable(newLogin).orElse(false)) {
+                Long clientUserId = proxy.getUserId(authentication, proxy);
+                logUserAuthenticationEvent(clientUserId);
+            }
+            return dto;
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Long getUserId(Authentication authentication, UserPermissionsProxy proxy) {
+        Jwt jwt = getJwtToken(authentication);
+        String subject = extractSubject(jwt);
+        UserEntity user = proxy.getUser(subject);
+        return user.getUserId();
+    }
+
+    private void logUserAuthenticationEvent(Long userId) {
+        Map<String, Object> data = Map.of("UserIdentifier", userId);
+        securityEventLoggingService.logEvent("User Authentication", "Success",
+                                             null, "Authentication", getRequestTimestamp(), data);
     }
 
     @Transactional(readOnly = true)

@@ -10,7 +10,11 @@ public interface UserPermissionsProxy {
 
     UserEntity getUser(String token);
 
-    UserStateDto getUserState(Authentication authentication, UserPermissionsProxy proxy);
+    Long getUserId(Authentication authentication, UserPermissionsProxy proxy);
+
+    UserStateDto getUserState(Authentication authentication, UserPermissionsProxy proxy, Boolean newLogin);
+
+    UserStateDto getUserState(Long userId, Authentication authentication, UserPermissionsProxy proxy, Boolean newLogin);
 
     UserStateDto buildUserState(UserEntity user);
 

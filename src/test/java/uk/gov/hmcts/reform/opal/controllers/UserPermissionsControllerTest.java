@@ -12,22 +12,31 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
+import uk.gov.hmcts.opal.generated.model.UserStateV1UserState;
+import uk.gov.hmcts.opal.generated.model.UserStateV2UserState;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
+import uk.gov.hmcts.reform.opal.dto.UserStateV1;
+import uk.gov.hmcts.reform.opal.dto.UserStateV2;
 import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
 
+import java.math.BigInteger;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-@Slf4j
+@Slf4j(topic = "opal.UserPermissionsControllerTest")
 @ExtendWith(MockitoExtension.class)
 class UserPermissionsControllerTest {
 
@@ -39,35 +48,65 @@ class UserPermissionsControllerTest {
 
     @BeforeEach
     void setup() {
-        // no additional setup
+        SecurityContextHolder.clearContext();
     }
 
     @Test
-    @DisplayName("getUserState with userId=0 uses principal name with preferred_username claim")
-    void getUserState_whenUserIdZero_invokesServiceWithPreferredUsernameClaim() {
+    @DisplayName("Should get UserState when userId=0 uses principal name with preferred_username claim")
+    void testGetUserState_userIdZero() {
         // Arrange
         String expectedUsername = "opal-test@HMCTS.NET";
-        UserStateDto returnedDto = new UserStateDto();
-        returnedDto.setUserId(123L);
-        returnedDto.setUsername(expectedUsername);
 
-        given(userPermissionsService.getUserState(anyLong(), any(), any())).willReturn(returnedDto);
+        UserStateDto returnedDto = UserStateDto.builder()
+            .userId(123L)
+            .username(expectedUsername)
+            .build();
 
-        Map<String, Object> claims = Map.of(
-            "preferred_username", expectedUsername,
-            "name","Test User",
-            "sub", "ohE52BNHaghsWf34");
-        Jwt jwt = new Jwt("token", null, null, Map.of("alg", "none"), claims);
-        Authentication auth = new JwtAuthenticationToken(jwt);
+        given(userPermissionsService.getUserState(anyLong(), any(), any(), any())).willReturn(returnedDto);
+
+        Authentication auth = createAuthentication(expectedUsername);
 
         // Act
-        ResponseEntity<UserStateDto> response = controller.getUserState(0L, auth);
+        ResponseEntity<UserStateDto> response = controller.getUserState(0L, auth, null);
         UserStateDto result = response.getBody();
 
         // Assert
         assertNotNull(result);
         assertEquals(expectedUsername, result.getUsername());
-        verify(userPermissionsService).getUserState(anyLong(), any(), any());
+        verify(userPermissionsService).getUserState(eq(0L), same(auth), same(userPermissionsService), isNull());
+    }
+
+    @Test
+    @DisplayName("Should get UserState when userId=0 uses principal name with preferred_username claim")
+    void testGetUserState_noUserId() {
+        // Arrange
+        String expectedUsername = "opal-test@HMCTS.NET";
+
+        UserStateDto returnedDto = UserStateDto.builder()
+            .userId(123L)
+            .username(expectedUsername)
+            .build();
+
+        given(userPermissionsService.getUserState(any(), any(), any())).willReturn(returnedDto);
+        Authentication auth = createAuthentication(expectedUsername);
+
+        // Act
+        ResponseEntity<UserStateDto> response = controller.getUserState(auth, null);
+        UserStateDto result = response.getBody();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedUsername, result.getUsername());
+        verify(userPermissionsService).getUserState(same(auth), same(userPermissionsService), isNull());
+    }
+
+    private JwtAuthenticationToken createAuthentication(String preferredName) {
+        Map<String, Object> claims = Map.of(
+            "preferred_username", preferredName,
+            "name", "Test User",
+            "sub", "ohE52BNHaghsWf34");
+        Jwt jwt = new Jwt("token", null, null, Map.of("alg", "none"), claims);
+        return new JwtAuthenticationToken(jwt);
     }
 
     @Test
@@ -85,10 +124,11 @@ class UserPermissionsControllerTest {
         // Assert
         assertNotNull(result);
         assertEquals("opal-test@HMCTS.NET", result.getUsername());
+        verify(userPermissionsService).addUser(eq("bearer token-value"));
     }
 
     @Test
-    void testUpdateUser() {
+    void testUpdateUser_withId() {
         // Arrange
         UserDto returnedDto = new UserDto();
         returnedDto.setUserId(123L);
@@ -108,10 +148,12 @@ class UserPermissionsControllerTest {
         assertEquals("\"7\"", headers.getETag());
         assertNotNull(result);
         assertEquals("opal-test@HMCTS.NET", result.getUsername());
+        verify(userPermissionsService).updateUser(eq(1L), eq("bearer token-value"), same(userPermissionsService),
+                                                  eq("if-match"));
     }
 
     @Test
-    void testUpdateUser_2() {
+    void testUpdateUser_withoutId() {
         // Arrange
         UserDto returnedDto = new UserDto();
         returnedDto.setUserId(123L);
@@ -131,5 +173,45 @@ class UserPermissionsControllerTest {
         assertEquals("\"7\"", headers.getETag());
         assertNotNull(result);
         assertEquals("opal-test@HMCTS.NET", result.getUsername());
+        verify(userPermissionsService).updateUser(eq("bearer token-value"), same(userPermissionsService),
+                                                  eq("if-match"));
+    }
+
+    @Test
+    void testGetUserStateV1() {
+        UserStateV1 returnedDto = new UserStateV1();
+        returnedDto.setUserId(123L);
+        returnedDto.setUsername("opal-test@HMCTS.NET");
+        Authentication auth = createAuthentication("opal-test@HMCTS.NET");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        given(userPermissionsService.getUserStateV1(anyLong(), any(), any(), any())).willReturn(returnedDto);
+
+        ResponseEntity<UserStateV1UserState> response = controller.getUserStateV1(0L, true);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(returnedDto, response.getBody());
+        verify(userPermissionsService).getUserStateV1(eq(0L), same(auth), same(userPermissionsService), eq(true));
+    }
+
+    @Test
+    void testGetUserStateV2() {
+        UserStateV2 returnedDto = new UserStateV2();
+        returnedDto.setCacheName("opal-test@HMCTS.NET");
+        returnedDto.setUserId(123L);
+        returnedDto.setUsername("opal-test@HMCTS.NET");
+        returnedDto.setStatus(UserStateV2.StatusEnum.ACTIVE);
+        returnedDto.setVersion(new BigInteger("7"));
+        Authentication auth = createAuthentication("opal-test@HMCTS.NET");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        given(userPermissionsService.getUserStateV2(anyLong(), any(), any(), any())).willReturn(returnedDto);
+
+        ResponseEntity<UserStateV2UserState> response = controller.getUserStateV2(0L, true);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("\"7\"", response.getHeaders().getETag());
+        assertEquals(returnedDto, response.getBody());
+        verify(userPermissionsService).getUserStateV2(eq(0L), same(auth), same(userPermissionsService), eq(true));
     }
 }

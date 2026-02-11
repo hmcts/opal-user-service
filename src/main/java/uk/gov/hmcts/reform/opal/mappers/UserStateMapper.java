@@ -5,11 +5,17 @@ import org.mapstruct.Mapping;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.PermissionDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
+import uk.gov.hmcts.opal.generated.model.BusinessUnitUserCommon;
+import uk.gov.hmcts.opal.generated.model.DomainUserState;
+import uk.gov.hmcts.opal.generated.model.DomainsUserState;
+import uk.gov.hmcts.reform.opal.dto.UserStateV1;
+import uk.gov.hmcts.reform.opal.dto.UserStateV2;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
 import java.util.List;
+import java.util.Optional;
 
 @Mapper(componentModel = "spring", implementationName = "UserStateMapperImplementation")
 public interface UserStateMapper {
@@ -42,4 +48,39 @@ public interface UserStateMapper {
     @Mapping(source = "applicationFunction.applicationFunctionId", target = "permissionId")
     @Mapping(source = "applicationFunction.functionName", target = "permissionName")
     PermissionDto toPermissionDto(UserEntitlementEntity entitlementEntity);
+
+    @Mapping(source = "businessUnitUsers", target = "businessUnitUsers")
+    UserStateV1 toV1(UserStateDto userStateDto);
+
+    @Mapping(source = "username", target = "cacheName")
+    @Mapping(source = "status", target = "status")
+    @Mapping(source = "businessUnitUsers", target = "domains")
+    UserStateV2 toV2(UserStateDto userStateDto);
+
+    @Mapping(source = "businessUnitId", target = "businessUnitId")
+    @Mapping(target = "businessUnitName", ignore = true)
+    @Mapping(source = "permissions", target = "roles")
+    BusinessUnitUserCommon toBusinessUnitUserCommon(BusinessUnitUserDto businessUnitUserDto);
+
+    default String toPermissionName(PermissionDto permissionDto) {
+        return Optional.ofNullable(permissionDto)
+            .map(PermissionDto::getPermissionName)
+            .orElse(null);
+    }
+
+    default DomainsUserState map(List<BusinessUnitUserDto> businessUnitUsers) {
+        return DomainsUserState.builder()
+            .fines(DomainUserState.builder()
+                       .businessUnitUsers(mapBusinessUnitUsers(businessUnitUsers))
+                       .build())
+            .build();
+    }
+
+    default List<BusinessUnitUserCommon> mapBusinessUnitUsers(List<BusinessUnitUserDto> businessUnitUsers) {
+        return Optional.ofNullable(businessUnitUsers)
+            .map(list -> list.stream()
+                .map(this::toBusinessUnitUserCommon)
+                .toList())
+            .orElse(null);
+    }
 }

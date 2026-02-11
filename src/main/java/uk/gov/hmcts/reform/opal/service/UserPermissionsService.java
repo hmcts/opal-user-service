@@ -49,7 +49,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
 
     private final UserEntitlementRepository userEntitlementRepository;
     private final UserRepository userRepository;
-    private final UserStateMapper userStateMapper;
+    private final UserStateMapper userStateMapperImplementation;
     private final UserMapper userMapper;
     private final AccessTokenService tokenService;
 
@@ -89,7 +89,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         // 2. If the set is empty, check if the user actually exists.
         if (entitlements.isEmpty()) {
             // User exists but has no entitlements, so return the DTO with an empty list.
-            return userStateMapper.toUserStateDto(user, Collections.emptyList());
+            return userStateMapperImplementation.toUserStateDto(user, Collections.emptyList());
         }
 
         // 3. Group entitlements by the BusinessUnitUser's ID (a String)
@@ -106,12 +106,12 @@ public class UserPermissionsService implements UserPermissionsProxy {
         List<BusinessUnitUserDto> buuDtos = buuMap.values().stream()
             .map(buu -> {
                 List<UserEntitlementEntity> buuEntitlements = entitlementsByBuuId.get(buu.getBusinessUnitUserId());
-                return userStateMapper.toBusinessUnitUserDto(buu, buuEntitlements);
+                return userStateMapperImplementation.toBusinessUnitUserDto(buu, buuEntitlements);
             })
             .toList();
 
         // 6. Pass the user entity and the BUU list to the mapper.
-        return userStateMapper.toUserStateDto(user, buuDtos);
+        return userStateMapperImplementation.toUserStateDto(user, buuDtos);
     }
 
     private void compare(String fromToken, String fromDb, Long userId, String reason, Versioned versioned) {

@@ -17,14 +17,14 @@ import static org.mockito.Mockito.when;
 
 class CustomAuthenticationExceptionsTest {
 
-    private CustomAuthenticationExceptions customAuthenticationExceptions;
+    private CustomAuthenticationExceptions userCustomAuthenticationExceptions;
     private HttpServletRequest request;
     private HttpServletResponse response;
     private PrintWriter writer;
 
     @BeforeEach
     void setUp() throws IOException {
-        customAuthenticationExceptions = new CustomAuthenticationExceptions();
+        userCustomAuthenticationExceptions = new CustomAuthenticationExceptions();
         request = mock(HttpServletRequest.class);
         response = mock(HttpServletResponse.class);
         writer = mock(PrintWriter.class);
@@ -35,7 +35,7 @@ class CustomAuthenticationExceptionsTest {
     void commenceShouldReturnUnauthorizedResponse() throws IOException, ServletException {
         AuthenticationException authException = mock(AuthenticationException.class);
 
-        customAuthenticationExceptions.commence(request, response, authException);
+        userCustomAuthenticationExceptions.commence(request, response, authException);
 
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         verify(response).setContentType("application/json");
@@ -47,7 +47,7 @@ class CustomAuthenticationExceptionsTest {
     void handleShouldReturnForbiddenResponse() throws IOException, ServletException {
         AccessDeniedException accessDeniedException = mock(AccessDeniedException.class);
 
-        customAuthenticationExceptions.handle(request, response, accessDeniedException);
+        userCustomAuthenticationExceptions.handle(request, response, accessDeniedException);
 
         verify(response).setStatus(HttpServletResponse.SC_FORBIDDEN);
         verify(response).setContentType("application/json");

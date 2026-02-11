@@ -11,7 +11,7 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", implementationName = "UserStateMapperImplementation")
 public interface UserStateMapper {
 
     /**

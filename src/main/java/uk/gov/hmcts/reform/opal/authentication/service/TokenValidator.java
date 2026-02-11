@@ -24,7 +24,7 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashSet;
 
-@Component
+@Component("userTokenValidator")
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.TokenValidator")
 public class TokenValidator {

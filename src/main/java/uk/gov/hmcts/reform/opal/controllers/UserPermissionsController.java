@@ -28,13 +28,18 @@ public class UserPermissionsController {
 
     @GetMapping("/state")
     public ResponseEntity<UserStateDto> getUserState(Authentication authentication) {
-        return buildResponse(userPermissionsService.getUserState(authentication, userPermissionsService));
+
+        log.debug(":GET:getUserState:");
+        UserStateDto dto = userPermissionsService.getUserState(authentication, userPermissionsService);
+        return buildResponse(dto);
     }
 
     @GetMapping("/{userId}/state")
     public ResponseEntity<UserStateDto> getUserState(@PathVariable Long userId, Authentication authentication) {
+
         log.debug(":GET:getUserState: userId: {}", userId);
-        return buildResponse(userPermissionsService.getUserState(userId, authentication, userPermissionsService));
+        UserStateDto dto = userPermissionsService.getUserState(userId, authentication, userPermissionsService);
+        return buildResponse(dto);
     }
 
     @PostMapping

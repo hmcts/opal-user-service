@@ -57,7 +57,7 @@ class UserPermissionsServiceTest {
     private UserRepository userRepository;
 
     @Spy
-    private UserStateMapper userStateMapper = Mappers.getMapper(UserStateMapper.class);
+    private UserStateMapper userStateMapperImplementation;
 
     @Spy
     private UserMapper userMapper = Mappers.getMapper(UserMapper.class);

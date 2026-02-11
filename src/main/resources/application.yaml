@@ -111,6 +111,8 @@ opal:
   test-user:
     email: ${OPAL_TEST_USER_EMAIL:opal-test@HMCTS.NET}
     password: ${OPAL_TEST_USER_PASSWORD}
+  common:
+    domain: user
 
 be-developer-config:
   user-role-permissions: ${BE_DEV_ROLE_PERMISSIONS:}
@@ -129,3 +131,7 @@ logging:
           descriptor:
             sql:
               BasicBinder: WARN
+
+user:
+  service:
+    url: ${OPAL_USER_SERVICE_API_URL:http://localhost:4555}

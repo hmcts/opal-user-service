@@ -16,7 +16,7 @@ import uk.gov.hmcts.reform.opal.exception.OpalApiException;
 import java.text.ParseException;
 
 @Slf4j(topic = "opal.AccessTokenService")
-@Service
+@Service("userAccessTokenService")
 @RequiredArgsConstructor
 public class AccessTokenService {
 
@@ -30,7 +30,7 @@ public class AccessTokenService {
 
     private final InternalAuthConfigurationProperties configuration;
     private final AzureTokenClient azureTokenClient;
-    private final TokenValidator tokenValidator;
+    private final TokenValidator userTokenValidator;
     private final TestUser testUser;
 
     public AccessTokenResponse getTestUserToken() {
@@ -84,7 +84,7 @@ public class AccessTokenService {
     public JWTClaimsSet extractClaims(String accessToken) {
         try {
             String token = extractToken(accessToken);
-            JWT parsedJwt = tokenValidator.parse(token);
+            JWT parsedJwt = userTokenValidator.parse(token);
             return parsedJwt.getJWTClaimsSet();
         } catch (ParseException e) {
             log.error(":extractClaim: Unable to extract claims from JWT Token: {}", e.getMessage());

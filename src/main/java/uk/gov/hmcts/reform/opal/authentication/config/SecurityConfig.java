@@ -24,14 +24,13 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerAuthenticationManagerResolver;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.filter.OncePerRequestFilter;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthConfigurationProperties;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthConfigurationPropertiesStrategy;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthProviderConfigurationProperties;
 import uk.gov.hmcts.reform.opal.authentication.exception.AuthenticationError;
+import uk.gov.hmcts.reform.opal.authentication.exception.CustomAuthenticationExceptions;
 import uk.gov.hmcts.reform.opal.exception.OpalApiException;
 
 import java.io.IOException;
@@ -50,8 +49,7 @@ public class SecurityConfig {
     private final InternalAuthConfigurationPropertiesStrategy fallbackConfiguration;
     private final InternalAuthConfigurationProperties internalAuthConfigurationProperties;
     private final InternalAuthProviderConfigurationProperties internalAuthProviderConfigurationProperties;
-    private final AuthenticationEntryPoint customAuthenticationEntryPoint;
-    private final AccessDeniedHandler customAccessDeniedHandler;
+    private final CustomAuthenticationExceptions userCustomAuthenticationExceptions;
 
     private static final String[] AUTH_WHITELIST = {
         "/swagger-ui.html",
@@ -87,8 +85,8 @@ public class SecurityConfig {
             )
             .exceptionHandling(exceptionHandling ->
                                    exceptionHandling
-                                       .authenticationEntryPoint(customAuthenticationEntryPoint)
-                                       .accessDeniedHandler(customAccessDeniedHandler)
+                                       .authenticationEntryPoint(userCustomAuthenticationExceptions)
+                                       .accessDeniedHandler(userCustomAuthenticationExceptions)
             )
             .oauth2ResourceServer(oauth2 ->
                                       oauth2.authenticationManagerResolver(jwtIssuerAuthenticationManagerResolver())

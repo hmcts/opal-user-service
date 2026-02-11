@@ -16,7 +16,7 @@ import java.util.Optional;
 public class AuthorisationService {
 
     private final UserService userService;
-    private final AccessTokenService accessTokenService;
+    private final AccessTokenService userAccessTokenService;
 
     public UserState getAuthorisation(String username) {
         return userService.getUserStateByUsername(username);
@@ -26,7 +26,7 @@ public class AuthorisationService {
         var securityTokenBuilder = SecurityToken.builder()
             .accessToken(accessToken);
         Optional<String> preferredUsernameOptional = Optional.ofNullable(
-            accessTokenService.extractPreferredUsername(accessToken));
+            userAccessTokenService.extractPreferredUsername(accessToken));
 
         if (preferredUsernameOptional.isPresent()) {
             UserState userStateOptional = this.getAuthorisation(preferredUsernameOptional.get());

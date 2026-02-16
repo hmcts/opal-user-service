@@ -3,9 +3,7 @@ package uk.gov.hmcts.opal.steps;
 import io.cucumber.java.en.When;
 import uk.gov.hmcts.opal.actions.CreateUser;
 
-import static uk.gov.hmcts.opal.steps.BearerTokenStepDef.getToken;
-
-public class UsersStepDef extends BaseStepDef{
+public class UsersStepDef extends BaseStepDef {
 
     @When("I create a user using the stored token")
     public void createUser() {

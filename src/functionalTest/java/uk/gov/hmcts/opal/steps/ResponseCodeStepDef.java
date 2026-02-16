@@ -5,7 +5,6 @@ import io.cucumber.java.en.Then;
 import io.restassured.response.Response;
 import net.serenitybdd.core.Serenity;
 
-import static net.serenitybdd.rest.SerenityRest.then;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ResponseCodeStepDef {
@@ -14,8 +13,9 @@ public class ResponseCodeStepDef {
         Response response = Serenity.sessionVariableCalled("LAST_RESPONSE");
         assertThat(response.getStatusCode()).isEqualTo(statusCode);
     }
+
     @Then("The response contains the following")
-    public void responseContains(DataTable responseDetails){
+    public void responseContains(DataTable responseDetails) {
         Response response = Serenity.sessionVariableCalled("LAST_RESPONSE");
         responseDetails.asMap(String.class, String.class).forEach((key, value) -> {
             String actualValue = response.jsonPath().getString(key);

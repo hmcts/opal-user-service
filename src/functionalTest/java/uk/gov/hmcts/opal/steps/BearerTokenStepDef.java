@@ -2,6 +2,8 @@ package uk.gov.hmcts.opal.steps;
 
 import io.cucumber.java.AfterAll;
 import io.cucumber.java.en.When;
+import io.restassured.response.Response;
+import net.serenitybdd.core.Serenity;
 import net.serenitybdd.rest.SerenityRest;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,12 +25,14 @@ public class BearerTokenStepDef extends BaseStepDef {
     }
 
     private static String fetchToken(String user) {
-        SerenityRest.given()
+        Response response = SerenityRest.given()
             .accept("*/*")
             .header("X-User-Email", user)
             .contentType("application/json")
             .when()
             .get(getTestUrl() + "/testing-support/token/user");
+
+        Serenity.setSessionVariable("LAST_RESPONSE").to(response);
 
         return then().extract().body().jsonPath().getString("access_token");
     }

@@ -330,6 +330,19 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void addUser_whenNonUniqueTokenSubject_givesBadRequest() throws Exception {
+
+        final String exitingTokenSubject = "GfsHbIMt49WjQ"; //used by opal-test-2@HMCTS.NET
+
+        mockMvc.perform(
+            post(URL_BASE).header("Authorization", "Bearer " + createSignedToken(exitingTokenSubject)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$['title']").value("Conflict"))
+            .andExpect(jsonPath("$['detail']").value("Data integrity violation with the requested resource"))
+            .andExpect(jsonPath("$['constraintViolated']").value("users_token_subject_key"));
+    }
+
+    @Test
     void testUpdateUser() throws Exception {
 
         // Check Data in DB before update

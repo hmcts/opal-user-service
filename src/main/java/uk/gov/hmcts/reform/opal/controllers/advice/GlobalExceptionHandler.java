@@ -11,8 +11,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.LazyInitializationException;
 import org.hibernate.PropertyValueException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.postgresql.util.PSQLException;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpStatus;
@@ -366,6 +368,24 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("conflictReason", e.getConflictReason());
 
         return responseWithProblemDetail(HttpStatus.CONFLICT, problemDetail, e.getVersioned());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ProblemDetail> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+
+        ProblemDetail problemDetail = createProblemDetail(
+            HttpStatus.CONFLICT,
+            "Conflict",
+            "Data integrity violation with the requested resource",
+            "resource-conflict",
+            e
+        );
+
+        if (e.getCause() instanceof ConstraintViolationException cve) {
+            problemDetail.setProperty("constraintViolated", cve.getConstraintName());
+        }
+
+        return responseWithProblemDetail(HttpStatus.CONFLICT, problemDetail);
     }
 
     private ProblemDetail createProblemDetail(HttpStatus status, String title, String detail,

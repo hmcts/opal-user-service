@@ -117,7 +117,8 @@ be-developer-config:
 
 logging:
   level:
-    opal: INFO
+    root: ${ROOT_LOG_LEVEL:INFO}
+    opal: ${OPAL_LOG_LEVEL:INFO}
     org:
       springframework:
         security: WARN

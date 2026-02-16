@@ -105,42 +105,54 @@ tasks.register('integration', Test) {
   failFast = true
 }
 
+
 tasks.register('functionalOpal', Test) {
 
   description = "Runs functional tests against Opal mode"
   group = "Verification"
   testClassesDirs = sourceSets.functionalTest.output.classesDirs
   classpath = sourceSets.functionalTest.runtimeClasspath
-  reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/functional"))
+  outputs.upToDateWhen { false }
+  reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/functional/opal"))
   testLogging.showStandardStreams = true
   gradle.startParameter.continueOnFailure = true
-  systemProperty "cucumber.filter.tags", "@Opal and not @Smoke and not @Ignore"
-  systemProperty "test.mode", "opal"
+  environment("DEFAULT_APP_MODE", "opal")
+  include '**/OpalTestRunner.class'
+
 }
 tasks.register('functionalLegacy', Test) {
   description = "Runs functional tests against Legacy mode"
   group = "Verification"
   testClassesDirs = sourceSets.functionalTest.output.classesDirs
   classpath = sourceSets.functionalTest.runtimeClasspath
-  reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/functional"))
+  outputs.upToDateWhen { false }
+  reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/functional/legacy"))
   gradle.startParameter.continueOnFailure = true
   testLogging.showStandardStreams = true
-  systemProperty "cucumber.filter.tags", "@Legacy and not @Smoke and not @Ignore"
-  systemProperty "test.mode", "legacy"
+  environment("DEFAULT_APP_MODE", "legacy")
+
+  include '**/LegacyTestRunner.class'
 }
 tasks.register('copyFunctionalReport', Copy) {
   from("${rootDir}/target/site/serenity")
   into("${rootDir}/functional-test-report")
   logger.quiet("Functional Test Report available at - file://${rootDir}/functional-test-report/index.html")
 }
+tasks.register('mergeFunctionalResults', Copy) {
+  from layout.buildDirectory.dir("test-results/functional/opal")
+  from layout.buildDirectory.dir("test-results/functional/legacy")
+  into layout.buildDirectory.dir("test-results/functional")
+  include '*.xml'
+}
 
 tasks.register('functional') {
   description = "Runs functional tests"
   group = "Verification"
   gradle.startParameter.continueOnFailure = true
-  dependsOn('clearReports', 'functionalOpal', 'functionalLegacy', 'aggregate', 'copyFunctionalReport')
+  dependsOn('clearReports', 'functionalOpal', 'functionalLegacy', 'aggregate', 'copyFunctionalReport', 'mergeFunctionalResults')
   tasks.functionalOpal.mustRunAfter clearReports
   tasks.functionalLegacy.mustRunAfter functionalOpal
+  tasks.mergeFunctionalResults.mustRunAfter functionalLegacy
   tasks.aggregate.mustRunAfter functionalLegacy
   tasks.copyFunctionalReport.mustRunAfter aggregate
 
@@ -153,7 +165,9 @@ tasks.register('smokeOpal', Test) {
   reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/smoke"))
   testLogging.showStandardStreams = true
   gradle.startParameter.continueOnFailure = true
-  systemProperty "cucumber.filter.tags", "@Smoke and not @Ignore"
+
+  include '**/SmokeTestRunner.class'
+
 }
 tasks.register('copySmokeReport', Copy) {
   from("${rootDir}/target/site/serenity")
@@ -171,6 +185,7 @@ tasks.register('smoke') {
   tasks.copySmokeReport.mustRunAfter aggregate
 
 }
+
 
 def coverageExclusions = [
   '**/uk/gov/hmcts/reform/opal/**/model/**',

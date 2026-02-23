@@ -51,11 +51,8 @@ REFERENCES domain
 
 CREATE INDEX roles_opal_domain_id_idx ON roles (opal_domain_id);
 
-CREATE UNIQUE INDEX roles_name_domain_version_uk_idx
-    ON roles (role_name, opal_domain_id, version_number);
-
 ALTER TABLE roles
-ADD CONSTRAINT roles_name_domain_version_uk UNIQUE USING INDEX roles_name_domain_version_uk_idx;
+ADD CONSTRAINT roles_name_domain_version_uk UNIQUE (role_name, opal_domain_id, version_number);
 
 CREATE INDEX roles_application_function_list_gin_idx
     ON roles USING GIN (application_function_list);

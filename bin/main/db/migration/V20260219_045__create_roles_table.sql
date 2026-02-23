@@ -33,7 +33,7 @@ CREATE SEQUENCE role_id_seq
     MINVALUE 1
     NO MAXVALUE
     START WITH 1
-    CACHE 20
+    CACHE 1
     OWNED BY roles.role_id;
 
 ALTER TABLE roles

@@ -32,6 +32,10 @@ CREATE SEQUENCE business_unit_user_role_id_seq
     CACHE 1
     OWNED BY business_unit_user_roles.business_unit_user_role_id;
 
+COMMENT ON COLUMN business_unit_user_roles.business_unit_user_role_id IS 'Unique ID of this record';
+COMMENT ON COLUMN business_unit_user_roles.business_unit_user_id IS 'ID of the business unit user being assigned a role';
+COMMENT ON COLUMN business_unit_user_roles.role_id IS 'ID of the role assigned for this record';
+
 ALTER TABLE business_unit_user_roles
     ALTER COLUMN business_unit_user_role_id SET DEFAULT nextval('business_unit_user_role_id_seq');
 

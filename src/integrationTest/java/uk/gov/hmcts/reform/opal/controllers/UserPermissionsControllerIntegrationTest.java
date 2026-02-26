@@ -14,9 +14,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.ResultActions;
+import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.service.JsonSchemaValidationService;
 import org.springframework.http.HttpStatus;

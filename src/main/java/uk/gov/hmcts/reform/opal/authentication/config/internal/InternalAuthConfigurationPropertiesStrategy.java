@@ -3,8 +3,8 @@ package uk.gov.hmcts.reform.opal.authentication.config.internal;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthProviderConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthProviderConfigurationProperties;
 import uk.gov.hmcts.reform.opal.authentication.config.AuthenticationConfigurationPropertiesStrategy;
 import uk.gov.hmcts.reform.opal.authentication.util.RequestMatcher;
 

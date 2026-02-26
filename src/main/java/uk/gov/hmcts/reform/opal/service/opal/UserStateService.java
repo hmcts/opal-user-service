@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
+import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.config.properties.BeDeveloperConfiguration;
 

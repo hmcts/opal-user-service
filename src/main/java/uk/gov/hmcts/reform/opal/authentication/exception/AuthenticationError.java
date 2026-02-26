@@ -3,7 +3,7 @@ package uk.gov.hmcts.reform.opal.authentication.exception;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import uk.gov.hmcts.reform.opal.exception.OpalApiError;
+import uk.gov.hmcts.opal.common.exception.OpalApiError;
 
 @Getter
 @RequiredArgsConstructor

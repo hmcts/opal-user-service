@@ -11,9 +11,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthProviderConfigurationProperties;
 import uk.gov.hmcts.reform.opal.authentication.client.OAuthClient;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthProviderConfigurationProperties;
 import uk.gov.hmcts.reform.opal.authentication.exception.AzureDaoException;
 import uk.gov.hmcts.reform.opal.authentication.model.OAuthProviderRawResponse;
 

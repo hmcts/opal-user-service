@@ -5,8 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthProviderConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthProviderConfigurationProperties;
 
 import java.net.URI;
 

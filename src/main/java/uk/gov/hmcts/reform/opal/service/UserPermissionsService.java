@@ -13,7 +13,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
+import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.dto.UserStateDto;

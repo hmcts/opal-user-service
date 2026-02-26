@@ -2,8 +2,8 @@ package uk.gov.hmcts.reform.opal.authentication.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import uk.gov.hmcts.opal.common.exception.OpalApiException;
 import uk.gov.hmcts.reform.opal.authentication.exception.AuthenticationError;
-import uk.gov.hmcts.reform.opal.exception.OpalApiException;
 
 @Configuration
 public class AuthenticationConfiguration {

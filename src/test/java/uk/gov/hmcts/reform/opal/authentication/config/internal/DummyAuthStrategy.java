@@ -4,8 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthProviderConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthProviderConfigurationProperties;
 import uk.gov.hmcts.reform.opal.authentication.config.AuthenticationConfigurationPropertiesStrategy;
 
 @Getter

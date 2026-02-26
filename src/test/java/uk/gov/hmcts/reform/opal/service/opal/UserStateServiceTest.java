@@ -6,7 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
-import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
+import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.config.properties.BeDeveloperConfiguration;
 

@@ -9,8 +9,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenResponse;
-import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
+import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -35,8 +36,10 @@ class TestingSupportControllerTest {
     private FeatureToggleService featureToggleService;
 
     @MockitoBean
-    private AccessTokenService accessTokenService;
+    private TestingSupportAccessTokenService testingSupportAccessTokenService;
 
+    @MockitoBean
+    private AccessTokenService accessTokenService;
 
     @Test
     void testIsFeatureEnabled() throws Exception {
@@ -63,7 +66,7 @@ class TestingSupportControllerTest {
         AccessTokenResponse accessTokenResponse = new AccessTokenResponse();
         accessTokenResponse.setAccessToken("testAccessToken");
 
-        when(accessTokenService.getTestUserToken()).thenReturn(accessTokenResponse);
+        when(testingSupportAccessTokenService.getTestUserToken()).thenReturn(accessTokenResponse);
 
         mockMvc.perform(get("/testing-support/token/test-user"))
             .andExpect(status().isOk())
@@ -78,7 +81,7 @@ class TestingSupportControllerTest {
         AccessTokenResponse accessTokenResponse = new AccessTokenResponse();
         accessTokenResponse.setAccessToken("testAccessToken");
 
-        when(accessTokenService.getTestUserToken(anyString())).thenReturn(accessTokenResponse);
+        when(testingSupportAccessTokenService.getTestUserToken(anyString())).thenReturn(accessTokenResponse);
 
         mockMvc.perform(get("/testing-support/token/user")
                 .header("X-User-Email", "test@example.com"))
@@ -105,7 +108,7 @@ class TestingSupportControllerTest {
         AccessTokenResponse accessTokenResponse = new AccessTokenResponse();
         accessTokenResponse.setAccessToken("testAccessToken");
 
-        when(accessTokenService.getTestUserToken(anyString())).thenReturn(accessTokenResponse);
+        when(testingSupportAccessTokenService.getTestUserToken(anyString())).thenReturn(accessTokenResponse);
 
         mockMvc.perform(get("/testing-support/token/user")
                 .header("X-User-Email", "test@example.com"))
@@ -119,7 +122,7 @@ class TestingSupportControllerTest {
     void testGetToken_testUser_strictShape_onlyAccessToken() throws Exception {
         AccessTokenResponse resp = new AccessTokenResponse();
         resp.setAccessToken("testAccessToken");
-        when(accessTokenService.getTestUserToken()).thenReturn(resp);
+        when(testingSupportAccessTokenService.getTestUserToken()).thenReturn(resp);
 
         mockMvc.perform(get("/testing-support/token/test-user"))
             .andExpect(status().isOk())
@@ -133,7 +136,7 @@ class TestingSupportControllerTest {
     void testGetToken_forUser_strictShape_onlyAccessToken() throws Exception {
         AccessTokenResponse resp = new AccessTokenResponse();
         resp.setAccessToken("testAccessToken");
-        when(accessTokenService.getTestUserToken(anyString())).thenReturn(resp);
+        when(testingSupportAccessTokenService.getTestUserToken(anyString())).thenReturn(resp);
 
         mockMvc.perform(get("/testing-support/token/user")
                             .header("X-User-Email", "test@example.com"))
@@ -145,7 +148,7 @@ class TestingSupportControllerTest {
 
     @Test
     void testGetTokenForUser_missingEmail_returnsBadRequest() throws Exception {
-        when(accessTokenService.getTestUserToken(isNull()))
+        when(testingSupportAccessTokenService.getTestUserToken(isNull()))
             .thenThrow(new IllegalArgumentException("email required"));
 
         // Act + Assert
@@ -156,7 +159,7 @@ class TestingSupportControllerTest {
 
     @Test
     void testGetTokenForUser_unknownEmail_returnsNotFound() throws Exception {
-        when(accessTokenService.getTestUserToken("nobody@example.com"))
+        when(testingSupportAccessTokenService.getTestUserToken("nobody@example.com"))
             .thenThrow(new ResponseStatusException(NOT_FOUND, "Test user not found"));
 
         mockMvc.perform(get("/testing-support/token/user")
@@ -166,7 +169,7 @@ class TestingSupportControllerTest {
 
     @Test
     void testGetToken_testUser_upstreamFailure_returns500() throws Exception {
-        when(accessTokenService.getTestUserToken())
+        when(testingSupportAccessTokenService.getTestUserToken())
             .thenThrow(new ResponseStatusException(INTERNAL_SERVER_ERROR, "upstream boom"));
 
         mockMvc.perform(get("/testing-support/token/test-user"))
@@ -177,7 +180,7 @@ class TestingSupportControllerTest {
     void testGetToken_alwaysJsonContentType() throws Exception {
         AccessTokenResponse resp = new AccessTokenResponse();
         resp.setAccessToken("abc");
-        when(accessTokenService.getTestUserToken()).thenReturn(resp);
+        when(testingSupportAccessTokenService.getTestUserToken()).thenReturn(resp);
 
         mockMvc.perform(get("/testing-support/token/test-user"))
             .andExpect(status().isOk())

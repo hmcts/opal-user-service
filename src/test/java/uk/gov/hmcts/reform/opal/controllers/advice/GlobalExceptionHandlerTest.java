@@ -32,8 +32,8 @@ import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import uk.gov.hmcts.opal.common.exception.OpalApiException;
-import uk.gov.hmcts.reform.opal.authentication.exception.AuthenticationError;
-import uk.gov.hmcts.reform.opal.authentication.exception.MissingRequestHeaderException;
+import uk.gov.hmcts.opal.common.user.authentication.exception.AuthenticationError;
+import uk.gov.hmcts.opal.common.user.authentication.exception.MissingRequestHeaderException;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 
 import java.lang.reflect.Method;

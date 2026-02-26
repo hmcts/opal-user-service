@@ -25,7 +25,8 @@ public class PermissionUtil {
     public static boolean checkBusinessUnitUserHasPermission(BusinessUnitUser businessUnitUser,
                                                              PermissionDescriptor permission) {
         if (businessUnitUser.doesNotHavePermission(permission)) {
-            throw new AccessDeniedException("User does not have the required permission: " + permission.getDescription());
+            throw new AccessDeniedException("User does not have the required permission: "
+                                                + permission.getDescription());
         }
         return true;
     }

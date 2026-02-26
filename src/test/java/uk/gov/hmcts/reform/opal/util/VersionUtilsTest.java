@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 
 public class VersionUtilsTest {

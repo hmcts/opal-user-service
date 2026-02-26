@@ -15,8 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
-import uk.gov.hmcts.reform.opal.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
@@ -26,7 +27,6 @@ import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
-import uk.gov.hmcts.reform.opal.util.Versioned;
 
 import java.util.Collections;
 import java.util.List;

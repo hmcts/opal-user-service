@@ -21,7 +21,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import uk.gov.hmcts.reform.opal.util.Versioned;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
 
 
 @Entity

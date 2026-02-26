@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uk.gov.hmcts.reform.opal.util.Versioned;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.ToJsonString;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
 
 @Data
 @NoArgsConstructor

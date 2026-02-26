@@ -20,8 +20,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authentication.service.TokenValidator;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
-import uk.gov.hmcts.reform.opal.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;

@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.PermissionDto;
-import uk.gov.hmcts.reform.opal.dto.UserStateDto;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;

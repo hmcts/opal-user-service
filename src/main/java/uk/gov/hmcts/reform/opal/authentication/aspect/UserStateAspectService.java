@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.stereotype.Component;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.authentication.exception.MissingRequestHeaderException;
 import uk.gov.hmcts.reform.opal.authorisation.aspect.AuthorizationAspectService;
-import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.service.opal.UserStateService;
 
 import java.util.function.Supplier;

@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.opal.authorisation.model;
 
+import uk.gov.hmcts.opal.common.user.authorisation.model.PermissionDescriptor;
+
 public enum Permissions {
     CREATE_MANAGE_DRAFT_ACCOUNTS(1, "Create and Manage Draft Accounts"),
     ACCOUNT_ENQUIRY_NOTES(2, "Account Enquiry - Account Notes"),
@@ -18,5 +20,19 @@ public enum Permissions {
     Permissions(long id, String description) {
         this.id = id;
         this.description = description;
+    }
+
+    public PermissionDescriptor getDescriptor() {
+        return new PermissionDescriptor() {
+            @Override
+            public long getId() {
+                return id;
+            }
+
+            @Override
+            public String getDescription() {
+                return description;
+            }
+        };
     }
 }

@@ -1,9 +1,10 @@
 package uk.gov.hmcts.reform.opal.util;
 
 import org.springframework.security.access.AccessDeniedException;
-import uk.gov.hmcts.reform.opal.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.PermissionDescriptor;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
-import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitRef;
 import uk.gov.hmcts.reform.opal.service.opal.UserStateService;
 
@@ -22,15 +23,15 @@ public class PermissionUtil {
     }
 
     public static boolean checkBusinessUnitUserHasPermission(BusinessUnitUser businessUnitUser,
-                                                             Permissions permission) {
+                                                             PermissionDescriptor permission) {
         if (businessUnitUser.doesNotHavePermission(permission)) {
-            throw new AccessDeniedException("User does not have the required permission: " + permission.description);
+            throw new AccessDeniedException("User does not have the required permission: " + permission.getDescription());
         }
         return true;
     }
 
     public static boolean checkAnyBusinessUnitUserHasPermission(UserState userState, Permissions permission) {
-        if (userState.noBusinessUnitUserHasPermission(permission)) {
+        if (userState.noBusinessUnitUserHasPermission(permission.getDescriptor())) {
             throw new AccessDeniedException("User does not have the required permission: " + permission.description);
         }
         return true;
@@ -38,7 +39,7 @@ public class PermissionUtil {
 
     public static  <B extends BusinessUnitRef> List<B> filterBusinessUnitsByPermission(
         UserStateService userStateService, List<B> refData,
-        Optional<Permissions> optPermission, String authHeaderValue) {
+        Optional<PermissionDescriptor> optPermission, String authHeaderValue) {
 
         return optPermission.map(
             permission -> {

@@ -5,10 +5,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenRequest;
+import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.reform.opal.authentication.client.AzureTokenClient;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenRequest;
-import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.reform.opal.config.properties.TestUser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -3,10 +3,10 @@ package uk.gov.hmcts.reform.opal.authentication.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenRequest;
+import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.reform.opal.authentication.client.AzureTokenClient;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenRequest;
-import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.reform.opal.config.properties.TestUser;
 
 @Slf4j(topic = "opal.AccessTokenHelper")

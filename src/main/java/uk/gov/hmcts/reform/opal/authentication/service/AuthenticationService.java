@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.hmcts.opal.common.exception.OpalApiException;
 import uk.gov.hmcts.opal.common.user.authentication.exception.AuthenticationError;
 import uk.gov.hmcts.opal.common.user.authentication.model.JwtValidationResult;
+import uk.gov.hmcts.opal.common.user.authentication.model.OAuthProviderRawResponse;
 import uk.gov.hmcts.opal.common.user.authentication.model.SecurityToken;
 import uk.gov.hmcts.opal.common.user.authentication.service.TokenValidator;
 import uk.gov.hmcts.reform.opal.authentication.aspect.AccessTokenParam;
@@ -14,7 +15,6 @@ import uk.gov.hmcts.reform.opal.authentication.config.AuthStrategySelector;
 import uk.gov.hmcts.reform.opal.authentication.config.AuthenticationConfigurationPropertiesStrategy;
 import uk.gov.hmcts.reform.opal.authentication.dao.AzureDao;
 import uk.gov.hmcts.reform.opal.authentication.exception.AzureDaoException;
-import uk.gov.hmcts.reform.opal.authentication.model.OAuthProviderRawResponse;
 import uk.gov.hmcts.reform.opal.authorisation.model.LogActions;
 import uk.gov.hmcts.reform.opal.authorisation.service.AuthorisationService;
 

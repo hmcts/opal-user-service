@@ -252,7 +252,7 @@ dependencyUpdates {
 
 dependencyManagement {
   imports {
-    mavenBom "org.springframework.integration:spring-integration-bom:6.5.6"
+    mavenBom "org.springframework.integration:spring-integration-bom:6.5.7"
     mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2025.0.0'
   }
 
@@ -295,7 +295,7 @@ dependencies {
   implementation 'org.springframework.integration:spring-integration-sftp'
   implementation 'org.springframework.integration:spring-integration-file'
 
-  implementation 'org.springframework.security:spring-security-oauth2-authorization-server:1.5.5'
+  implementation 'org.springframework.security:spring-security-oauth2-authorization-server:1.5.6'
 
   implementation 'org.springframework:spring-aspects'
   implementation 'org.springframework.cloud:spring-cloud-starter-openfeign', {
@@ -349,7 +349,7 @@ dependencies {
   testImplementation 'org.springframework.security:spring-security-test'
   testImplementation 'org.springframework.boot:spring-boot-devtools'
   testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-  testImplementation 'com.auth0:java-jwt:4.5.0'
+  testImplementation 'com.auth0:java-jwt:4.5.1'
   testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
   testImplementation 'org.testcontainers:postgresql'
   testImplementation(platform('org.junit:junit-bom:6.0.2'))

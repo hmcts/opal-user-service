@@ -27,19 +27,22 @@ public class UserPermissionsController {
     private final UserPermissionsService userPermissionsService;
 
     @GetMapping("/state")
-    public ResponseEntity<UserStateDto> getUserState(Authentication authentication) {
+    public ResponseEntity<UserStateDto> getUserState(
+        Authentication authentication,
+        @RequestHeader(value = "x-new-login", required = false) Boolean newLogin) {
 
-        log.debug(":GET:getUserState:");
-        UserStateDto dto = userPermissionsService.getUserState(authentication, userPermissionsService);
-        return buildResponse(dto);
+        log.debug(":GET:getUserState: new login: {}", newLogin);
+        return buildResponse(userPermissionsService.getUserState(authentication, userPermissionsService, newLogin));
     }
 
     @GetMapping("/{userId}/state")
-    public ResponseEntity<UserStateDto> getUserState(@PathVariable Long userId, Authentication authentication) {
+    public ResponseEntity<UserStateDto> getUserState(
+        @PathVariable Long userId, Authentication authentication,
+        @RequestHeader(value = "x-new-login", required = false) Boolean newLogin) {
 
-        log.debug(":GET:getUserState: userId: {}", userId);
-        UserStateDto dto = userPermissionsService.getUserState(userId, authentication, userPermissionsService);
-        return buildResponse(dto);
+        log.debug(":GET:getUserState: userId: {}, new login: {}", userId, newLogin);
+        return buildResponse(userPermissionsService
+                                 .getUserState(userId, authentication, userPermissionsService, newLogin));
     }
 
     @PostMapping

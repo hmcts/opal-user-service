@@ -6,8 +6,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenResponse;
-import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
+import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
+import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
+import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,6 +37,9 @@ class TestingSupportControllerTest {
     private FeatureToggleService featureToggleService;
 
     @MockitoBean
+    private TestingSupportAccessTokenService testingSupportAccessTokenService;
+
+    @MockitoBean
     private AccessTokenService accessTokenService;
 
     @Test
@@ -62,7 +66,7 @@ class TestingSupportControllerTest {
     void getToken_shouldReturnResponse() {
         // Arrange
         AccessTokenResponse expectedResponse = AccessTokenResponse.builder().accessToken(TEST_TOKEN).build();
-        when(accessTokenService.getTestUserToken())
+        when(testingSupportAccessTokenService.getTestUserToken())
             .thenReturn(expectedResponse);
 
         // Call the controller method
@@ -79,7 +83,7 @@ class TestingSupportControllerTest {
     @Test
     void getToken_shouldHandleExceptions() {
         // Arrange
-        when(accessTokenService.getTestUserToken())
+        when(testingSupportAccessTokenService.getTestUserToken())
             .thenThrow(new RuntimeException("Error!"));
 
         // Act and Assert
@@ -93,7 +97,7 @@ class TestingSupportControllerTest {
     void getTokenForUser_shouldReturnResponse() {
         // Arrange
         AccessTokenResponse expectedResponse = AccessTokenResponse.builder().accessToken(TEST_TOKEN).build();
-        when(accessTokenService.getTestUserToken(TEST_USER_EMAIL))
+        when(testingSupportAccessTokenService.getTestUserToken(TEST_USER_EMAIL))
             .thenReturn(expectedResponse);
 
         // Act
@@ -111,7 +115,7 @@ class TestingSupportControllerTest {
     @Test
     void getTokenForUser_shouldHandleExceptions() {
         // Arrange
-        when(accessTokenService.getTestUserToken(TEST_USER_EMAIL))
+        when(testingSupportAccessTokenService.getTestUserToken(TEST_USER_EMAIL))
             .thenThrow(new RuntimeException("Error!"));
 
         // Act and Assert

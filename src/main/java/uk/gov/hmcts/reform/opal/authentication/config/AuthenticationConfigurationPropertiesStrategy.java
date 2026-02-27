@@ -2,6 +2,8 @@ package uk.gov.hmcts.reform.opal.authentication.config;
 
 import lombok.SneakyThrows;
 import org.apache.http.client.utils.URIBuilder;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthProviderConfigurationProperties;
 import uk.gov.hmcts.reform.opal.authentication.util.RequestMatcher;
 
 import java.net.URI;

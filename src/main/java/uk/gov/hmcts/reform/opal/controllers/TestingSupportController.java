@@ -12,8 +12,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenResponse;
-import uk.gov.hmcts.reform.opal.authentication.service.AccessTokenService;
+import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
+import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
+import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 
 @RestController
@@ -27,6 +28,7 @@ public class TestingSupportController {
     private static final String X_USER_EMAIL = "X-User-Email";
 
     private final FeatureToggleService featureToggleService;
+    private final TestingSupportAccessTokenService testingSupportAccessTokenService;
     private final AccessTokenService userAccessTokenService;
 
     @GetMapping("/launchdarkly/bool/{featureKey}")
@@ -43,7 +45,7 @@ public class TestingSupportController {
     @Operation(summary = "Retrieves the token for default test user")
     public ResponseEntity<TestingSupportTokenResponse> getToken() {
         log.debug(":getToken: for test user defined at: opal.test-user.email");
-        AccessTokenResponse accessTokenResponse = this.userAccessTokenService.getTestUserToken();
+        AccessTokenResponse accessTokenResponse = testingSupportAccessTokenService.getTestUserToken();
         return ResponseEntity.ok(new TestingSupportTokenResponse(accessTokenResponse.getAccessToken()));
     }
 
@@ -53,7 +55,7 @@ public class TestingSupportController {
         @RequestHeader(value = X_USER_EMAIL) String userEmail
     ) {
         log.debug(":getTokenForUser: user: {}", userEmail);
-        AccessTokenResponse accessTokenResponse = this.userAccessTokenService.getTestUserToken(userEmail);
+        AccessTokenResponse accessTokenResponse = testingSupportAccessTokenService.getTestUserToken(userEmail);
         return ResponseEntity.ok(new TestingSupportTokenResponse(accessTokenResponse.getAccessToken()));
     }
 

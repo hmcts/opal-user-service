@@ -8,11 +8,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.hmcts.reform.opal.authentication.exception.MissingRequestHeaderException;
+import uk.gov.hmcts.opal.common.user.authentication.exception.MissingRequestHeaderException;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.Permission;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.authorisation.aspect.AuthorizationAspectService;
-import uk.gov.hmcts.reform.opal.authorisation.model.BusinessUnitUser;
-import uk.gov.hmcts.reform.opal.authorisation.model.Permission;
-import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.service.opal.UserStateService;
 
 import java.util.Optional;

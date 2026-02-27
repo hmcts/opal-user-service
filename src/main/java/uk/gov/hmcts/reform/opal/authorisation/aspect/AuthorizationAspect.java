@@ -5,9 +5,9 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.authentication.aspect.UserStateAspectService;
-import uk.gov.hmcts.reform.opal.authorisation.model.BusinessUnitUser;
-import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 
 import static uk.gov.hmcts.reform.opal.util.PermissionUtil.checkAnyBusinessUnitUserHasPermission;
 import static uk.gov.hmcts.reform.opal.util.PermissionUtil.checkBusinessUnitUserHasPermission;
@@ -43,7 +43,7 @@ public class AuthorizationAspect {
         BusinessUnitUser businessUnitUser = authorizationAspectService
             .getBusinessUnitUser(args, userState);
         if (checkBusinessUnitUserHasPermission(businessUnitUser,
-                                               authorizedBusinessUnitUserHasPermission.value())) {
+                                               authorizedBusinessUnitUserHasPermission.value().getDescriptor())) {
             return joinPoint.proceed();
         }
         throw new PermissionNotAllowedException(authorizedBusinessUnitUserHasPermission.value(),

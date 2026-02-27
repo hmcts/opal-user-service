@@ -13,7 +13,7 @@ import com.nimbusds.oauth2.sdk.id.ClientID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthProviderConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthProviderConfigurationProperties;
 
 import java.io.IOException;
 import java.net.URI;

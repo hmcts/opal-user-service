@@ -2,10 +2,10 @@ package uk.gov.hmcts.reform.opal.util;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.security.access.AccessDeniedException;
-import uk.gov.hmcts.reform.opal.authorisation.model.BusinessUnitUser;
-import uk.gov.hmcts.reform.opal.authorisation.model.Permission;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.Permission;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
-import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 
 import java.util.Collections;
 import java.util.Set;
@@ -20,7 +20,7 @@ class PermissionUtilTest {
     void testCheckBusinessUnitUserHasPermission_success() {
         BusinessUnitUser businessUnitUser = createBusinessUnitUser(createSinglePermissions(2L));
         Permissions permission = Permissions.ACCOUNT_ENQUIRY_NOTES;
-        assertTrue(PermissionUtil.checkBusinessUnitUserHasPermission(businessUnitUser, permission));
+        assertTrue(PermissionUtil.checkBusinessUnitUserHasPermission(businessUnitUser, permission.getDescriptor()));
     }
 
     @Test
@@ -29,7 +29,7 @@ class PermissionUtilTest {
         Permissions permission = Permissions.ACCOUNT_ENQUIRY;
         AccessDeniedException ade = assertThrows(
             AccessDeniedException.class,
-            () -> PermissionUtil.checkBusinessUnitUserHasPermission(businessUnitUser, permission));
+            () -> PermissionUtil.checkBusinessUnitUserHasPermission(businessUnitUser, permission.getDescriptor()));
         assertEquals("User does not have the required permission: Account Enquiry", ade.getMessage());
     }
 
@@ -39,7 +39,7 @@ class PermissionUtilTest {
         Permissions permission = Permissions.ACCOUNT_ENQUIRY;
         AccessDeniedException ade = assertThrows(
             AccessDeniedException.class,
-            () -> PermissionUtil.checkBusinessUnitUserHasPermission(businessUnitUser, permission));
+            () -> PermissionUtil.checkBusinessUnitUserHasPermission(businessUnitUser, permission.getDescriptor()));
         assertEquals("User does not have the required permission: Account Enquiry", ade.getMessage());
     }
 

@@ -6,9 +6,9 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.authentication.aspect.AccessTokenParam;
-import uk.gov.hmcts.reform.opal.authorisation.model.BusinessUnitUser;
-import uk.gov.hmcts.reform.opal.authorisation.model.UserState;
 
 import java.lang.reflect.Parameter;
 import java.util.Arrays;

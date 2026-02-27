@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenRequest;
+import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthProviderConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenRequest;
-import uk.gov.hmcts.reform.opal.authentication.model.AccessTokenResponse;
 
 
 @Slf4j(topic = "opal.AzureTokenClient")

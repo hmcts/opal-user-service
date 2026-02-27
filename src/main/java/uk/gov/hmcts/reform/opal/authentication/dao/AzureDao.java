@@ -7,11 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.config.AuthProviderConfigurationProperties;
+import uk.gov.hmcts.opal.common.user.authentication.model.OAuthProviderRawResponse;
 import uk.gov.hmcts.reform.opal.authentication.client.OAuthClient;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.config.AuthProviderConfigurationProperties;
 import uk.gov.hmcts.reform.opal.authentication.exception.AzureDaoException;
-import uk.gov.hmcts.reform.opal.authentication.model.OAuthProviderRawResponse;
 
 import java.io.IOException;
 

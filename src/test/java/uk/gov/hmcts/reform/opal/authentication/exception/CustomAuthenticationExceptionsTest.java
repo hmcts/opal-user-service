@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import uk.gov.hmcts.opal.common.user.authentication.exception.CustomAuthenticationExceptions;
 
 import java.io.IOException;
 import java.io.PrintWriter;

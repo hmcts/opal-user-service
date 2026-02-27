@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.opal.service;
 
 import org.springframework.security.core.Authentication;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
-import uk.gov.hmcts.reform.opal.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
 public interface UserPermissionsProxy {

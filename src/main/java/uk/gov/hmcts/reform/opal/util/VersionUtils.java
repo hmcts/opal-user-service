@@ -5,6 +5,7 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.helpers.MessageFormatter;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 
 @Slf4j(topic = "opal.VersionUtils")

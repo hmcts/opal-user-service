@@ -26,12 +26,12 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerAuthenticationManagerResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.filter.OncePerRequestFilter;
+import uk.gov.hmcts.opal.common.exception.OpalApiException;
+import uk.gov.hmcts.opal.common.user.authentication.exception.AuthenticationError;
+import uk.gov.hmcts.opal.common.user.authentication.exception.CustomAuthenticationExceptions;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthConfigurationProperties;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthConfigurationPropertiesStrategy;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthProviderConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.exception.AuthenticationError;
-import uk.gov.hmcts.reform.opal.authentication.exception.CustomAuthenticationExceptions;
-import uk.gov.hmcts.reform.opal.exception.OpalApiException;
 
 import java.io.IOException;
 import java.util.Map;

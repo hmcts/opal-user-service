@@ -1,0 +1,66 @@
+/**
+* CGI OPAL Program
+*
+* MODULE      : create_roles_table.sql
+*
+* DESCRIPTION : Creates the ROLES table to support role-based permission assignment.
+*
+* VERSION HISTORY:
+*
+* Date          Author      Version     Nature of Change
+* ----------    -------     --------    ----------------------------------------------------------------------------
+* 19/02/2026    C Cho       1.0         PO-2823 Create ROLES table, sequence, constraints, and indexes.
+*
+**/
+
+CREATE TABLE roles
+(
+ role_id                       bigint          NOT NULL
+,version_number                bigint          NOT NULL
+,opal_domain_id                smallint        NOT NULL
+,role_name                     varchar(100)    NOT NULL
+,is_active                     boolean         NOT NULL
+,application_function_list     varchar(200)[]  DEFAULT ARRAY[]::varchar(200)[]
+,CONSTRAINT roles_pk PRIMARY KEY
+ (
+   role_id
+  ,version_number
+ )
+);
+
+COMMENT ON COLUMN roles.role_id IS 'ID of the role for this record.';
+COMMENT ON COLUMN roles.version_number IS 'Version of the application functions (permissions) for this record.';
+COMMENT ON COLUMN roles.opal_domain_id IS 'ID of the Opal domain to which the role belongs.';
+COMMENT ON COLUMN roles.role_name IS 'Role name, unique within an Opal domain.';
+COMMENT ON COLUMN roles.is_active IS 'Flag to indicate if this record is the active (current) version of a role.';
+COMMENT ON COLUMN roles.application_function_list IS
+    'Array of application functions (permissions set) applicable for this role version.';
+
+CREATE SEQUENCE role_id_seq
+    INCREMENT 1
+    MINVALUE 1
+    NO MAXVALUE
+    START WITH 1
+    CACHE 1
+    OWNED BY roles.role_id;
+
+ALTER TABLE roles
+    ALTER COLUMN role_id SET DEFAULT nextval('role_id_seq');
+
+ALTER TABLE roles
+ADD CONSTRAINT roles_opal_domain_id_fk FOREIGN KEY
+(
+  opal_domain_id
+)
+REFERENCES domain
+(
+  opal_domain_id
+);
+
+CREATE INDEX roles_opal_domain_id_idx ON roles (opal_domain_id);
+
+ALTER TABLE roles
+ADD CONSTRAINT roles_name_domain_version_uk UNIQUE (role_name, opal_domain_id, version_number);
+
+CREATE INDEX roles_application_function_list_gin_idx
+    ON roles USING GIN (application_function_list);

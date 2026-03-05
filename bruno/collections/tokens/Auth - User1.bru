@@ -1,0 +1,20 @@
+meta {
+  name: Auth - User1
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseURL}}/testing-support/token/test-user
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  baseURL: http://localhost:4555
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

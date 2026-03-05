@@ -1,0 +1,20 @@
+meta {
+  name: health
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseURL}}/health
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  baseURL: http://localhost:4555
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

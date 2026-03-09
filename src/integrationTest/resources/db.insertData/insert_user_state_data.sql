@@ -1,15 +1,21 @@
 -- Insert users from Flyway script V20240729_003
-INSERT INTO users (user_id, token_preferred_username, password, description)
-VALUES (500000000, 'opal-test@HMCTS.NET', 'password', 'User with 7 business units');
+INSERT INTO users (user_id, token_preferred_username, password, description, created_date)
+VALUES (500000000, 'opal-test@HMCTS.NET', 'password', 'User with 7 business units', CURRENT_TIMESTAMP);
 
-INSERT INTO users (user_id, token_preferred_username, token_subject, status, description, token_name, version_number)
-VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', NULL, 'User with no business units', NULL, 0),
-       (500000002, 'update-user@HMCTS.NET', 'BmMfmuTT9pEdG', 'CREATED', 'User for testing \`update\`', NULL, 0),
-       (500000003, 'test-user@HMCTS.NET', 'jjqwGAERGW43', 'active', 'Test User for testing', 'Pablo', 2),
-       (500000004, 'test-user@HMCTS.NET', '7324-fh42dEsr', 'active', 'Test User for testing', 'Pablo', 2),
-       (500000005, 'update-user@HMCTS.NET', 'QeJjwoWnY-kBmMfm', 'active', 'Test User for testing \`update\`', 'Pablo', 7),
-       (500000006, 'no-go-user@HMCTS.NET', '8hqucbw874fg3', 'active',
-        'User with business units but no entitlements', 'No Permissions', 3);
+INSERT INTO users (user_id, token_preferred_username, token_subject, description, token_name, version_number,
+                   created_date)
+VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', 'User with no business units', NULL, 0,
+        CURRENT_TIMESTAMP),
+       (500000002, 'update-user@HMCTS.NET', 'BmMfmuTT9pEdG', 'User for testing \`update\`', NULL, 0,
+        CURRENT_TIMESTAMP),
+       (500000003, 'test-user@HMCTS.NET', 'jjqwGAERGW43', 'Test User for testing', 'Pablo', 2,
+        CURRENT_TIMESTAMP),
+       (500000004, 'test-user@HMCTS.NET', '7324-fh42dEsr', 'Test User for testing', 'Pablo', 2,
+        CURRENT_TIMESTAMP),
+       (500000005, 'update-user@HMCTS.NET', 'QeJjwoWnY-kBmMfm', 'Test User for testing \`update\`', 'Pablo', 7,
+        CURRENT_TIMESTAMP),
+       (500000006, 'no-go-user@HMCTS.NET', '8hqucbw874fg3', 'User with business units but no entitlements', 'No Permissions', 3,
+        CURRENT_TIMESTAMP);
 
 -- Insert business units that are referenced in the business_unit_users script
 INSERT INTO business_units (business_unit_id, business_unit_name, business_unit_code, business_unit_type,

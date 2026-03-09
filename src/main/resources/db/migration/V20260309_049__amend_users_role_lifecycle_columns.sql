@@ -38,7 +38,7 @@ ALTER TABLE users
     ALTER COLUMN created_date DROP DEFAULT;
 
 ALTER TABLE users
-    ADD CONSTRAINT users_suspension_reason_ck
+    ADD CONSTRAINT users_suspension_reason_cc
         CHECK (suspension_start_date IS NULL OR suspension_reason IS NOT NULL);
 
 ALTER TABLE users

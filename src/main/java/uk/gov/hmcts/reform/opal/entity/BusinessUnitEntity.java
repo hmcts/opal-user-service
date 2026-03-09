@@ -54,7 +54,7 @@ public class BusinessUnitEntity {
     private BusinessUnitEntity parentBusinessUnit;
 
     @Column(name = "opal_domain_id")
-    private Short opalDomainId;
+    private Integer opalDomainId;
 
     @Column(name = "welsh_language")
     private Boolean welshLanguage;

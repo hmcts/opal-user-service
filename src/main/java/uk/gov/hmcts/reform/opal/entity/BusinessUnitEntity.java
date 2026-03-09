@@ -53,8 +53,8 @@ public class BusinessUnitEntity {
     @JoinColumn(name = "parent_business_unit_id")
     private BusinessUnitEntity parentBusinessUnit;
 
-    @Column(name = "opal_domain", length = 30)
-    private String opalDomain;
+    @Column(name = "opal_domain_id")
+    private Short opalDomainId;
 
     @Column(name = "welsh_language")
     private Boolean welshLanguage;

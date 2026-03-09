@@ -56,8 +56,8 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${OPAL_USER_DB_HOST:localhost}:${OPAL_USER_DB_PORT:5432}/${OPAL_USER_DB_NAME:opal-user-db}${OPAL_USER_DB_OPTIONS:}
-    username: ${OPAL_USER_DB_USERNAME:opal-user}
-    password: ${OPAL_USER_DB_PASSWORD:opal-user}
+    username: ${OPAL_USER_DB_USERNAME:opal-db-user}
+    password: ${OPAL_USER_DB_PASSWORD:opal-db-password}
     properties:
       charSet: UTF-8
     hikari:

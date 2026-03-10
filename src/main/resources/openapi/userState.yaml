@@ -1,0 +1,186 @@
+openapi: 3.1.1
+info:
+  title: Opal User Service - User State
+  version: "0.0.1"
+paths:
+  /users/{id}/state:
+    get:
+      operationId: getUserStateV1
+      summary: Get User State (v1)
+      description: >
+        Returns the user state for a given user ID (v1).
+        If the ID is `0`, returns the authenticated user's state.
+        This follows the V1 payload structure (simpler root; business_unit_users array).
+      tags:
+        - Users State
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User identifier. Use `0` to return the authenticated user.
+          schema:
+            type: integer
+            format: int64
+        - name: X-New-Login
+          in: header
+          required: true
+          description: |
+            Indicates whether this request is immediately following a login.
+            - true: request immediately after login
+            - false: standard refresh of user state.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Successful retrieval of user state (v1)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStateResponseV1'
+        '400':
+          description: Invalid request
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+        '404':
+          description: User not found
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+  /v2/users/{id}/state:
+    get:
+      operationId: getUserStateV2
+      summary: Get User State (v2)
+      description: >
+        Returns the user state for a given user ID (v2).
+        If the ID is `0`, returns the authenticated user's state.
+        V2 payload includes `domains`, optional `fines`, and `business_unit_users`.
+      tags:
+        - Users State
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User identifier. Use `0` to return the authenticated user.
+          schema:
+            type: integer
+            format: int64
+        - name: X-New-Login
+          in: header
+          required: true
+          description: |
+            Indicates whether this request is immediately following a login.
+            - true: request immediately after login
+            - false: standard refresh of user state.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Successful retrieval of user state (v2)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStateResponseV2'
+        '400':
+          description: Invalid request
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+        '404':
+          description: User not found
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+components:
+  schemas:
+
+    # ---------------------------
+    # V1 response (as documented)
+    # ---------------------------
+    UserStateResponseV1:
+      type: object
+      required:
+        - user_id
+        - status
+      properties:
+        user_id:
+          type: integer
+          format: int64
+          description: users.user_id
+        username:
+          type: string
+          description: users.username
+        name:
+          type: string
+          description: Obtained from access token until persisted in DB (applies when id = 0).
+        business_unit_users:
+          type: array
+          description: Business Unit Users (0..N)
+          items:
+            $ref: './common.yaml#/components/schemas/BusinessUnitUser'
+
+    # ---------------------------
+    # V2 response (expanded)
+    # ---------------------------
+    UserStateResponseV2:
+      type: object
+      required:
+        - cache_name
+        - user_id
+        - username
+        - status
+        - version
+        - domains
+      properties:
+        cache_name:
+          type: string
+          description: The cache key that the user state has been stored under.
+        user_id:
+          type: integer
+          format: int64
+          description: users.user_id
+        username:
+          type: string
+          description: users.username
+        name:
+          type: string
+          description: Obtained from access token until persisted in DB (applies when id = 0).
+        status:
+          type: string
+          description: Derived user status.
+          enum:
+            - PENDING
+            - ACTIVE
+            - SUSPENDED
+            - DEACTIVATED
+        version:
+          type: integer
+          description: users.version
+        domains:
+          $ref: '#/components/schemas/Domains'
+
+    Domains:
+      type: object
+      required:
+        - fines
+      properties:
+        fines:
+          $ref: '#/components/schemas/Domain'
+
+    Domain:
+      type: object
+      description: Domain object
+      required:
+        - business_unit_users
+      properties:
+        business_unit_users:
+          minItems: 0
+          type: array
+          items:
+            $ref: './common.yaml#/components/schemas/BusinessUnitUser'

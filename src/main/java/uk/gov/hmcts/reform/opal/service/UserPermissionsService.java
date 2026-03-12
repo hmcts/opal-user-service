@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
+import uk.gov.hmcts.opal.common.dto.Versioned;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
@@ -145,7 +145,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
                               .status(UserStatus.CREATED)
                               .tokenSubject(claimSet.getSubject())
                               .tokenName(claimSet.getClaim(NAME_CLAIM).toString())
-                              .version(0L)
+                              .versionNumber(0L)
                               .build());
 
         log.debug(":createUser: name: {}, new id: {}", userEntity.getTokenName(), userEntity.getUserId());

@@ -1,11 +1,12 @@
 package uk.gov.hmcts.reform.opal.util;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.helpers.MessageFormatter;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
+import uk.gov.hmcts.opal.common.dto.Versioned;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 
 @Slf4j(topic = "opal.VersionUtils")
@@ -64,7 +65,7 @@ public class VersionUtils {
     public static void verifyIfMatch(Versioned existingFromDB, String ifMatch, Object id, String method) {
         verifyVersions(existingFromDB, () -> Optional.ofNullable(ifMatch)
             .map(s -> s.replace("\"", ""))
-            .map(Long::parseLong)
+            .map(BigInteger::new)
             .orElseThrow(() -> new ResourceConflictException(existingFromDB.getClass().getSimpleName(), id,
                   "Could not parse 'ifMatch': " + ifMatch + " in method: " + method, existingFromDB)), id, method);
     }

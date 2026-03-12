@@ -37,6 +37,7 @@ import uk.gov.hmcts.opal.common.user.authentication.exception.MissingRequestHead
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.ConnectException;
 import java.net.URI;
 import java.util.NoSuchElementException;
@@ -472,7 +473,8 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleResourceConflict_withVersioned() {
-        ResourceConflictException ex = new ResourceConflictException("DraftAccount", "123", "BU mismatch", () -> 666L);
+        ResourceConflictException ex = new ResourceConflictException("DraftAccount", "123", "BU mismatch",
+                                                                     () -> new BigInteger("666"));
         ResponseEntity<ProblemDetail> r = globalExceptionHandler.handleResourceConflictException(ex);
 
         assertEquals(HttpStatus.CONFLICT, r.getStatusCode());

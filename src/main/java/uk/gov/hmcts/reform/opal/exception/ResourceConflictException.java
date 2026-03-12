@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.opal.exception;
 
 import lombok.Getter;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
+import uk.gov.hmcts.opal.common.dto.Versioned;
 
 import java.util.Optional;
 

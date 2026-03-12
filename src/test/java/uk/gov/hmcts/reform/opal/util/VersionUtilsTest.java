@@ -3,24 +3,26 @@ package uk.gov.hmcts.reform.opal.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.math.BigInteger;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
+import uk.gov.hmcts.opal.common.dto.Versioned;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 
 public class VersionUtilsTest {
 
     @Test
     void testVerifyVersions_success() {
-        Versioned entity = new UtilVersioned(1L);
-        Versioned dto = new UtilVersioned(1L);
+        Versioned entity = new UtilVersioned(1);
+        Versioned dto = new UtilVersioned(1);
         VersionUtils.verifyVersions(entity, dto, "test id", "testVerifyVersions_success");
     }
 
     @Test
     void testVerifyVersions_fail() {
-        Versioned entity = new UtilVersioned(1L);
-        Versioned dto = new UtilVersioned(2L);
+        Versioned entity = new UtilVersioned(1);
+        Versioned dto = new UtilVersioned(2);
 
         ObjectOptimisticLockingFailureException rte = assertThrows(ObjectOptimisticLockingFailureException.class, () ->
             VersionUtils.verifyVersions(entity, dto, "test id", "testVerifyVersions_fail")
@@ -35,15 +37,15 @@ public class VersionUtilsTest {
 
     @Test
     void testVerifyUpdated_success() {
-        Versioned entity = new UtilVersioned(2L);
-        Versioned dto = new UtilVersioned(1L);
+        Versioned entity = new UtilVersioned(2);
+        Versioned dto = new UtilVersioned(1);
         VersionUtils.verifyUpdated(entity, dto, "test id", "testVerifyVersions_success");
     }
 
     @Test
     void testVerifyUpdated_fail() {
-        Versioned entity = new UtilVersioned(2L);
-        Versioned dto = new UtilVersioned(2L);
+        Versioned entity = new UtilVersioned(2);
+        Versioned dto = new UtilVersioned(2);
 
         ResourceConflictException rte = assertThrows(ResourceConflictException.class, () ->
             VersionUtils.verifyUpdated(entity, dto, "test id", "testVerifyVersions_fail")
@@ -57,14 +59,14 @@ public class VersionUtilsTest {
 
     private class UtilVersioned implements Versioned {
 
-        private final Long version;
+        private final BigInteger version;
 
-        public UtilVersioned(Long v) {
-            this.version = v;
+        public UtilVersioned(int v) {
+            this.version = new BigInteger(String.valueOf(v));
         }
 
         @Override
-        public Long getVersion() {
+        public BigInteger getVersion() {
             return version;
         }
     }

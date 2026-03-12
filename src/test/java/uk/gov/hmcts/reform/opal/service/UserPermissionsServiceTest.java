@@ -33,6 +33,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -86,7 +87,7 @@ class UserPermissionsServiceTest {
         userEntity.setUsername(TOKEN_PREFERRED_USERNAME);
         userEntity.setTokenName(TOKEN_NAME);
         userEntity.setTokenSubject(TOKEN_SUBJECT);
-        userEntity.setVersion(4L);
+        userEntity.setVersionNumber(4L);
 
         userDto = new UserStateDto();
         userDto.setUserId(USER_ID);
@@ -159,7 +160,7 @@ class UserPermissionsServiceTest {
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
         assertNull(response.getStatus());
         assertEquals("John Smith", response.getName());
-        assertEquals(4L, response.getVersion());
+        assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
     @Test
@@ -183,7 +184,7 @@ class UserPermissionsServiceTest {
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
         assertNull(response.getStatus());
         assertEquals("john.smith", response.getName());
-        assertEquals(4L, response.getVersion());
+        assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
     @Test
@@ -207,7 +208,7 @@ class UserPermissionsServiceTest {
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
         assertNull(response.getStatus());
         assertEquals("john.smith", response.getName());
-        assertEquals(4L, response.getVersion());
+        assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
     @Test

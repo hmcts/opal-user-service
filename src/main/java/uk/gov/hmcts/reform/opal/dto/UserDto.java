@@ -1,11 +1,15 @@
 package uk.gov.hmcts.reform.opal.dto;
 
+import java.math.BigInteger;
+import java.util.Optional;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.ToJsonString;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
+import uk.gov.hmcts.opal.common.dto.ToJsonString;
+import uk.gov.hmcts.opal.common.dto.Versioned;
 
 @Data
 @NoArgsConstructor
@@ -27,7 +31,12 @@ public class UserDto implements Versioned, ToJsonString {
     @JsonProperty("status")
     private String status;
 
-    @JsonProperty("version")
-    private Long version;
+    @JsonIgnore
+    private Long versionNumber;
 
+    @Override
+    @JsonProperty("version")
+    public BigInteger getVersion() {
+        return Optional.ofNullable(versionNumber).map(BigInteger::valueOf).orElse(null);
+    }
 }

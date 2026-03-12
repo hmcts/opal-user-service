@@ -93,7 +93,7 @@ class UserPermissionsControllerTest {
         UserDto returnedDto = new UserDto();
         returnedDto.setUserId(123L);
         returnedDto.setUsername("opal-test@HMCTS.NET");
-        returnedDto.setVersion(7L);
+        returnedDto.setVersionNumber(7L);
         given(userPermissionsService.updateUser(any(), any(), any(), any())).willReturn(returnedDto);
 
         // Act
@@ -116,7 +116,7 @@ class UserPermissionsControllerTest {
         UserDto returnedDto = new UserDto();
         returnedDto.setUserId(123L);
         returnedDto.setUsername("opal-test@HMCTS.NET");
-        returnedDto.setVersion(7L);
+        returnedDto.setVersionNumber(7L);
         given(userPermissionsService.updateUser(any(), any(), any())).willReturn(returnedDto);
 
         // Act

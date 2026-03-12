@@ -1,5 +1,8 @@
 package uk.gov.hmcts.reform.opal.entity;
 
+import java.math.BigInteger;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -21,7 +24,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
+import uk.gov.hmcts.opal.common.dto.Versioned;
 
 
 @Entity
@@ -69,6 +72,11 @@ public class UserEntity implements Versioned {
 
     @Column(name = "version_number")
     @Version
-    private Long version;
+    private Long versionNumber;
+
+    @Override
+    public BigInteger getVersion() {
+        return Optional.ofNullable(versionNumber).map(BigInteger::valueOf).orElse(null);
+    }
 
 }

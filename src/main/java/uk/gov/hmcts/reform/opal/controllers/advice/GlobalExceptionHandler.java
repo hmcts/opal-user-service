@@ -32,8 +32,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import uk.gov.hmcts.opal.common.dto.Versioned;
 import uk.gov.hmcts.opal.common.exception.OpalApiException;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Versioned;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 
 import java.net.ConnectException;

@@ -2,7 +2,7 @@ package uk.gov.hmcts.reform.opal.dto.search;
 
 import lombok.Builder;
 import lombok.Data;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.ToJsonString;
+import uk.gov.hmcts.opal.common.dto.ToJsonString;
 
 @Data
 @Builder

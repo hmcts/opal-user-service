@@ -393,7 +393,7 @@ dependencies {
   implementation 'org.apache.xmlgraphics:fop-core:2.11'
   implementation 'org.apache.xmlgraphics:fop-events:2.11'
   implementation 'org.apache.xmlgraphics:xmlgraphics-commons:2.11'
-  implementation 'org.apache.pdfbox:pdfbox:3.0.6'
+  implementation 'org.apache.pdfbox:pdfbox:3.0.7'
   implementation 'net.sf.saxon:Saxon-HE:12.9'
 
   implementation 'com.networknt:json-schema-validator:1.5.9'

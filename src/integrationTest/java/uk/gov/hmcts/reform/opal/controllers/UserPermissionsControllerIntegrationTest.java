@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static uk.gov.hmcts.opal.common.user.authorisation.client.dto.ToJsonString.toPrettyJson;
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.toPrettyJson;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;

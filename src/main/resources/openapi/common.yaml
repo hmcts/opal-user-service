@@ -7,6 +7,13 @@ info:
   title: Opal Fines Service
   version: v0.0.1
 components:
+  headers:
+    ETag:
+      description: Version of the returned entity - a BigInteger surrounded by double quotes.
+      schema:
+        type: string
+        example: '"7"'
+      required: true
   schemas:
     BusinessUnitUser:
       type: object

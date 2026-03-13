@@ -33,10 +33,13 @@ paths:
       responses:
         '200':
           description: Successful retrieval of user state (v1)
+          headers:
+            ETag:
+              $ref: './common.yaml#/components/headers/ETag'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserStateResponseV1'
+                $ref: '#/components/schemas/UserStateV1'
         '400':
           description: Invalid request
           content:
@@ -80,10 +83,13 @@ paths:
       responses:
         '200':
           description: Successful retrieval of user state (v2)
+          headers:
+            ETag:
+              $ref: './common.yaml#/components/headers/ETag'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserStateResponseV2'
+                $ref: '#/components/schemas/UserStateV2'
         '400':
           description: Invalid request
           content:
@@ -103,11 +109,11 @@ components:
     # ---------------------------
     # V1 response (as documented)
     # ---------------------------
-    UserStateResponseV1:
+    UserStateV1:
       type: object
+      x-extendable: true
       required:
         - user_id
-        - status
       properties:
         user_id:
           type: integer
@@ -128,14 +134,14 @@ components:
     # ---------------------------
     # V2 response (expanded)
     # ---------------------------
-    UserStateResponseV2:
+    UserStateV2:
       type: object
+      x-extendable: true
       required:
         - cache_name
         - user_id
         - username
         - status
-        - version
         - domains
       properties:
         cache_name:
@@ -159,9 +165,6 @@ components:
             - ACTIVE
             - SUSPENDED
             - DEACTIVATED
-        version:
-          type: integer
-          description: users.version
         domains:
           $ref: '#/components/schemas/Domains'
 

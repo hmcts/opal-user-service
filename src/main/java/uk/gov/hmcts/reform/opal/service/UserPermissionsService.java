@@ -35,6 +35,7 @@ import uk.gov.hmcts.reform.opal.entity.UserStatus;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
@@ -50,6 +51,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
     //The claim used to map the authorised user to the user entity.
     private static final String PREFERRED_USERNAME_CLAIM = "preferred_username";
 
+    private final BusinessUnitUserRepository businessUnitUserRepository;
     private final UserEntitlementRepository userEntitlementRepository;
     private final UserRepository userRepository;
     private final UserStateMapper userStateMapperImplementation;
@@ -116,8 +118,16 @@ public class UserPermissionsService implements UserPermissionsProxy {
 
         // 2. If the set is empty, check if the user actually exists.
         if (entitlements.isEmpty()) {
-            // User exists but has no entitlements, so return the DTO with an empty list.
-            return userStateMapperImplementation.toUserStateDto(user, Collections.emptyList());
+            List<BusinessUnitUserDto> businessUnitUsers = businessUnitUserRepository
+                .findAllByUser_UserId(user.getUserId())
+                .stream()
+                .map(businessUnitUser -> userStateMapperImplementation.toBusinessUnitUserDto(
+                    businessUnitUser,
+                    Collections.emptyList()
+                ))
+                .toList();
+
+            return userStateMapperImplementation.toUserStateDto(user, businessUnitUsers);
         }
 
         // 3. Group entitlements by the BusinessUnitUser's ID (a String)

@@ -1,6 +1,6 @@
 java:
   applicationPort: 4555
-  image: 'sdshmctspublic.azurecr.io/opal/user-service:latest'
+  image: 'hmctsprod.azurecr.io/opal/user-service:latest'
   ingressHost: opal-user-service.{{ .Values.global.environment }}.platform.hmcts.net
   aadIdentityName: opal
   keyVaults:

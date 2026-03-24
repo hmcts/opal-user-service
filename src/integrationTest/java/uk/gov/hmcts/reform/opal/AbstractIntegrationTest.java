@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -16,12 +17,17 @@ import static uk.gov.hmcts.reform.opal.TestContainerConfig.POSTGRES_CONTAINER;
 @ActiveProfiles("integration")
 @ContextConfiguration(classes = {TestContainerConfig.class})
 @AutoConfigureMockMvc()
-public class AbstractIntegrationTest {
+@SuppressWarnings({"java:S6813", "SpringJavaInjectionPointsAutowiringInspection"})
+public abstract class AbstractIntegrationTest {
+
     @Autowired
     protected MockMvc mockMvc;
 
     @Autowired
     protected ObjectMapper objectMapper;
+
+    @Autowired
+    protected JdbcTemplate jdbcTemplate;
 
     // Dynamically register properties to configure the datasource
     @DynamicPropertySource

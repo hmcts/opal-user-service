@@ -76,7 +76,7 @@ public class UserEntity implements Versioned {
 
     @Override
     public BigInteger getVersion() {
-        return Optional.ofNullable(versionNumber).map(BigInteger::valueOf).orElse(null);
+        return Optional.ofNullable(versionNumber).map(BigInteger::valueOf).orElse(BigInteger.ZERO);
     }
 
 }

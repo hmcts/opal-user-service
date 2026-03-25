@@ -109,7 +109,7 @@ opal:
   testing-support-endpoints:
     enabled: ${TESTING_SUPPORT_ENDPOINTS_ENABLED:true}
   test-user:
-    email: ${OPAL_TEST_USER_EMAIL:opal-test@HMCTS.NET}
+    email: ${OPAL_TEST_USER_EMAIL:opal-test@dev.platform.hmcts.net}
     password: ${OPAL_TEST_USER_PASSWORD}
   common:
     domain: user

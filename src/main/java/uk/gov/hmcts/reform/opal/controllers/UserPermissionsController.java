@@ -24,25 +24,29 @@ import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
 @Slf4j(topic = "opal.UserPermissionsController")
 public class UserPermissionsController {
 
+    private static final String X_NEW_LOGIN = "X-New-Login";
     private final UserPermissionsService userPermissionsService;
 
     @GetMapping("/state")
-    public ResponseEntity<UserStateDto> getUserState(Authentication authentication) {
+    public ResponseEntity<UserStateDto> getUserState(
+        Authentication authentication,
+        @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
 
-        log.debug(":GET:getUserState:");
-        UserStateDto dto = userPermissionsService.getUserState(authentication, userPermissionsService);
-        return buildResponse(dto);
+        log.debug(":GET:getUserState: new login: {}", newLogin);
+        return buildResponse(userPermissionsService.getUserState(authentication, userPermissionsService, newLogin));
     }
 
     @GetMapping("/{userId}/state")
-    public ResponseEntity<UserStateDto> getUserState(@PathVariable Long userId, Authentication authentication) {
+    public ResponseEntity<UserStateDto> getUserState(
+        @PathVariable Long userId, Authentication authentication,
+        @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
 
-        log.debug(":GET:getUserState: userId: {}", userId);
-        UserStateDto dto = userPermissionsService.getUserState(userId, authentication, userPermissionsService);
-        return buildResponse(dto);
+        log.debug(":GET:getUserState: userId: {}, new login: {}", userId, newLogin);
+        return buildResponse(userPermissionsService
+                                 .getUserState(userId, authentication, userPermissionsService, newLogin));
     }
 
-    @PostMapping
+    @PostMapping()
     public ResponseEntity<UserDto> addUser(@RequestHeader(value = "Authorization") String authHeaderValue) {
         log.debug(":POST:addUser:");
         return buildCreatedResponse(userPermissionsService.addUser(authHeaderValue));
@@ -63,4 +67,5 @@ public class UserPermissionsController {
         log.debug(":PUT:updateUser:");
         return buildResponse(userPermissionsService.updateUser(authHeaderValue, userPermissionsService, ifMatch));
     }
+
 }

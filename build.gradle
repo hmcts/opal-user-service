@@ -286,9 +286,11 @@ sonarqube {
   properties {
     property "sonar.projectName", "Reform :: opal-user-service"
     property "sonar.projectKey", "uk.gov.hmcts.reform:opal-user-service"
+    property "sonar.organization", "hmcts"
     property "sonar.gradle.skipCompile", "true"
     property "sonar.exclusions", coverageExclusions.join(', ')
     property 'sonar.coverage.exclusions', "**/entity/*,**/model/*,**/exception/*,**/config/**,**/repository/jpa/*,**/opal/dto/*"
+    property 'sonar.cpd.exclusions', "**/entity/*,**/opal/dto/**"
   }
 }
 

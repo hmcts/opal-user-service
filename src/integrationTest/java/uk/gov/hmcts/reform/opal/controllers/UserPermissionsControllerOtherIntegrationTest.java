@@ -1,37 +1,11 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTCreator.Builder;
-import com.auth0.jwt.algorithms.Algorithm;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.web.servlet.ResultActions;
-import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
-import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
-import uk.gov.hmcts.reform.opal.service.JsonSchemaValidationService;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -48,19 +22,36 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.util.Map;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTCreator.Builder;
+import com.auth0.jwt.algorithms.Algorithm;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
+import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
+import uk.gov.hmcts.reform.opal.service.JsonSchemaValidationService;
+
 @ActiveProfiles({"integration"})
 @Slf4j(topic = "opal.UserPermissionsControllerIntegrationTest")
 @Sql(scripts = "classpath:db.insertData/insert_user_state_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @TestPropertySource(properties = {"spring.jpa.hibernate.ddl-auto=create-drop"})
-@DisplayName("UserPermissionsController Integration Test with Security")
-class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
+@DisplayName("UserPermissionsController 'Add' and 'Update' Integration Tests with Security")
+class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationTest {
 
     private static final String URL_BASE = "/users";
     private static final String SQL_USER_QUERY = "SELECT * FROM users WHERE user_id = ?";
     private static final String GET_USER_STATE_RESPONSE_JSON = "getUserStateResponse.json";
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     @MockitoSpyBean
     private JsonSchemaValidationService jsonSchemaValidationService;
@@ -69,238 +60,7 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
     private AccessTokenService accessTokenService;
 
     @Test
-    @DisplayName("Should return 200 and full user state for a user with permissions [PO-857]")
-    void getUserState_whenUserHasPermissions_returns200AndCorrectPayload() throws Exception {
-        long userIdWithPermissions = 500000000L;
-
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithPermissions + "/state"));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_whenUserHasPermissions_returns200AndCorrectPayload: Response body:\n{}",
-                 toPrettyJson(body));
-
-        actions.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$['user_id']").value(500000000))
-            .andExpect(jsonPath("$['username']").value("opal-test@HMCTS.NET"))
-            .andExpect(jsonPath("$['business_unit_users']", hasSize(3)))
-            .andExpect(jsonPath("$['business_unit_users'][*]['business_unit_id']",
-                                containsInAnyOrder(70, 68, 61)))
-            .andExpect(jsonPath(
-                "$['business_unit_users'][?(@['business_unit_id']==70)]['business_unit_user_id']")
-                           .value("L065JG"))
-            .andExpect(jsonPath(
-                "$['business_unit_users'][?(@['business_unit_id']==70)]['permissions'][*]['permission_name']",
-                                containsInAnyOrder("Account Enquiry - Account Notes", "Account Enquiry")))
-            .andExpect(jsonPath(
-                "$['business_unit_users'][?(@['business_unit_id']==68)]['business_unit_user_id']")
-                           .value("L066JG"))
-            .andExpect(jsonPath(
-                "$['business_unit_users'][?(@['business_unit_id']==68)]['permissions'][0]['permission_name']")
-                           .value("Account Enquiry - Account Notes"))
-            .andExpect(jsonPath(
-                "$['business_unit_users'][?(@['business_unit_id']==61)]['business_unit_user_id']")
-                           .value("L080JG"))
-            .andExpect(jsonPath(
-                "$['business_unit_users'][?(@['business_unit_id']==61)]['permissions'][0]['permission_name']")
-                           .value("Collection Order"));
-    }
-
-    @Test
-    @DisplayName("Should return 200 and state with empty list for a user that exists but has no permissions [PO-857]")
-    void getUserState_whenUserExistsButHasNoPermissions_returns200AndEmptyList() throws Exception {
-        long userIdWithoutPermissions = 500000001L;
-
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithoutPermissions + "/state"));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_whenUserExistsButHasNoPermissions_returns200AndEmptyList: Response body:\n{}",
-                 toPrettyJson(body));
-
-        actions.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(header().string("ETag", "\"0\""))
-            .andExpect(jsonPath("$['user_id']").value(500000001))
-            .andExpect(jsonPath("$['username']").value("opal-test-2@HMCTS.NET"))
-            .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
-    }
-
-    @Test
-    @DisplayName("Should return 200")
-    void getUserState_existingUser() throws Exception {
-        long userIdWithoutPermissions = 500000003L;
-
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithoutPermissions + "/state"));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_existingUser: Response body:\n{}", toPrettyJson(body));
-
-        actions.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(header().string("ETag", "\"2\""))
-            .andExpect(jsonPath("$['user_id']").value(500000003))
-            .andExpect(jsonPath("$['username']").value("test-user@HMCTS.NET"))
-            .andExpect(jsonPath("$['name']").value("Pablo"))
-            .andExpect(jsonPath("$['status']").value("active"))
-            .andExpect(jsonPath("$['version']").value(2))
-            .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
-    }
-
-    @Test
-    @DisplayName("Should return 200 from Authentication Principal and no User Id")
-    void getUserState_existingUserViaPrinciple_noUserId() throws Exception {
-
-        JwtAuthenticationToken jwtAuthToken = createJwtPrincipal("jjqwGAERGW43","test-user@HMCTS.NET", "Pablo");
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/state").principal(jwtAuthToken));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_existingUserViaPrinciple: Response body:\n{}", toPrettyJson(body));
-
-        actions.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(header().string("ETag", "\"2\""))
-            .andExpect(jsonPath("$['user_id']").value(500000003))
-            .andExpect(jsonPath("$['username']").value("test-user@HMCTS.NET"))
-            .andExpect(jsonPath("$['name']").value("Pablo"))
-            .andExpect(jsonPath("$['status']").value("active"))
-            .andExpect(jsonPath("$['version']").value(2))
-            .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
-    }
-
-    @Test
-    @DisplayName("Should return 200 from Authentication Principal")
-    void getUserState_existingUserViaPrinciple() throws Exception {
-
-        JwtAuthenticationToken jwtAuthToken = createJwtPrincipal("jjqwGAERGW43","test-user@HMCTS.NET", "Pablo");
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/0/state").principal(jwtAuthToken));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_existingUserViaPrinciple: Response body:\n{}", toPrettyJson(body));
-
-        actions.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(header().string("ETag", "\"2\""))
-            .andExpect(jsonPath("$['user_id']").value(500000003))
-            .andExpect(jsonPath("$['username']").value("test-user@HMCTS.NET"))
-            .andExpect(jsonPath("$['name']").value("Pablo"))
-            .andExpect(jsonPath("$['status']").value("active"))
-            .andExpect(jsonPath("$['version']").value(2))
-            .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
-    }
-
-    @Test
-    @DisplayName("Should return 404 Not Found from Authentication Principal")
-    void getUserState_existingUserViaPrinciple_doesNotExist() throws Exception {
-
-        JwtAuthenticationToken jwtAuthToken = createJwtPrincipal("invalid_sub","test-user@HMCTS.NET", "Pablo");
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/0/state").principal(jwtAuthToken));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_existingUserViaPrinciple_doesNotExist: Response body:\n{}",
-                 toPrettyJson(body));
-
-        actions.andExpect(status().isNotFound())
-            .andExpect(jsonPath("$['reason']").value("User not found with subject: invalid_sub"));
-    }
-
-    @Test
-    @DisplayName("Should return 409 Conflict from different preferred username")
-    void getUserState_existingUserViaPrinciple_conflitPreferred() throws Exception {
-
-        JwtAuthenticationToken jwtAuthToken = createJwtPrincipal("jjqwGAERGW43","different@HMCTS.NET", "Pablo");
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/0/state").principal(jwtAuthToken));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_existingUserViaPrinciple_doesNotExist: Response body:\n{}",
-                 toPrettyJson(body));
-
-        actions.andExpect(status().isConflict())
-            .andExpect(header().string("ETag", "\"2\""))
-            .andExpect(jsonPath("$['conflictReason']").value(
-                "Preferred Username mismatch: token: different@HMCTS.NET, db: test-user@HMCTS.NET"));
-    }
-
-    @Test
-    @DisplayName("Should return 409 Conflict from different name")
-    void getUserState_existingUserViaPrinciple_conflitName() throws Exception {
-
-        JwtAuthenticationToken jwtAuthToken = createJwtPrincipal("jjqwGAERGW43","test-user@HMCTS.NET", "Peter");
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/0/state").principal(jwtAuthToken));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_existingUserViaPrinciple_doesNotExist: Response body:\n{}",
-                 toPrettyJson(body));
-
-        actions.andExpect(status().isConflict())
-            .andExpect(header().string("ETag", "\"2\""))
-            .andExpect(jsonPath("$['conflictReason']").value("Name mismatch: token: Peter, db: Pablo"));
-    }
-
-    @Test
-    @DisplayName("Should return 404 Not Found for a user that does not exist [PO-857]")
-    void getUserState_whenUserDoesNotExist_returns404() throws Exception {
-        long nonExistentUserId = 999999999L;
-
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + nonExistentUserId + "/state"));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_whenUserDoesNotExist_returns404: Response body:\n{}", toPrettyJson(body));
-
-        actions.andExpect(status().isNotFound())
-            .andExpect(jsonPath("$['reason']").value("User not found with id: 999999999"));
-    }
-
-    @Test
-    @DisplayName("Should return 406 for invalid User ID format [PO-857]")
-    void getUserState_whenUserIdFormatIsInvalid_returns406() throws Exception {
-        String invalidUserId = "invalidUserId";
-
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + invalidUserId + "/state"));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_whenUserIdFormatIsInvalid_returns406: Response body:\n{}", toPrettyJson(body));
-
-        actions.andExpect(status().isNotAcceptable());
-    }
-
-    @Test
-    @DisplayName("Should handle business unit with one permission [PO-857]")
-    void getUserState_whenBusinessUnitHasOnePermission_returnsCorrectPermission() throws Exception {
-        long userIdWithPermissions = 500000000L;
-
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithPermissions + "/state"));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_whenBusinessUnitHasOnePermission_returnsCorrectPermission: Response body:\n{}",
-                 toPrettyJson(body));
-
-        actions.andExpect(status().isOk())
-            .andExpect(jsonPath(
-                "$['business_unit_users'][?(@['business_unit_id']==68)]['permissions']", hasSize(1)))
-            .andExpect(jsonPath(
-                "$['business_unit_users'][?(@['business_unit_id']==68)]['permissions'][0]['permission_name']")
-                .value("Account Enquiry - Account Notes"));
-    }
-
-    @Test
-    @DisplayName("Should handle business unit with multiple permissions [PO-857]")
-    void getUserState_whenBusinessUnitHasMultiplePermissions_returnsAllPermissions() throws Exception {
-        long userIdWithPermissions = 500000000L;
-
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithPermissions + "/state"));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_whenBusinessUnitHasMultiplePermissions_returnsAllPermissions: Response body:\n{}",
-                 toPrettyJson(body));
-
-        actions.andExpect(status().isOk())
-            .andExpect(jsonPath(
-                "$['business_unit_users'][?(@['business_unit_id']==70)]['permissions'][*]['permission_name']",
-                        containsInAnyOrder("Account Enquiry - Account Notes", "Account Enquiry")));
-    }
-
-    @Test
-    void testAddUser() throws Exception {
+    void addUser() throws Exception {
 
         ResultActions actions = mockMvc.perform(
             post(URL_BASE).header("Authorization", "Bearer " + createSignedToken("kWiw5ddDf32")));
@@ -343,7 +103,7 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void testUpdateUser() throws Exception {
+    void updateUser_ok_1() throws Exception {
 
         // Check Data in DB before update
         Map<String, Object> rowData = jdbcTemplate.queryForMap(SQL_USER_QUERY, 500000002L);
@@ -388,7 +148,7 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void testUpdateUser_2() throws Exception {
+    void updateUser_ok_2() throws Exception {
 
         // Check Data in DB before update
         Map<String, Object> rowData = jdbcTemplate.queryForMap(SQL_USER_QUERY, 500000005L);
@@ -476,8 +236,9 @@ class UserPermissionsControllerIntegrationTest extends AbstractIntegrationTest {
                                 .accept(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(status().isInternalServerError());
         } catch (jakarta.servlet.ServletException ex) {
-            assertTrue(ex.getCause() instanceof NullPointerException,
-                       "Expected NullPointerException when JWT claim is null");
+            assertInstanceOf(NullPointerException.class, ex.getCause(),
+                "Expected NullPointerException when JWT claim is null"
+            );
         }
     }
 

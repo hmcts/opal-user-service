@@ -33,7 +33,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.ResultActions;
@@ -44,8 +43,8 @@ import uk.gov.hmcts.reform.opal.service.JsonSchemaValidationService;
 
 @ActiveProfiles({"integration"})
 @Slf4j(topic = "opal.UserPermissionsControllerIntegrationTest")
+@Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @Sql(scripts = "classpath:db.insertData/insert_user_state_data.sql", executionPhase = BEFORE_TEST_CLASS)
-@TestPropertySource(properties = {"spring.jpa.hibernate.ddl-auto=create-drop"})
 @DisplayName("UserPermissionsController 'Add' and 'Update' Integration Tests with Security")
 class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationTest {
 
@@ -99,7 +98,7 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$['title']").value("Conflict"))
             .andExpect(jsonPath("$['detail']").value("Data integrity violation with the requested resource"))
-            .andExpect(jsonPath("$['constraintViolated']").value("users_token_subject_key"));
+            .andExpect(jsonPath("$['constraintViolated']").value("users_token_subject_uk"));
     }
 
     @Test

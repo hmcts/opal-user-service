@@ -1,6 +1,11 @@
 spring:
-  flyway:
-    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        hbm2ddl:
+          schema_filter_provider: uk.gov.hmcts.reform.opal.HibernateIntegrationSchemaFilterProvider
   security:
     oauth2:
       resourceserver:
@@ -13,4 +18,3 @@ spring:
       - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
       - org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientWebSecurityAutoConfiguration
       - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
-

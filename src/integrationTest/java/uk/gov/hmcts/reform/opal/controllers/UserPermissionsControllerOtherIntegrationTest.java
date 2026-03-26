@@ -1,11 +1,14 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -59,8 +62,37 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
     private AccessTokenService accessTokenService;
 
     @Test
-    void addUser() throws Exception {
 
+    @DisplayName("Should return business unit users with empty permissions when entitlements are missing")
+    void getUserState_keepsUnitsWhenEntitlementsMissing()
+        throws Exception {
+        long userIdWithoutEntitlements = 500000006L;
+
+        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithoutEntitlements + "/state"));
+
+        String body = actions.andReturn().getResponse().getContentAsString();
+        log.info(":getUserState_whenUserHasBusinessUnitsButNoEntitlements_returnsBusinessUnitsWithEmptyPermissions:"
+                     + " Response body:\n{}",
+                 toPrettyJson(body));
+
+        actions.andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(header().string("ETag", "\"3\""))
+            .andExpect(jsonPath("$['user_id']").value(500000006))
+            .andExpect(jsonPath("$['username']").value("no-go-user@HMCTS.NET"))
+            .andExpect(jsonPath("$['business_unit_users']", hasSize(2)))
+            .andExpect(jsonPath("$['business_unit_users'][*]['business_unit_id']",
+                                containsInAnyOrder(67, 69)))
+            .andExpect(jsonPath("$['business_unit_users'][?(@['business_unit_id']==67)]['business_unit_user_id']")
+                           .value("L081JG"))
+            .andExpect(jsonPath("$['business_unit_users'][?(@['business_unit_id']==69)]['business_unit_user_id']")
+                           .value("L082JG"))
+            .andExpect(jsonPath("$['business_unit_users'][0]['permissions']", hasSize(0)))
+            .andExpect(jsonPath("$['business_unit_users'][1]['permissions']", hasSize(0)));
+    }
+
+    @Test
+    void addUser() throws Exception {
         ResultActions actions = mockMvc.perform(
             post(URL_BASE).header("Authorization", "Bearer " + createSignedToken("kWiw5ddDf32")));
 

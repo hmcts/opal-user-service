@@ -28,7 +28,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.ResultActions;
@@ -38,8 +37,8 @@ import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 
 @ActiveProfiles({"integration"})
 @Slf4j(topic = "opal.UserPermissionsControllerIntegrationTest")
+@Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @Sql(scripts = "classpath:db.insertData/insert_user_state_data.sql", executionPhase = BEFORE_TEST_CLASS)
-@TestPropertySource(properties = {"spring.jpa.hibernate.ddl-auto=create-drop"})
 @DisplayName("UserPermissionsControllerGetIntegrationTest")
 class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTest {
 

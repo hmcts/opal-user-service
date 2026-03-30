@@ -25,7 +25,7 @@ To start the Opal Fines Service along with the Opal User Service and Opal Loggin
 following commands:
 
 Docker using local version of fines (Based on your local changes)
-(All other services will use the images from sdshmctspublic)
+(All other services will use the images from hmctsprod)
 ```bash / zsh
  docker compose -p opal-user-local \
   -f docker-compose.base.yml \

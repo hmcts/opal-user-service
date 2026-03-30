@@ -28,6 +28,13 @@
       "matchManagers": ["gradle"],
       "matchPackageNames": ["org.hibernate.orm:hibernate-jpamodelgen"],
       "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group Swagger Core dependencies",
+      "matchManagers": ["gradle"],
+      "matchPackagePrefixes": ["io.swagger.core.v3:"],
+      "groupName": "Swagger Core",
+      "groupSlug": "swagger-core"
     }
   ],
   "description": "Schedule for Wednesdays only.",

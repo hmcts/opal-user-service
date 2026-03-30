@@ -21,7 +21,7 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
-    image: hmctspublic.azurecr.io/opal/user-service
+    image: hmctsprod.azurecr.io/opal/user-service
     environment:
       # these environment variables are used by java-logging library
       - ROOT_APPENDER

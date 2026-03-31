@@ -37,6 +37,18 @@
       "groupSlug": "swagger-core"
     },
     {
+      "description": "Group Tomcat embed dependencies",
+      "matchManagers": ["gradle"],
+      "matchPackageNames": [
+        "org.apache.tomcat.embed:tomcat-embed-core",
+        "org.apache.tomcat.embed:tomcat-embed-websocket",
+        "org.apache.tomcat.embed:tomcat-embed-el",
+        "org.apache.tomcat:tomcat-annotations-api"
+      ],
+      "groupName": "Tomcat Embed",
+      "groupSlug": "tomcat-embed"
+    },
+    {
       "description": "springdoc 3.x requires Spring Boot 4.x; keep on 2.x until Boot 4 migration",
       "matchManagers": ["gradle"],
       "matchPackageNames": ["org.springdoc:springdoc-openapi-starter-webmvc-ui"],

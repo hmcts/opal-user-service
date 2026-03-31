@@ -10,7 +10,7 @@ plugins {
   id 'application'
   id 'jacoco'
   id 'io.spring.dependency-management' version '1.1.7'
-  id 'org.springframework.boot' version '3.5.11'
+  id 'org.springframework.boot' version '4.0.5'
   id 'com.github.ben-manes.versions' version '0.53.0'
   id 'org.sonarqube' version '7.2.3.7755'
   id 'uk.gov.hmcts.java' version '0.12.67'
@@ -136,7 +136,7 @@ openApiGenerate {
           dateLibrary                         : "java8-localdatetime",
           interfaceOnly                       : "true",
           useTags                             : "true",
-          useSpringBoot3                      : "true",
+          useSpringBoot4                      : "true",
           containerDefaultToNull              : "true",
           generatedConstructorWithRequiredArgs: "false",
           useBeanValidation                   : "true",
@@ -309,7 +309,7 @@ dependencyUpdates {
 dependencyManagement {
   imports {
     mavenBom "org.springframework.integration:spring-integration-bom:6.5.7"
-    mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2025.0.0'
+    mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2025.1.1'
   }
 
   dependencies {
@@ -331,22 +331,22 @@ repositories {
 }
 
 ext['snakeyaml.version'] = '2.0'
-ext['jackson.version'] = '2.16.1'
 ext['tomcat.version'] = '10.1.43'
 
 dependencies {
 
-  implementation 'uk.gov.hmcts:opal-common-lib:0.2.6'
+  implementation 'uk.gov.hmcts:opal-common-lib:0.3.0'
 
   implementation 'org.springframework.boot:spring-boot-starter-web'
   implementation 'org.springframework.boot:spring-boot-starter-actuator'
-  implementation 'org.springframework.boot:spring-boot-starter-aop'
+  implementation 'org.springframework.boot:spring-boot-starter-aspectj'
   implementation 'org.springframework.boot:spring-boot-starter-json'
   implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
   implementation 'org.springframework.boot:spring-boot-starter-security'
   implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
   implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
   implementation 'org.springframework.boot:spring-boot-starter-cache'
+  implementation 'org.springframework.boot:spring-boot-flyway'
 
   implementation 'org.springframework.boot:spring-boot-starter-integration'
   implementation 'org.springframework.integration:spring-integration-sftp'
@@ -357,7 +357,7 @@ dependencies {
     exclude group: 'commons-fileupload', module: 'commons-fileupload'
   }
 
-  implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
+  implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
 
   implementation 'com.github.hmcts.java-logging:logging:8.0.0'
 
@@ -370,7 +370,7 @@ dependencies {
   implementation 'com.networknt:json-schema-validator:2.0.1'
   implementation 'com.jayway.jsonpath:json-path:3.0.0'
 
-  implementation 'io.rest-assured:rest-assured'
+  implementation 'io.rest-assured:rest-assured:5.5.7'
   implementation 'org.flywaydb:flyway-core:11.20.3'
   runtimeOnly 'org.flywaydb:flyway-database-postgresql:11.20.3', {
     exclude group: 'org.flywaydb', module: 'flyway-core'
@@ -397,9 +397,10 @@ dependencies {
   testImplementation 'org.springframework.security:spring-security-test'
   testImplementation 'org.springframework.boot:spring-boot-devtools'
   testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+  testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
   testImplementation 'com.auth0:java-jwt:4.5.1'
   testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
-  testImplementation 'org.testcontainers:postgresql'
+  testImplementation 'org.testcontainers:testcontainers-postgresql'
   testImplementation(platform('org.junit:junit-bom:6.0.3'))
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testImplementation 'org.springframework.boot:spring-boot-starter-test', {

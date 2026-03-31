@@ -26,11 +26,14 @@ import uk.gov.hmcts.opal.common.user.authentication.service.TokenValidator;
 import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
+import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
+import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserMapperImpl;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapperImplementation;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
@@ -40,6 +43,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.math.BigInteger;
@@ -48,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -62,6 +67,9 @@ class UserPermissionsServiceTest {
 
     @Mock
     private UserEntitlementRepository userEntitlementRepository;
+
+    @Mock
+    private BusinessUnitUserRepository businessUnitUserRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -181,6 +189,31 @@ class UserPermissionsServiceTest {
 
         verify(userRepository).findByTokenSubject(any());
         verify(securityEventLoggingService, never()).logEvent(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void buildUserState_returnsEmptyPermissionsWhenEntitlementsMissing() {
+        BusinessUnitUserEntity firstBusinessUnitUser = BusinessUnitUserEntity.builder()
+            .businessUnitUserId("L081JG")
+            .businessUnit(BusinessUnitEntity.builder().businessUnitId((short) 67).build())
+            .build();
+        BusinessUnitUserEntity secondBusinessUnitUser = BusinessUnitUserEntity.builder()
+            .businessUnitUserId("L082JG")
+            .businessUnit(BusinessUnitEntity.builder().businessUnitId((short) 69).build())
+            .build();
+
+        when(userEntitlementRepository.findAllByUserIdWithFullJoins(USER_ID))
+            .thenReturn(java.util.Collections.emptySet());
+        when(businessUnitUserRepository.findAllByUser_UserId(USER_ID))
+            .thenReturn(List.of(firstBusinessUnitUser, secondBusinessUnitUser));
+
+        UserStateDto result = service.buildUserState(userEntity);
+
+        assertNotNull(result);
+        assertEquals(USER_ID, result.getUserId());
+        assertNotNull(result.getBusinessUnitUsers());
+        assertEquals(2, result.getBusinessUnitUsers().size());
+        assertTrue(result.getBusinessUnitUsers().stream().allMatch(buu -> buu.getPermissions().isEmpty()));
     }
 
     @Test

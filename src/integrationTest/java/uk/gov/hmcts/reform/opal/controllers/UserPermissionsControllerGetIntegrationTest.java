@@ -52,7 +52,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @NullSource
     @ValueSource(booleans = {false, true})
     @DisplayName("Should return 200 and full user state for a user with permissions [PO-857]")
-    void getUserState_whenUserHasPermissions_returns200AndCorrectPayload(Boolean newLogin) throws Exception {
+    void getUserState_returnsFullState(Boolean newLogin) throws Exception {
         long userIdWithPermissions = 500000000L;
 
         MockHttpServletRequestBuilder builder = get(URL_BASE + "/" + userIdWithPermissions + "/state")
@@ -99,7 +99,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @NullSource
     @ValueSource(booleans = {false, true})
     @DisplayName("Should return 200 and state with empty list for a user that exists but has no permissions [PO-857]")
-    void getUserState_whenUserExistsButHasNoPermissions_returns200AndEmptyList(Boolean newLogin) throws Exception {
+    void getUserState_returnsNoUnitsForUnentitledUser(Boolean newLogin) throws Exception {
         long userIdWithoutPermissions = 500000001L;
 
         MockHttpServletRequestBuilder builder = get(URL_BASE + "/" + userIdWithoutPermissions + "/state")
@@ -301,7 +301,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @NullSource
     @ValueSource(booleans = {false, true})
     @DisplayName("Should return 406 for invalid User ID format [PO-857]")
-    void getUserState_whenUserIdFormatIsInvalid_returns406(Boolean newLogin) throws Exception {
+    void getUserState_rejectsInvalidUserId(Boolean newLogin) throws Exception {
         String invalidUserId = "invalidUserId";
 
         MockHttpServletRequestBuilder builder = get(URL_BASE + "/" + invalidUserId + "/state");
@@ -320,7 +320,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @NullSource
     @ValueSource(booleans = {false, true})
     @DisplayName("Should handle business unit with one permission [PO-857]")
-    void getUserState_whenBusinessUnitHasOnePermission_returnsCorrectPermission(Boolean newLogin) throws Exception {
+    void getUserState_returnsSinglePermission(Boolean newLogin) throws Exception {
         long userIdWithPermissions = 500000000L;
 
         MockHttpServletRequestBuilder builder = get(URL_BASE + "/" + userIdWithPermissions + "/state")
@@ -348,7 +348,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @NullSource
     @ValueSource(booleans = {false, true})
     @DisplayName("Should handle business unit with multiple permissions [PO-857]")
-    void getUserState_whenBusinessUnitHasMultiplePermissions_returnsAllPermissions(Boolean newLogin) throws Exception {
+    void getUserState_returnsMultiplePermissions(Boolean newLogin) throws Exception {
         long userIdWithPermissions = 500000000L;
 
         MockHttpServletRequestBuilder builder = get(URL_BASE + "/" + userIdWithPermissions + "/state")

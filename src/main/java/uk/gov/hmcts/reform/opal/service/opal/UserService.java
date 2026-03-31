@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.dto.search.UserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
@@ -22,6 +23,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.UserService")
 @Qualifier("userService")
+@Transactional(readOnly = true)
 public class UserService implements UserServiceInterface {
 
     private final UserRepository userRepository;

@@ -39,7 +39,7 @@ class AcceptHeaderInterceptorTest {
     }
 
     @Test
-    void preHandle_WithCheckAcceptHeaderAnnotationAndValidJsonAcceptHeader_ShouldReturnTrue() throws Exception {
+    void preHandle_allowsJsonAccept() throws Exception {
         when(handlerMethod.hasMethodAnnotation(CheckAcceptHeader.class)).thenReturn(true);
         when(request.getHeader("Accept")).thenReturn("application/json");
 
@@ -50,7 +50,7 @@ class AcceptHeaderInterceptorTest {
     }
 
     @Test
-    void preHandle_WithCheckAcceptHeaderAnnotationAndValidWildcardAcceptHeader_ShouldReturnTrue() throws Exception {
+    void preHandle_allowsWildcardAccept() throws Exception {
         when(handlerMethod.hasMethodAnnotation(CheckAcceptHeader.class)).thenReturn(true);
         when(request.getHeader("Accept")).thenReturn("*/*");
 
@@ -61,7 +61,7 @@ class AcceptHeaderInterceptorTest {
     }
 
     @Test
-    void preHandle_WithCheckAcceptHeaderAnnotationAndInvalidAcceptHeader_ShouldReturnFalse() throws Exception {
+    void preHandle_rejectsInvalidAccept() throws Exception {
         when(handlerMethod.hasMethodAnnotation(CheckAcceptHeader.class)).thenReturn(true);
         when(request.getHeader("Accept")).thenReturn("application/xml");
 
@@ -80,7 +80,7 @@ class AcceptHeaderInterceptorTest {
 
 
     @Test
-    void preHandle_WithoutCheckAcceptHeaderAnnotation_ShouldReturnTrue() throws Exception {
+    void preHandle_skipsUncheckedHandlers() throws Exception {
         when(handlerMethod.hasMethodAnnotation(CheckAcceptHeader.class)).thenReturn(false);
 
         boolean result = interceptor.preHandle(request, response, handlerMethod);

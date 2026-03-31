@@ -28,6 +28,19 @@
       "matchManagers": ["gradle"],
       "matchPackageNames": ["org.hibernate.orm:hibernate-jpamodelgen"],
       "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "Group Swagger Core dependencies",
+      "matchManagers": ["gradle"],
+      "matchPackagePrefixes": ["io.swagger.core.v3:"],
+      "groupName": "Swagger Core",
+      "groupSlug": "swagger-core"
+    },
+    {
+      "description": "springdoc 3.x requires Spring Boot 4.x; keep on 2.x until Boot 4 migration",
+      "matchManagers": ["gradle"],
+      "matchPackageNames": ["org.springdoc:springdoc-openapi-starter-webmvc-ui"],
+      "allowedVersions": "<3.0.0"
     }
   ],
   "description": "Schedule for Wednesdays only.",

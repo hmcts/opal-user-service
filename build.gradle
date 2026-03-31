@@ -15,8 +15,8 @@ plugins {
   id 'org.sonarqube' version '7.2.3.7755'
   id 'uk.gov.hmcts.java' version '0.12.67'
   id 'org.flywaydb.flyway' version '11.20.3'
-  id 'net.serenity-bdd.serenity-gradle-plugin' version '5.2.2'
-  id "org.openapi.generator" version "7.19.0"
+  id 'net.serenity-bdd.serenity-gradle-plugin' version '5.3.9'
+  id "org.openapi.generator" version "7.21.0"
 }
 
 ext {
@@ -359,16 +359,16 @@ dependencies {
 
   implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
 
-  implementation 'com.github.hmcts.java-logging:logging:7.0.0'
+  implementation 'com.github.hmcts.java-logging:logging:8.0.0'
 
   implementation "org.apache.logging.log4j:log4j-api:${log4JVersion}"
   implementation "org.apache.logging.log4j:log4j-to-slf4j:${log4JVersion}"
   implementation 'com.google.guava:guava:33.5.0-jre'
 
-  implementation 'com.launchdarkly:launchdarkly-java-server-sdk:7.12.0'
+  implementation 'com.launchdarkly:launchdarkly-java-server-sdk:7.13.1'
 
   implementation 'com.networknt:json-schema-validator:2.0.1'
-  implementation 'com.jayway.jsonpath:json-path:2.10.0'
+  implementation 'com.jayway.jsonpath:json-path:3.0.0'
 
   implementation 'io.rest-assured:rest-assured'
   implementation 'org.flywaydb:flyway-core:11.20.3'
@@ -392,7 +392,7 @@ dependencies {
 
 
   implementation 'com.networknt:json-schema-validator:1.5.9'
-  implementation 'com.jayway.jsonpath:json-path:2.10.0'
+  implementation 'com.jayway.jsonpath:json-path:3.0.0'
   testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
   testImplementation 'org.springframework.security:spring-security-test'
   testImplementation 'org.springframework.boot:spring-boot-devtools'
@@ -417,10 +417,10 @@ dependencies {
   testImplementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
 
   implementation 'org.openapitools:jackson-databind-nullable:0.2.9'
-  openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.38"
-  openapiImplementation "io.swagger.core.v3:swagger-models:2.2.43"
-  openapiImplementation "io.swagger.core.v3:swagger-core:2.2.42"
-  openapiImplementation platform("com.fasterxml.jackson:jackson-bom:2.20.1")
+  openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.39"
+  openapiImplementation "io.swagger.core.v3:swagger-models:2.2.45"
+  openapiImplementation "io.swagger.core.v3:swagger-core:2.2.45"
+  openapiImplementation platform("com.fasterxml.jackson:jackson-bom:2.21.2")
   openapiImplementation "com.fasterxml.jackson.core:jackson-databind"
   openapiImplementation "com.fasterxml.jackson.core:jackson-core"
   openapiImplementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml"

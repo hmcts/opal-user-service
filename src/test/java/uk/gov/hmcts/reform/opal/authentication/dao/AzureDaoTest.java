@@ -94,7 +94,7 @@ class AzureDaoTest {
 
         HTTPResponse response = Mockito.mock(HTTPResponse.class);
         when(response.getStatusCode()).thenReturn(HttpStatus.SC_OK);
-        when(response.getContent()).thenReturn(body);
+        when(response.getBody()).thenReturn(body);
 
         return response;
     }
@@ -103,7 +103,7 @@ class AzureDaoTest {
 
         HTTPResponse response = Mockito.mock(HTTPResponse.class);
         when(response.getStatusCode()).thenReturn(HttpStatus.SC_BAD_REQUEST);
-        when(response.getContent()).thenReturn("body");
+        when(response.getBody()).thenReturn("body");
 
         return response;
     }

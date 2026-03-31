@@ -310,7 +310,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleServletExceptions_ResourceNotFound_ShouldReturnNotFoundError() {
-        NoResourceFoundException exception = new NoResourceFoundException(HttpMethod.GET, "path");
+        NoResourceFoundException exception = new NoResourceFoundException(HttpMethod.GET, "path", null);
         ResponseEntity<ProblemDetail> response = globalExceptionHandler.handleServletExceptions(exception);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());

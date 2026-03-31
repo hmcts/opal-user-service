@@ -39,7 +39,7 @@ public class AzureDao {
                                                                                    configuration.getClientId(),
                                                                                    configuration.getClientSecret(),
                                                                                    configuration.getScope());
-            String parsedResponse = response.getContent();
+            String parsedResponse = response.getBody();
 
             if (HttpStatus.SC_OK != response.getStatusCode()) {
                 throw new AzureDaoException(

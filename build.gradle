@@ -417,7 +417,7 @@ dependencies {
   testImplementation "net.serenity-bdd:serenity-cucumber:${serenityVersion}"
   testImplementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
 
-  implementation 'org.openapitools:jackson-databind-nullable:0.2.9'
+  implementation 'org.openapitools:jackson-databind-nullable:0.2.10'
   openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.39"
   openapiImplementation "io.swagger.core.v3:swagger-models:2.2.46"
   openapiImplementation "io.swagger.core.v3:swagger-core:2.2.46"

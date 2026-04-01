@@ -370,7 +370,7 @@ dependencies {
   implementation 'com.networknt:json-schema-validator:2.0.1'
   implementation 'com.jayway.jsonpath:json-path:3.0.0'
 
-  implementation 'io.rest-assured:rest-assured:5.5.7'
+  implementation 'io.rest-assured:rest-assured:6.0.0'
   implementation 'org.flywaydb:flyway-core:12.3.0'
   runtimeOnly 'org.flywaydb:flyway-database-postgresql:12.3.0', {
     exclude group: 'org.flywaydb', module: 'flyway-core'

@@ -13,11 +13,10 @@
       "versioning": "fixed"
     },
     {
-      "description": "Lock the Schema Validator to v1.x.y to avoid major issues with v2+",
+      "description": "Keep json-schema-validator on v1.x because JsonSchemaValidationService still uses the pre-v3 networknt API and v2/v3 are not drop-in compatible",
       "matchManagers": ["gradle"],
-      "matchPackageNames": ["json-schema-validator"],
-      "matchPackagePrefixes": "com.networknt",
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchPackageNames": ["com.networknt:json-schema-validator"],
+      "allowedVersions": "<2.0.0"
     },
     {
       "matchDatasources": ["docker"],

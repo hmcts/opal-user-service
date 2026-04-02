@@ -47,7 +47,7 @@
       "allowedVersions": "<3.0.0"
     },
     {
-      "description": "Group all Gradle plugins (Minor/Patch)",
+      "description": "Group all Gradle plugins - Minor/Patch",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^org\\.springframework\\.boot$",
@@ -60,10 +60,10 @@
         "^org\\.openapi.generator$"
       ],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "Gradle Plugins (Minor/Patch)"
+      "groupName": "Gradle Plugins - Minor/Patch"
     },
     {
-      "description": "Group all Gradle plugins (Major)",
+      "description": "Group all Gradle plugins - Major",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^org\\.springframework\\.boot$",
@@ -76,24 +76,24 @@
         "^org\\.openapi.generator$"
       ],
       "matchUpdateTypes": ["major"],
-      "groupName": "Gradle Plugins (Major)"
+      "groupName": "Gradle Plugins - Major"
     },
     {
-      "description": "Group all Spring dependencies (Minor/Patch)",
+      "description": "Group all Spring dependencies - Minor/Patch",
       "matchManagers": ["gradle"],
       "matchPackagePrefixes": "org.springframework",
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "Spring Dependencies (Minor/Patch)"
+      "groupName": "Spring Dependencies - Minor/Patch"
     },
     {
-      "description": "Group all Spring dependencies (Major)",
+      "description": "Group all Spring dependencies - Major",
       "matchManagers": ["gradle"],
       "matchPackagePrefixes": "org.springframework",
       "matchUpdateTypes": ["major"],
-      "groupName": "Spring Dependencies (Major)"
+      "groupName": "Spring Dependencies - Major"
     },
     {
-      "description": "Group all test dependencies (Minor/Patch)",
+      "description": "Group all test dependencies - Minor/Patch",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^io\\.cucumber.*",
@@ -102,10 +102,10 @@
         "^org\\.mockito.*"
       ],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "Test Dependencies (Minor/Patch)"
+      "groupName": "Test Dependencies - Minor/Patch"
     },
     {
-      "description": "Group all test dependencies (Major)",
+      "description": "Group all test dependencies - Major",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^io\\.cucumber.*",
@@ -114,70 +114,70 @@
         "^org\\.mockito.*"
       ],
       "matchUpdateTypes": ["major"],
-      "groupName": "Test Dependencies (Major)"
+      "groupName": "Test Dependencies - Major"
     },
     {
-      "description": "Group all database dependencies (Minor/Patch)",
+      "description": "Group all database dependencies - Minor/Patch",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^org\\.flywaydb.*",
         "^org\\.postgresql.*"
       ],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "Database Dependencies (Minor/Patch)"
+      "groupName": "Database Dependencies - Minor/Patch"
     },
     {
-      "description": "Group all database dependencies (Major)",
+      "description": "Group all database dependencies - Major",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^org\\.flywaydb.*",
         "^org\\.postgresql.*"
       ],
       "matchUpdateTypes": ["major"],
-      "groupName": "Database Dependencies (Major)"
+      "groupName": "Database Dependencies - Major"
     },
     {
-      "description": "Group all OpenAPI/Swagger dependencies (Minor/Patch)",
+      "description": "Group all OpenAPI/Swagger dependencies - Minor/Patch",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^org\\.openapi.*",
         "^io\\.swagger.*"
       ],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "OpenAPI/Swagger Dependencies (Minor/Patch)"
+      "groupName": "OpenAPI/Swagger Dependencies - Minor/Patch"
     },
     {
-      "description": "Group all OpenAPI/Swagger dependencies (Major)",
+      "description": "Group all OpenAPI/Swagger dependencies - Major",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^org\\.openapi.*",
         "^io\\.swagger.*"
       ],
       "matchUpdateTypes": ["major"],
-      "groupName": "OpenAPI/Swagger Dependencies (Major)"
+      "groupName": "OpenAPI/Swagger Dependencies - Major"
     },
     {
-      "description": "Group all HMCTS dependencies (Minor/Patch)",
+      "description": "Group all HMCTS dependencies - Minor/Patch",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^uk\\.gov\\.hmcts.*",
         ".*hmcts.*"
       ],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "HMCTS Dependencies (Minor/Patch)"
+      "groupName": "HMCTS Dependencies - Minor/Patch"
     },
     {
-      "description": "Group all HMCTS dependencies (Major)",
+      "description": "Group all HMCTS dependencies - Major",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         "^uk\\.gov\\.hmcts.*",
         ".*hmcts.*"
       ],
       "matchUpdateTypes": ["major"],
-      "groupName": "HMCTS Dependencies (Major)"
+      "groupName": "HMCTS Dependencies - Major"
     },
     {
-      "description": "Group all logging dependencies (Minor/Patch)",
+      "description": "Group all logging dependencies - Minor/Patch",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         ".*log4j.*",
@@ -186,10 +186,10 @@
         ".*logging.*"
       ],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "Logging Dependencies (Minor/Patch)"
+      "groupName": "Logging Dependencies - Minor/Patch"
     },
     {
-      "description": "Group all logging dependencies (Major)",
+      "description": "Group all logging dependencies - Major",
       "matchManagers": ["gradle"],
       "matchPackagePatterns": [
         ".*log4j.*",
@@ -198,7 +198,7 @@
         ".*logging.*"
       ],
       "matchUpdateTypes": ["major"],
-      "groupName": "Logging Dependencies (Major)"
+      "groupName": "Logging Dependencies - Major"
     }
   ],
   "description": "Schedule for Wednesdays only.",

@@ -378,4 +378,5 @@ class UserPermissionsServiceTest {
 
         return new JwtAuthenticationToken(jwt);
     }
+
 }

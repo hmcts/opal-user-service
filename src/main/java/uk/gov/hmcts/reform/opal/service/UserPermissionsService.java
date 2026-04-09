@@ -3,6 +3,8 @@ package uk.gov.hmcts.reform.opal.service;
 import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
 import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +33,6 @@ import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
-import uk.gov.hmcts.reform.opal.entity.UserStatus;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
@@ -58,6 +59,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
     private final UserMapper userMapper;
     private final AccessTokenService tokenService;
     private final SecurityEventLoggingService securityEventLoggingService;
+    private final Clock clock;
 
 
     @Transactional(readOnly = true)
@@ -180,7 +182,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         UserEntity userEntity = userRepository
             .saveAndFlush(UserEntity.builder()
                               .username(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString())
-                              .status(UserStatus.CREATED)
+                              .createdDate(LocalDateTime.now(clock))
                               .tokenSubject(claimSet.getSubject())
                               .tokenName(claimSet.getClaim(NAME_CLAIM).toString())
                               .versionNumber(0L)

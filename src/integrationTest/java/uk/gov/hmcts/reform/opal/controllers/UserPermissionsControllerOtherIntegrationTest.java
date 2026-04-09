@@ -105,7 +105,7 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
             .andExpect(jsonPath("$['username']").value("j.s@example.com"))
             .andExpect(jsonPath("$['subject']").value("kWiw5ddDf32"))
             .andExpect(jsonPath("$['name']").value("john.smith"))
-            .andExpect(jsonPath("$['status']").value("CREATED"))
+            .andExpect(jsonPath("$['status']").value("active"))
             .andExpect(jsonPath("$['version']").value(0));
 
         jsonSchemaValidationService.validateOrError(body, GET_USER_STATE_RESPONSE_JSON);
@@ -116,7 +116,6 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
         assertEquals("j.s@example.com", rowData.get("token_preferred_username"));
         assertEquals("kWiw5ddDf32", rowData.get("token_subject"));
         assertEquals("john.smith", rowData.get("token_name"));
-        assertEquals("CREATED", rowData.get("status"));
         assertEquals(0L, rowData.get("version_number"));
     }
 
@@ -143,7 +142,6 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
         assertEquals("update-user@HMCTS.NET", rowData.get("token_preferred_username"));
         assertEquals("BmMfmuTT9pEdG", rowData.get("token_subject"));
         assertNull(rowData.get("token_name"));
-        assertEquals("CREATED", rowData.get("status"));
         assertEquals(0L, rowData.get("version_number"));
 
         // Act
@@ -162,7 +160,7 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
             .andExpect(jsonPath("$['username']").value("j.s@example.com"))
             .andExpect(jsonPath("$['name']").value("john.smith"))
             .andExpect(jsonPath("$['subject']").value("2cdF2g3Ds"))
-            .andExpect(jsonPath("$['status']").value("CREATED"))
+            .andExpect(jsonPath("$['status']").value("active"))
             .andExpect(jsonPath("$['version']").value(1));
 
         jsonSchemaValidationService.validateOrError(body, GET_USER_STATE_RESPONSE_JSON);
@@ -174,7 +172,6 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
         assertEquals("j.s@example.com", rowData.get("token_preferred_username"));
         assertEquals("2cdF2g3Ds", rowData.get("token_subject"));
         assertEquals("john.smith", rowData.get("token_name"));
-        assertEquals("CREATED", rowData.get("status"));
         assertEquals(1L, rowData.get("version_number"));
     }
 
@@ -188,7 +185,6 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
         assertEquals("update-user@HMCTS.NET", rowData.get("token_preferred_username"));
         assertEquals("QeJjwoWnY-kBmMfm", rowData.get("token_subject"));
         assertEquals("Pablo", rowData.get("token_name"));
-        assertEquals("active", rowData.get("status"));
         assertEquals(7L, rowData.get("version_number"));
 
         // Act
@@ -218,7 +214,6 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
         assertEquals("j.s@example.com", rowData.get("token_preferred_username"));
         assertEquals("QeJjwoWnY-kBmMfm", rowData.get("token_subject"));
         assertEquals("john.smith", rowData.get("token_name"));
-        assertEquals("active", rowData.get("status"));
         assertEquals(8L, rowData.get("version_number"));
     }
 

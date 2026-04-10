@@ -21,6 +21,8 @@ import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 
+import java.util.Set;
+
 @ExtendWith(MockitoExtension.class)
 class BusinessEventServiceTest {
 
@@ -40,7 +42,7 @@ class BusinessEventServiceTest {
 
     @Test
     void logBusinessEvent_usesAuthenticatedUserAsInitiator() {
-        RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent();
+        RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, Set.of((short) 11));
         BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(10L).build();
 
         when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(99L);
@@ -57,7 +59,7 @@ class BusinessEventServiceTest {
         assertEquals(BusinessEventLogType.ROLE_ASSIGNED_TO_USER, capturedEntity.getEventType());
         assertEquals(42L, capturedEntity.getSubjectUserId());
         assertEquals(99L, capturedEntity.getInitiatorUserId());
-        assertEquals("{}", capturedEntity.getEventDetails());
+        assertEquals("{\"role_id\":201,\"added_business_unit_ids\":[11]}", capturedEntity.getEventDetails());
         assertSame(savedEntity, result);
     }
 
@@ -84,8 +86,9 @@ class BusinessEventServiceTest {
     @Test
     void logBusinessEvent_throwsWhenEventDetailsTypeDoesNotMatchEventType() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-            () -> businessEventService.logBusinessEvent(BusinessEventLogType.ACCOUNT_DEACTIVATION_DATE_AMENDED,
-                42L, 88L, new RoleAssignedToUserEvent()));
+            () -> businessEventService.logBusinessEvent(
+                BusinessEventLogType.ACCOUNT_DEACTIVATION_DATE_AMENDED, 42L, 88L,
+                new RoleAssignedToUserEvent(201L, Set.of((short) 11))));
 
         assertEquals(
             "eventDetails must be of type AccountDeactivationDateAmendedEvent"

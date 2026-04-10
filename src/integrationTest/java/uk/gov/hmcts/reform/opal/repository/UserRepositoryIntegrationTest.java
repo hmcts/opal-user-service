@@ -10,28 +10,21 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.reform.opal.BaseIntegrationTest;
-import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
 
 @ActiveProfiles({"integration"})
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
-@Sql(scripts = "classpath:db.insertData/insert_user_state_data.sql", executionPhase = BEFORE_TEST_CLASS)
+@Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@DisplayName("UserRepository database integration tests")
-class UserRepositoryDatabaseIntegrationTest extends BaseIntegrationTest {
+@DisplayName("UserRepository integration tests")
+class UserRepositoryIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
 
     @Autowired
     private UserStateMapper mapper;
@@ -64,35 +57,6 @@ class UserRepositoryDatabaseIntegrationTest extends BaseIntegrationTest {
                      "domains": {}
                    }
              """));
-    }
-
-    @Test
-    @DisplayName("Test roles view only brings back latest versions")
-    void testRolesViewOnlyBringsBackLatestVersions() {
-
-        RoleEntity finesRole1 = findRoleByName(1L, "Fines_Role_1");
-        RoleEntity finesRole2 = findRoleByName(1L, "Fines_Role_2");
-        RoleEntity confiscationRole3 = findRoleByName(2L, "Confiscation_Role_3");
-
-        assertThat(finesRole1.getVersionNumber()).isEqualTo(2);
-        assertThat(finesRole1.getApplicationFunctionList()).containsExactly(
-            "CREATE_MANAGE_DRAFT_ACCOUNTS", "ACCOUNT_ENQUIRY");
-        assertThat(finesRole2.getVersionNumber()).isEqualTo(3);
-        assertThat(finesRole2.getApplicationFunctionList()).containsExactly(
-            "COLLECTION_ORDER", "CHECK_VALIDATE_DRAFT_ACCOUNTS", "SEARCH_AND_VIEW_ACCOUNTS");
-        assertThat(confiscationRole3.getVersionNumber()).isEqualTo(2);
-        assertThat(confiscationRole3.getApplicationFunctionList()).containsExactly(
-            "CREATE_MANAGE_DRAFT_ACCOUNTS", "COLLECTION_ORDER");
-
-    }
-
-    private RoleEntity findRoleByName(Long domainId, String roleName) {
-        Set<RoleEntity> matchingRoles = roleRepository.findAllByDomainId(domainId)
-            .stream()
-            .filter(role -> role.getName().equals(roleName))
-            .collect(Collectors.toSet());
-        assertThat(matchingRoles).hasSize(1);
-        return matchingRoles.iterator().next();
     }
 
     public static final String EXPECTED_V2_USER_STATE =

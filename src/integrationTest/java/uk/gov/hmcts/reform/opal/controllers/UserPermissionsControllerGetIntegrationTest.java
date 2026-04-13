@@ -123,6 +123,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .andExpect(header().string("ETag", "\"0\""))
             .andExpect(jsonPath("$['user_id']").value(500000001))
             .andExpect(jsonPath("$['username']").value("opal-test-2@HMCTS.NET"))
+            .andExpect(jsonPath("$['status']").value("active"))
             .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
 
         boolean testNewLogin = Boolean.TRUE.equals(newLogin);

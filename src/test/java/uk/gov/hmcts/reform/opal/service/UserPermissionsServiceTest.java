@@ -42,7 +42,9 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,7 +52,6 @@ import java.math.BigInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -88,6 +89,9 @@ class UserPermissionsServiceTest {
 
     @Mock
     private SecurityEventLoggingService securityEventLoggingService;
+
+    @Spy
+    private Clock clock = Clock.fixed(Instant.parse("2026-04-02T12:30:00Z"), ZoneOffset.UTC);
 
     @Spy
     @InjectMocks
@@ -234,8 +238,8 @@ class UserPermissionsServiceTest {
         assertEquals(42L, response.getUserId());
         assertEquals("opal-user@hmcts.net", response.getUsername());
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
-        assertNull(response.getStatus());
         assertEquals("John Smith", response.getName());
+        assertEquals("active", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
@@ -258,8 +262,8 @@ class UserPermissionsServiceTest {
         assertEquals(42L, response.getUserId());
         assertEquals("j.s@example.com", response.getUsername());
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
-        assertNull(response.getStatus());
         assertEquals("john.smith", response.getName());
+        assertEquals("active", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
@@ -282,8 +286,8 @@ class UserPermissionsServiceTest {
         assertEquals(42L, response.getUserId());
         assertEquals("j.s@example.com", response.getUsername());
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
-        assertNull(response.getStatus());
         assertEquals("john.smith", response.getName());
+        assertEquals("active", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 

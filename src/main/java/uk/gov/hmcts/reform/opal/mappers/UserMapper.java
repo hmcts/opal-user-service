@@ -11,6 +11,7 @@ public interface UserMapper {
 
     @Mapping(source = "tokenSubject", target = "subject")
     @Mapping(source = "tokenName", target = "name")
+    @Mapping(target = "status", constant = "active")
     UserDto toUserDto(UserEntity userEntity);
 
 }

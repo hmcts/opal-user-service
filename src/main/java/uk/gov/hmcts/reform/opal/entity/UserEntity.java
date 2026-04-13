@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.opal.entity;
 
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -9,8 +10,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -62,6 +61,8 @@ public class UserEntity implements Versioned {
     @Column(name = "status", length = 25)
     @Enumerated(EnumType.STRING)
     private UserStatus status;
+    @Column(name = "created_date", nullable = false)
+    private LocalDateTime createdDate;
 
     @Column(name = "token_subject", length = 100, unique = true)
     private String tokenSubject;

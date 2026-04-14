@@ -26,15 +26,15 @@ import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -75,6 +75,9 @@ class UserPermissionsServiceV2Test {
 
     @Mock
     private UserPermissionsProxy proxy;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private UserPermissionsService service;
@@ -155,6 +158,11 @@ class UserPermissionsServiceV2Test {
     void getUserStateV2_NewLogin() {
 
         // Arrange
+        Instant fixedInstant = Instant.parse("2026-04-14T10:15:30Z");
+        ZoneId fixedZone = ZoneId.of("UTC");
+        when(clock.instant()).thenReturn(fixedInstant);
+        when(clock.getZone()).thenReturn(fixedZone);
+
         JwtAuthenticationToken authentication = mock(JwtAuthenticationToken.class);
         when(authentication.getToken()).thenReturn(jwt);
         when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -171,18 +179,9 @@ class UserPermissionsServiceV2Test {
 
         // Assert
         assertThat(result).isEqualTo(dto);
-        verify(securityEventLoggingService).logEvent(
-            eq("User Authentication"),
-            eq("Success"),
-            isNull(),
-            eq("Authentication"),
-            any(),
-            argThat(data ->
-                        data != null
-                            && data.size() == 1
-                            && Long.valueOf(USER_ID).equals(data.get("UserIdentifier"))
-            )
-        );
+        assertThat(userEntity.getLastLoginDate())
+            .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
+        verify(userRepository).saveAndFlush(userEntity);
     }
 
     @Test
@@ -270,6 +269,11 @@ class UserPermissionsServiceV2Test {
     void getUserStateV2IdMethod_NewLoginWhenIdIsNonZero() {
 
         // Arrange
+        Instant fixedInstant = Instant.parse("2026-04-14T10:15:30Z");
+        ZoneId fixedZone = ZoneId.of("UTC");
+        when(clock.instant()).thenReturn(fixedInstant);
+        when(clock.getZone()).thenReturn(fixedZone);
+
         Authentication authentication = mock(JwtAuthenticationToken.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
@@ -284,18 +288,9 @@ class UserPermissionsServiceV2Test {
 
         // Assert
         assertThat(result).isEqualTo(dto);
-        verify(securityEventLoggingService).logEvent(
-            eq("User Authentication"),
-            eq("Success"),
-            isNull(),
-            eq("Authentication"),
-            any(),
-            argThat(data ->
-                        data != null
-                            && data.size() == 1
-                            && clientUserId.equals(data.get("UserIdentifier"))
-            )
-        );
+        assertThat(userEntity.getLastLoginDate())
+            .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
+        verify(userRepository).saveAndFlush(userEntity);
     }
 
     @Test
@@ -325,5 +320,62 @@ class UserPermissionsServiceV2Test {
         // Assert
         assertThat(result).isEqualTo(dto);
         verifyNoInteractions(securityEventLoggingService);
+    }
+
+    @Test
+    void getUserStateV2_NewLogin_UpdatesLastLogin() {
+        // Arrange
+        Instant fixedInstant = Instant.parse("2026-04-14T10:15:30Z");
+        ZoneId fixedZone = ZoneId.of("UTC");
+        when(clock.instant()).thenReturn(fixedInstant);
+        when(clock.getZone()).thenReturn(fixedZone);
+
+        JwtAuthenticationToken authentication = mock(JwtAuthenticationToken.class);
+        when(authentication.getToken()).thenReturn(jwt);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
+        when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
+        when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
+        when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
+        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+
+        // Act
+        UserStateV2Dto result = service.getUserStateV2(proxy, true);
+
+        // Assert
+        assertThat(result).isEqualTo(dto);
+        assertThat(userEntity.getLastLoginDate())
+            .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
+        verify(userRepository).saveAndFlush(userEntity);
+    }
+
+    @Test
+    void getUserStateV2IdMethod_NewLogin_UpdatesLastLogin() {
+        // Arrange
+        Instant fixedInstant = Instant.parse("2026-04-14T10:15:30Z");
+        ZoneId fixedZone = ZoneId.of("UTC");
+        when(clock.instant()).thenReturn(fixedInstant);
+        when(clock.getZone()).thenReturn(fixedZone);
+
+        Authentication authentication = mock(JwtAuthenticationToken.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
+        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+
+        Long clientUserId = 123L;
+        when(proxy.getUserId(authentication, proxy)).thenReturn(clientUserId);
+
+        // Act
+        UserStateV2Dto result = service.getUserStateV2(USER_ID, proxy, true);
+
+        // Assert
+        assertThat(result).isEqualTo(dto);
+        assertThat(userEntity.getLastLoginDate())
+            .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
+        verify(userRepository).saveAndFlush(userEntity);
     }
 }

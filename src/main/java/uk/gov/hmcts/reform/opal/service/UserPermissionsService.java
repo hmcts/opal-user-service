@@ -117,6 +117,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user);
         if (Optional.ofNullable(newLogin).orElse(false)) {
             logUserAuthenticationEvent(user.getUserId());
+            updateLastLogin(user);
         }
         return dto;
     }
@@ -133,6 +134,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 Long clientUserId = proxy.getUserId(authentication, proxy);
                 logUserAuthenticationEvent(clientUserId);
+                updateLastLogin(user);
             }
             return dto;
         }
@@ -150,6 +152,11 @@ public class UserPermissionsService implements UserPermissionsProxy {
         Map<String, Object> data = Map.of("UserIdentifier", userId);
         securityEventLoggingService.logEvent("User Authentication", "Success",
                                              null, "Authentication", getRequestTimestamp(), data);
+    }
+
+    private void updateLastLogin(UserEntity user) {
+        user.setLastLoginDate(LocalDateTime.now(clock));
+        userRepository.saveAndFlush(user);
     }
 
     @Transactional(readOnly = true)

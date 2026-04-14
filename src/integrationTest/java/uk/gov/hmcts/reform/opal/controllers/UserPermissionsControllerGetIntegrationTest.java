@@ -6,6 +6,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.verification.VerificationMode;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,7 +22,10 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import uk.gov.hmcts.opal.common.logging.EventLoggingService;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
 
@@ -411,6 +417,55 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             verifyNoInteractions(eventLoggingService);
         }
 
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("PO-2816, AC3: V2 with ID should update last_login_date only when newLogin is true")
+    void getV2UserStateWithId_updatesLastLoginDateInDb(boolean newLogin) throws Exception {
+        long userIdWithPermissions = 500000000L;
+
+        Authentication auth = createJwtPrincipal("k9LpT2xVqR8m", "opal-test@HMCTS.NET", "Pablo");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        LocalDateTime before = readLastLoginDate(userIdWithPermissions);
+
+        MockHttpServletRequestBuilder builder =
+            get("/v2" + URL_BASE + "/" + userIdWithPermissions + "/state");
+        addLoginHeader(newLogin, builder);
+
+        mockMvc.perform(builder)
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        LocalDateTime after = readLastLoginDate(userIdWithPermissions);
+
+        if (newLogin) {
+            assertThat(after).isNotNull();
+            assertThat(after).isAfter(before);
+        } else {
+            assertThat(after).isEqualTo(before);
+        }
+    }
+
+    private LocalDateTime readLastLoginDate(long userId) {
+        return jdbcTemplate.queryForObject(
+            "select last_login_date from users where user_id = ?",
+            (rs, rowNum) -> rs.getObject("last_login_date", LocalDateTime.class),
+            userId
+        );
+    }
+
+    @TestConfiguration
+    static class FixedClockConfig {
+        @Bean
+        @Primary
+        Clock clock() {
+            return Clock.fixed(
+                Instant.parse("2026-04-14T10:15:30Z"),
+                ZoneId.of("UTC")
+            );
+        }
     }
 
     public static final String EXPECTED_V2_USER_STATE =

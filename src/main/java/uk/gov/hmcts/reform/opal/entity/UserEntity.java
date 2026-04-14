@@ -58,9 +58,6 @@ public class UserEntity implements Versioned {
     @EqualsAndHashCode.Exclude
     private String description;
 
-    @Column(name = "status", length = 25)
-    @Enumerated(EnumType.STRING)
-    private UserStatus status;
     @Column(name = "created_date", nullable = false)
     private LocalDateTime createdDate;
 

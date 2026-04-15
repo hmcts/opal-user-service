@@ -1,6 +1,6 @@
 -- Insert users from Flyway script V20240729_003
-INSERT INTO users (user_id, token_preferred_username, password, description, created_date)
-VALUES (500000000, 'opal-test@HMCTS.NET', 'password', 'User with 7 business units', CURRENT_TIMESTAMP);
+INSERT INTO users (user_id, token_preferred_username, token_subject, token_name, password, description, created_date, version_number)
+VALUES (500000000, 'opal-test@HMCTS.NET', 'k9LpT2xVqR8m','Pablo', 'password', 'User with 7 business units', CURRENT_TIMESTAMP, 0);
 
 INSERT INTO users (user_id, token_preferred_username, token_subject, description, token_name, version_number,
                    created_date)
@@ -16,6 +16,7 @@ VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', 'User with no busin
         CURRENT_TIMESTAMP),
        (500000006, 'no-go-user@HMCTS.NET', '8hqucbw874fg3', 'User with business units but no entitlements', 'No Permissions', 3,
         CURRENT_TIMESTAMP);
+
 
 -- Insert business units that are referenced in the business_unit_users script
 INSERT INTO business_units (business_unit_id, business_unit_name, business_unit_code, business_unit_type,
@@ -55,3 +56,16 @@ VALUES (112687, 'L065JG', 41), -- BU 70 gets 'Account Enquiry - Account Notes'
        (112683, 'L065JG', 54), -- BU 70 gets 'Account Enquiry'
        (112921, 'L066JG', 41), -- BU 68 gets 'Account Enquiry - Account Notes'
        (500001, 'L080JG', 500); -- BU 61 gets 'Collection Order'
+
+INSERT INTO roles (role_id, version_number, opal_domain_id, role_name, is_active, application_function_list)
+VALUES (1,1, 1, 'Fines_Role_1', true, ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'ACCOUNT_ENQUIRY_NOTES']),
+       (1,2, 1, 'Fines_Role_1', true, ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'ACCOUNT_ENQUIRY']),
+       (2,1, 1, 'Fines_Role_2', true, ARRAY['COLLECTION_ORDER']),
+       (2,2, 1, 'Fines_Role_2', true, ARRAY['CHECK_VALIDATE_DRAFT_ACCOUNTS', 'SEARCH_AND_VIEW_ACCOUNTS']),
+       (2,3, 1, 'Fines_Role_2', true, ARRAY['COLLECTION_ORDER', 'CHECK_VALIDATE_DRAFT_ACCOUNTS', 'SEARCH_AND_VIEW_ACCOUNTS']),
+       (3,1, 2, 'Confiscation_Role_3', true, ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS']),
+       (3,2, 2, 'Confiscation_Role_3', true, ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'COLLECTION_ORDER']);
+
+INSERT INTO business_unit_user_roles(business_unit_user_role_id, business_unit_user_id, role_id)
+VALUES (1,'L065JG', 1),
+       (2,'L065JG', 2);

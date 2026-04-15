@@ -9,6 +9,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -19,6 +20,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
+import java.util.Set;
+
 
 @Entity
 @Table(name = "business_unit_users")
@@ -26,6 +30,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "businessUnitUserId")
 @XmlRootElement
@@ -34,20 +39,22 @@ public class BusinessUnitUserEntity {
 
     @Id
     @Column(name = "business_unit_user_id", length = 6)
+    @EqualsAndHashCode.Include
     private String businessUnitUserId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_unit_id", nullable = false)
-    @EqualsAndHashCode.Exclude
     private BusinessUnitEntity businessUnit;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @EqualsAndHashCode.Exclude
     private UserEntity user;
+
+    @OneToMany(mappedBy = "businessUnitUser")
+    @Builder.Default
+    private Set<BusinessUnitUserRoleEntity> businessUnitUserRoleList = new HashSet<>();
 
     public Short getBusinessUnitId() {
         return businessUnit.getBusinessUnitId();
     }
-
 }

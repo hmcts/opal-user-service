@@ -7,6 +7,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,7 +18,9 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.verification.VerificationMode;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.server.ResponseStatusException;
@@ -174,6 +177,32 @@ class UserPermissionsServiceTest {
         // Assert
         assertEquals(USER_ID, result);
         verify(userRepository).findByTokenSubject(any());
+    }
+
+    @Test
+    @DisplayName("getAuthenticatedUserId returns current authenticated user id")
+    void testGetAuthenticatedUserId() {
+        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
+        SecurityContextHolder.getContext().setAuthentication(jwtAuthToken);
+        when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.of(userEntity));
+
+        long result = service.getAuthenticatedUserId(service);
+
+        assertEquals(USER_ID, result);
+        verify(userRepository).findByTokenSubject(any());
+    }
+
+    @Test
+    @DisplayName("getAuthenticatedUserId throws when authentication is missing")
+    void testGetAuthenticatedUserId_throwsWhenAuthenticationMissing() {
+        SecurityContextHolder.clearContext();
+
+        AccessDeniedException ex = assertThrows(
+            AccessDeniedException.class,
+            () -> service.getAuthenticatedUserId(service)
+        );
+
+        assertEquals("No authenticated user found in the security context.", ex.getMessage());
     }
 
     @ParameterizedTest
@@ -346,6 +375,11 @@ class UserPermissionsServiceTest {
             () -> service.getJwtToken(testToken)
         );
         assertEquals("401 UNAUTHORIZED \"Authentication Token not of type Jwt.\"", ex.getMessage());
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
 

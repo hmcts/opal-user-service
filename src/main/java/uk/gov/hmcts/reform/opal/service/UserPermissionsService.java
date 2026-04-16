@@ -18,6 +18,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -101,7 +102,15 @@ public class UserPermissionsService implements UserPermissionsProxy {
         }
     }
 
-    @Transactional(readOnly = true)
+    public Long getAuthenticatedUserId(UserPermissionsProxy proxy) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new AccessDeniedException("No authenticated user found in the security context.");
+        }
+        return proxy.getUserId(authentication, proxy);
+    }
+
+    @Transactional
     public UserStateV2Dto getUserStateV2(UserPermissionsProxy proxy, Boolean newLogin) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = getJwtToken(authentication);
@@ -122,7 +131,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         return dto;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserStateV2Dto getUserStateV2(Long userId, UserPermissionsProxy proxy, Boolean newLogin) {
         log.debug(":getUserState: userId: {}", userId);
         if (userId == 0) {

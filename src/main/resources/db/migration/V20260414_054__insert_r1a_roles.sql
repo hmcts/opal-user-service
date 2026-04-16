@@ -43,7 +43,7 @@ VALUES
     nextval('role_id_seq'),
     1,
     1,
-    'Enf Admin Team Leader Enhanced',
+    'Enf Admin Enhanced',
     TRUE,
     ARRAY['Check and Validate Draft Accounts']
 );

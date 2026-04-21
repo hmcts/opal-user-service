@@ -4,9 +4,12 @@ import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,6 +22,7 @@ import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authentication.service.TokenValidator;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
+import uk.gov.hmcts.reform.opal.config.properties.CacheConfiguration;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
@@ -31,10 +35,14 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -79,16 +87,26 @@ class UserPermissionsServiceV2Test {
     @Mock
     private Clock clock;
 
+    @Mock
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
+
     @InjectMocks
     private UserPermissionsService service;
 
     private static final long USER_ID = 42L;
+    private static final long CACHE_TIMEOUT_MINUTES = 30L;
     private static final String TOKEN_PREFERRED_USERNAME = "opal-user@hmcts.net";
     private static final String TOKEN_NAME = "John Smith";
     private static final String TOKEN_SUBJECT = "hcv732JFVWhf3Fd";
 
     private UserEntity userEntity;
     private UserStateV2Dto dto;
+
+    @Mock
+    private CacheConfiguration cacheConfiguration;
 
     @BeforeEach
     void setUp() {
@@ -101,6 +119,8 @@ class UserPermissionsServiceV2Test {
             .build();
         dto = UserStateV2Dto.builder().build();
         SecurityContextHolder.clearContext();
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(cacheConfiguration.getUserStateTimeoutMinutes()).thenReturn(CACHE_TIMEOUT_MINUTES);
     }
 
     @Test
@@ -182,6 +202,7 @@ class UserPermissionsServiceV2Test {
         assertThat(userEntity.getLastLoginDate())
             .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
         verify(userRepository).saveAndFlush(userEntity);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
     }
 
     @Test
@@ -205,6 +226,7 @@ class UserPermissionsServiceV2Test {
         // Assert
         assertThat(result).isEqualTo(dto);
         verifyNoInteractions(securityEventLoggingService);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
     }
 
     @Test
@@ -291,6 +313,7 @@ class UserPermissionsServiceV2Test {
         assertThat(userEntity.getLastLoginDate())
             .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
         verify(userRepository).saveAndFlush(userEntity);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
     }
 
     @Test
@@ -306,6 +329,7 @@ class UserPermissionsServiceV2Test {
         // Assert
         assertThat(result).isEqualTo(dto);
         verifyNoInteractions(securityEventLoggingService);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
     }
 
     @Test
@@ -349,6 +373,7 @@ class UserPermissionsServiceV2Test {
         assertThat(userEntity.getLastLoginDate())
             .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
         verify(userRepository).saveAndFlush(userEntity);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
     }
 
     @Test
@@ -377,5 +402,20 @@ class UserPermissionsServiceV2Test {
         assertThat(userEntity.getLastLoginDate())
             .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
         verify(userRepository).saveAndFlush(userEntity);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
+    }
+
+    private void assertDtoWasCachedForSubject(String subject) {
+        String cacheKey = "USER_STATE_" + subject;
+        ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
+
+        verify(valueOperations).set(
+            eq(cacheKey),
+            payloadCaptor.capture(),
+            eq(CACHE_TIMEOUT_MINUTES),
+            eq(TimeUnit.MINUTES)
+        );
+        assertThat(dto.getCacheName()).isEqualTo(cacheKey);
+        assertThat(payloadCaptor.getValue()).isEqualTo(objectToPrettyJson(dto));
     }
 }

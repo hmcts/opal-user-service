@@ -19,6 +19,8 @@ public class BaseIntegrationTest {
         registry.add("spring.datasource.url", TestContainerConfig.POSTGRES_CONTAINER::getJdbcUrl);
         registry.add("spring.datasource.username", TestContainerConfig.POSTGRES_CONTAINER::getUsername);
         registry.add("spring.datasource.password", TestContainerConfig.POSTGRES_CONTAINER::getPassword);
+        registry.add("spring.data.redis.host", TestContainerConfig.REDIS_CONTAINER::getHost);
+        registry.add("spring.data.redis.port", TestContainerConfig.REDIS_CONTAINER::getRedisPort);
     }
 
 }

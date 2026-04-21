@@ -376,7 +376,7 @@ dependencies {
 
   compileOnly 'org.projectlombok:lombok:1.18.44'
   annotationProcessor 'org.projectlombok:lombok:1.18.44'
-  annotationProcessor 'org.hibernate:hibernate-jpamodelgen:7.3.2.Final'
+  annotationProcessor 'org.hibernate.orm:hibernate-processor:7.3.2.Final'
 
   testCompileOnly 'org.projectlombok:lombok:1.18.44'
   testAnnotationProcessor 'org.projectlombok:lombok:1.18.44'

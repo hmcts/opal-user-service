@@ -85,7 +85,7 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
         refreshService.refreshMappings();
 
-        assertRedisJsonEquals("ROLE_MAPPING_USER_opal-test-subject-01", Map.of(
+        assertRedisJsonEquals("ROLE_MAPPING_USER_k9LpT2xVqR8m", Map.of(
             "BU70", List.of("R1", "R2"),
             "BU68", List.of("R3")
         ));
@@ -99,7 +99,7 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
             redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT)
         );
 
-        assertTrue(redisTemplate.getExpire("ROLE_MAPPING_USER_opal-test-subject-01", TimeUnit.SECONDS) > 0);
+        assertTrue(redisTemplate.getExpire("ROLE_MAPPING_USER_k9LpT2xVqR8m", TimeUnit.SECONDS) > 0);
         assertTrue(redisTemplate.getExpire(
             UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT, TimeUnit.SECONDS) > 0);
     }
@@ -125,7 +125,7 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
         refreshService.refreshMappings();
 
-        assertRedisJsonEquals("ROLE_MAPPING_USER_opal-test-subject-01", Map.of(
+        assertRedisJsonEquals("ROLE_MAPPING_USER_k9LpT2xVqR8m", Map.of(
             "BU70", List.of("R1", "R2"),
             "BU68", List.of("R3")
         ));
@@ -244,7 +244,7 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
         refreshService.refreshMappings();
 
-        assertNotNull(redisTemplate.opsForValue().get("ROLE_MAPPING_USER_opal-test-subject-01"));
+        assertNotNull(redisTemplate.opsForValue().get("ROLE_MAPPING_USER_k9LpT2xVqR8m"));
         assertNotNull(redisTemplate.opsForValue().get("ROLE_MAPPING_USER_8hqucbw874fg3"));
         assertNull(redisTemplate.opsForValue().get("ROLE_MAPPING_USER_GfsHbIMt49WjQ"));
         assertEquals(LAST_UPDATE_AT, redisTemplate.opsForValue()
@@ -263,7 +263,7 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
         refreshService.refreshMappings();
 
-        assertNotNull(redisTemplate.opsForValue().get("ROLE_MAPPING_USER_opal-test-subject-01"));
+        assertNotNull(redisTemplate.opsForValue().get("ROLE_MAPPING_USER_k9LpT2xVqR8m"));
         assertNotNull(redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT));
 
         Thread.sleep(3500);
@@ -289,7 +289,7 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
         refreshService.refreshMappings();
 
-        assertRedisJsonEquals("ROLE_MAPPING_USER_opal-test-subject-01", Map.of(
+        assertRedisJsonEquals("ROLE_MAPPING_USER_k9LpT2xVqR8m", Map.of(
             "BU70", List.of("R1", "R2"),
             "BU68", List.of("R3"),
             "BU61", List.of("R4")

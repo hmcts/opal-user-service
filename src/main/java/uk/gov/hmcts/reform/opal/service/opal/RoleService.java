@@ -85,6 +85,11 @@ public class RoleService {
         );
     }
 
+    @Transactional
+    public void removeAssignments(List<BusinessUnitUserRoleEntity> assignments) {
+        businessUnitUserRoleRepository.deleteAll(assignments);
+    }
+
     private void validateNoMissingBusinessUnitUserAlignments(
         Long userId, Set<Short> requestedBusinessUnitIds, List<BusinessUnitUserEntity> businessUnitUsers) {
 

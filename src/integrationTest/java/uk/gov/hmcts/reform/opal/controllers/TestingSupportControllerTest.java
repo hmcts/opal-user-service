@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -198,5 +199,13 @@ class TestingSupportControllerTest {
 
         verify(userService).addOrReplaceRoleInformationOnUser(
             987L, 101L, Set.of((short) 1, (short) 4, (short) 5), userService);
+    }
+
+    @Test
+    void testDeleteRoleFromUser() throws Exception {
+        mockMvc.perform(delete("/testing-support/users/987/roles/101"))
+            .andExpect(status().isNoContent());
+
+        verify(userService).deleteRoleFromUser(987L, 101L, userService);
     }
 }

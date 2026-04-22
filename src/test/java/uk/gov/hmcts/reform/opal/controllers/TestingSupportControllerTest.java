@@ -139,4 +139,11 @@ class TestingSupportControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("my@email.com", response.getBody());
     }
+
+    @Test
+    void deleteRoleFromUser_returnsNoContent() {
+        ResponseEntity<Void> response = controller.deleteRoleFromUser(123L, 456L);
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+    }
 }

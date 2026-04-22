@@ -40,7 +40,6 @@ import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingRefreshServic
 @DisplayName("User role mapping refresh integration tests")
 class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
-    private static final String LAST_UPDATE_AT = "2025-01-02T03:04:05.678";
     private static final String PREVIOUS_LAST_UPDATE_AT = "2025-01-01T00:00:00.000";
 
     private static final String OPAL_TEST_KEY = "ROLE_MAPPING_USER_k9LpT2xVqR8m";
@@ -80,6 +79,11 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
         refreshService.refreshMappings();
 
+        assertEquals(
+            lastModifiedAt,
+            redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT)
+        );
+
         assertRedisJsonEquals(OPAL_TEST_KEY, Map.of(
             "BU70", List.of("R1", "R2"),
             "BU68", List.of("R3")
@@ -89,13 +93,9 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
             "BU67", List.of("R4")
         ));
 
-        assertEquals(
-            lastModifiedAt,
-            redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT)
-        );
-
         assertTrue(redisTemplate.getExpire(OPAL_TEST_KEY, TimeUnit.SECONDS) > 0);
-        assertTrue(redisTemplate.getExpire(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT, TimeUnit.SECONDS) > 0);
+        assertTrue(redisTemplate.getExpire(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT,
+                                           TimeUnit.SECONDS) > 0);
     }
 
     @Test
@@ -117,6 +117,11 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
         refreshService.refreshMappings();
 
+        assertEquals(
+            lastModifiedAt,
+            redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT)
+        );
+
         assertRedisJsonEquals(OPAL_TEST_KEY, Map.of(
             "BU70", List.of("R1", "R2"),
             "BU68", List.of("R3")
@@ -126,14 +131,11 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
             "BU67", List.of("R4")
         ));
 
-        assertEquals(
-            lastModifiedAt,
-            redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT)
-        );
     }
 
     @Test
-    @DisplayName("AC3: when USER_MAPPING_FILE_LAST_UPDATE_AT matches the file last updated time, cache should not update")
+    @DisplayName("AC3: when USER_MAPPING_FILE_LAST_UPDATE_AT matches the file last updated time, "
+        + "cache should not update")
     void ac3_whenLastUpdateMarkerMatches_skipsRefresh() throws Exception {
         String lastModifiedAt = uploadCsv("""
                 email_address,business_unit_id,role_id
@@ -163,13 +165,6 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("AC4: when an email appears again non-contiguously, that user's cache should be deleted")
     void ac4_whenEmailReappearsNonContiguously_deletesInvalidUserCache() throws Exception {
-        String lastModifiedAt = uploadCsv("""
-                email_address,business_unit_id,role_id
-                opal-test@HMCTS.NET,BU70,R1
-                opal-test@HMCTS.NET,BU70,R2
-                no-go-user@HMCTS.NET,BU67,R3
-                opal-test@HMCTS.NET,BU68,R4
-                """);
 
         redisTemplate.opsForValue().set(
             OPAL_TEST_KEY,
@@ -187,26 +182,29 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
             Duration.ofHours(1)
         );
 
+        String lastModifiedAt = uploadCsv("""
+                email_address,business_unit_id,role_id
+                opal-test@HMCTS.NET,BU70,R1
+                opal-test@HMCTS.NET,BU70,R2
+                no-go-user@HMCTS.NET,BU67,R3
+                opal-test@HMCTS.NET,BU68,R4
+                """);
+
         refreshService.refreshMappings();
 
-        assertNull(redisTemplate.opsForValue().get(OPAL_TEST_KEY));
-        assertNotNull(redisTemplate.opsForValue().get(NO_GO_USER_KEY));
         assertEquals(
             lastModifiedAt,
             redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT)
         );
+
+        assertNull(redisTemplate.opsForValue().get(OPAL_TEST_KEY));
+        assertNotNull(redisTemplate.opsForValue().get(NO_GO_USER_KEY));
     }
 
     @Test
     @DisplayName("AC5: when a user is removed from the file, that user's cache should be deleted")
     void ac5_whenUserRemovedFromFile_deletesStaleCacheEntry() throws Exception {
-        String lastModifiedAt = uploadCsv("""
-                email_address,business_unit_id,role_id
-                opal-test@HMCTS.NET,BU70,R1
-                opal-test@HMCTS.NET,BU68,R2
-                no-go-user@HMCTS.NET,BU67,R3
-                no-go-user@HMCTS.NET,BU69,R4
-                """);
+
 
         redisTemplate.opsForValue().set(
             OPAL_TEST_KEY,
@@ -229,15 +227,25 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
             Duration.ofHours(1)
         );
 
+        String lastModifiedAt = uploadCsv("""
+                email_address,business_unit_id,role_id
+                opal-test@HMCTS.NET,BU70,R1
+                opal-test@HMCTS.NET,BU68,R2
+                no-go-user@HMCTS.NET,BU67,R3
+                no-go-user@HMCTS.NET,BU69,R4
+                """);
+
         refreshService.refreshMappings();
 
-        assertNotNull(redisTemplate.opsForValue().get(OPAL_TEST_KEY));
-        assertNotNull(redisTemplate.opsForValue().get(NO_GO_USER_KEY));
-        assertNull(redisTemplate.opsForValue().get(TEST_USER_KEY));
         assertEquals(
             lastModifiedAt,
             redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT)
         );
+
+        assertNotNull(redisTemplate.opsForValue().get(OPAL_TEST_KEY));
+        assertNotNull(redisTemplate.opsForValue().get(NO_GO_USER_KEY));
+        assertNull(redisTemplate.opsForValue().get(TEST_USER_KEY));
+
     }
 
     @Test
@@ -274,6 +282,11 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
         refreshService.refreshMappings();
 
+        assertEquals(
+            lastModifiedAt,
+            redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT)
+        );
+
         assertRedisJsonEquals(OPAL_TEST_KEY, Map.of(
             "BU70", List.of("R1", "R2"),
             "BU68", List.of("R3"),
@@ -285,10 +298,7 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
             "BU69", List.of("R1")
         ));
 
-        assertEquals(
-            lastModifiedAt,
-            redisTemplate.opsForValue().get(UserRoleMappingCacheService.USER_MAPPING_FILE_LAST_UPDATE_AT)
-        );
+
     }
 
     private String uploadCsv(String csv) {

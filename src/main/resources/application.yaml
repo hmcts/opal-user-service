@@ -21,6 +21,9 @@ springdoc:
   writer-with-order-by-keys: true
 
 spring:
+  data:
+    redis:
+      url: ${REDIS_CONNECTION_STRING:redis://localhost:6379}
   config:
     import: "optional:configtree:/mnt/secrets/opal/"
   application:

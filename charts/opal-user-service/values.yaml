@@ -30,6 +30,8 @@ java:
           alias: role_mapping_storage_container_name
         - name: RoleMappingStorageConnectionString
           alias: storage_primary_connection_string
+        - name: REDIS_CONNECTION_STRING
+          alias: OPAL_REDIS_CONNECTION_STRING
 
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true

@@ -41,8 +41,5 @@ java:
     enabled: false
     image:
       tag: '17.5.0'
-redis:
-  image:
-    registry: hmctsprod.azurecr.io
-    repository: imported/bitnami/redis
+hmcts-redis:
   enabled: false

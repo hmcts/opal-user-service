@@ -37,9 +37,17 @@ java:
     enabled: true
 redis:
   enabled: true
-  architecture: standalone
   master:
     persistence:
       enabled: false
   auth:
+    enabled: false
+    sentinel: false
+  image:
+    registry: hmctsprod.azurecr.io
+    repository: imported/redis
+    tag: 8.2.1
+  sentinel:
+    enabled: false
+  metrics:
     enabled: false

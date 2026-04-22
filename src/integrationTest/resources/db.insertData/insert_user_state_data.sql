@@ -1,6 +1,6 @@
 -- Insert users from Flyway script V20240729_003
-INSERT INTO users (user_id, token_preferred_username, password, description)
-VALUES (500000000, 'opal-test@HMCTS.NET', 'password', 'User with 7 business units');
+INSERT INTO users (user_id, token_preferred_username, token_subject, password, description)
+VALUES (500000000, 'opal-test@HMCTS.NET', 'opal-test-subject-01', 'password', 'User with 7 business units');
 
 INSERT INTO users (user_id, token_preferred_username, token_subject, status, description, token_name, version_number)
 VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', NULL, 'User with no business units', NULL, 0),

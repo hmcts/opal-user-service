@@ -132,3 +132,14 @@ logging:
 user:
   service:
     url: ${OPAL_USER_SERVICE_API_URL:http://localhost:4555}
+
+cache:
+  role-mapping:
+    user-ttl: PT24H
+    last-update-ttl: PT1H
+
+blob:
+  storage:
+    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:UseDevelopmentStorage=true}
+    container: ${REPORT_AZURE_STORAGE_CONTAINER:roleMapping}
+    blob-name: ${AZURE_BLOB_FILE_NAME}

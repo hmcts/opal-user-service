@@ -51,6 +51,12 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class UserPermissionsServiceV2Test {
 
+    private static final long USER_ID = 42L;
+    private static final long CACHE_TIMEOUT_MINUTES = 30L;
+    private static final String TOKEN_PREFERRED_USERNAME = "opal-user@hmcts.net";
+    private static final String TOKEN_NAME = "John Smith";
+    private static final String TOKEN_SUBJECT = "hcv732JFVWhf3Fd";
+
     @Mock
     SecurityContext securityContext;
 
@@ -95,12 +101,6 @@ class UserPermissionsServiceV2Test {
 
     @InjectMocks
     private UserPermissionsService service;
-
-    private static final long USER_ID = 42L;
-    private static final long CACHE_TIMEOUT_MINUTES = 30L;
-    private static final String TOKEN_PREFERRED_USERNAME = "opal-user@hmcts.net";
-    private static final String TOKEN_NAME = "John Smith";
-    private static final String TOKEN_SUBJECT = "hcv732JFVWhf3Fd";
 
     private UserEntity userEntity;
     private UserStateV2Dto dto;

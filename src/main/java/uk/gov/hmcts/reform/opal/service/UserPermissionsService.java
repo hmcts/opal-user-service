@@ -3,6 +3,8 @@ package uk.gov.hmcts.reform.opal.service;
 import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
 import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +18,9 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -27,11 +31,11 @@ import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
-import uk.gov.hmcts.reform.opal.entity.UserStatus;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
@@ -54,13 +58,15 @@ public class UserPermissionsService implements UserPermissionsProxy {
     private final BusinessUnitUserRepository businessUnitUserRepository;
     private final UserEntitlementRepository userEntitlementRepository;
     private final UserRepository userRepository;
-    private final UserStateMapper userStateMapperImplementation;
+    private final UserStateMapper userStateMapper;
     private final UserMapper userMapper;
     private final AccessTokenService tokenService;
     private final SecurityEventLoggingService securityEventLoggingService;
+    private final Clock clock;
 
 
     @Transactional(readOnly = true)
+    @Deprecated //Use getUserStateV2 equivalent method
     public UserStateDto getUserState(Authentication authentication, UserPermissionsProxy proxy, Boolean newLogin) {
         Jwt jwt = getJwtToken(authentication);
         String subject = extractSubject(jwt);
@@ -80,6 +86,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
     }
 
     @Transactional(readOnly = true)
+    @Deprecated //Use getUserStateV2 equivalent method
     public UserStateDto getUserState(Long userId, Authentication authentication, UserPermissionsProxy proxy,
                                      Boolean newLogin) {
         log.debug(":getUserState: userId: {}", userId);
@@ -90,6 +97,53 @@ public class UserPermissionsService implements UserPermissionsProxy {
             if (Optional.ofNullable(newLogin).orElse(false)) {
                 Long clientUserId = proxy.getUserId(authentication, proxy);
                 logUserAuthenticationEvent(clientUserId);
+            }
+            return dto;
+        }
+    }
+
+    public Long getAuthenticatedUserId(UserPermissionsProxy proxy) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new AccessDeniedException("No authenticated user found in the security context.");
+        }
+        return proxy.getUserId(authentication, proxy);
+    }
+
+    @Transactional
+    public UserStateV2Dto getUserStateV2(UserPermissionsProxy proxy, Boolean newLogin) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = getJwtToken(authentication);
+        String subject = extractSubject(jwt);
+        UserEntity user = proxy.getUserV2(subject);
+
+        String username = extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
+        compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
+        String name = extractClaim(jwt, NAME_CLAIM);
+        compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
+
+        log.debug(":getUserState: found User: {}", username);
+        UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user);
+        if (Optional.ofNullable(newLogin).orElse(false)) {
+            logUserAuthenticationEvent(user.getUserId());
+            updateLastLogin(user);
+        }
+        return dto;
+    }
+
+    @Transactional
+    public UserStateV2Dto getUserStateV2(Long userId, UserPermissionsProxy proxy, Boolean newLogin) {
+        log.debug(":getUserState: userId: {}", userId);
+        if (userId == 0) {
+            return proxy.getUserStateV2(proxy, newLogin);
+        } else {
+            UserEntity user = proxy.getUserV2(userId);
+            UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user);
+            if (Optional.ofNullable(newLogin).orElse(false)) {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                Long clientUserId = proxy.getUserId(authentication, proxy);
+                logUserAuthenticationEvent(clientUserId);
+                updateLastLogin(user);
             }
             return dto;
         }
@@ -109,6 +163,11 @@ public class UserPermissionsService implements UserPermissionsProxy {
                                              null, "Authentication", getRequestTimestamp(), data);
     }
 
+    private void updateLastLogin(UserEntity user) {
+        user.setLastLoginDate(LocalDateTime.now(clock));
+        userRepository.saveAndFlush(user);
+    }
+
     @Transactional(readOnly = true)
     public UserStateDto buildUserState(UserEntity user) {
 
@@ -121,13 +180,13 @@ public class UserPermissionsService implements UserPermissionsProxy {
             List<BusinessUnitUserDto> businessUnitUsers = businessUnitUserRepository
                 .findAllByUser_UserId(user.getUserId())
                 .stream()
-                .map(businessUnitUser -> userStateMapperImplementation.toBusinessUnitUserDto(
+                .map(businessUnitUser -> userStateMapper.toBusinessUnitUserDto(
                     businessUnitUser,
                     Collections.emptyList()
                 ))
                 .toList();
 
-            return userStateMapperImplementation.toUserStateDto(user, businessUnitUsers);
+            return userStateMapper.toUserStateDto(user, businessUnitUsers);
         }
 
         // 3. Group entitlements by the BusinessUnitUser's ID (a String)
@@ -144,12 +203,12 @@ public class UserPermissionsService implements UserPermissionsProxy {
         List<BusinessUnitUserDto> buuDtos = buuMap.values().stream()
             .map(buu -> {
                 List<UserEntitlementEntity> buuEntitlements = entitlementsByBuuId.get(buu.getBusinessUnitUserId());
-                return userStateMapperImplementation.toBusinessUnitUserDto(buu, buuEntitlements);
+                return userStateMapper.toBusinessUnitUserDto(buu, buuEntitlements);
             })
             .toList();
 
         // 6. Pass the user entity and the BUU list to the mapper.
-        return userStateMapperImplementation.toUserStateDto(user, buuDtos);
+        return userStateMapper.toUserStateDto(user, buuDtos);
     }
 
     private void compare(String fromToken, String fromDb, Long userId, String reason, Versioned versioned) {
@@ -171,6 +230,18 @@ public class UserPermissionsService implements UserPermissionsProxy {
             .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
     }
 
+    @Transactional(readOnly = true)
+    public UserEntity getUserV2(Long userId) {
+        return userRepository.findIdWithPermissions(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+    }
+
+    @Transactional(readOnly = true)
+    public UserEntity getUserV2(String subject) {
+        return userRepository.findByTokenSubjectWithPermissions(subject)
+            .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
+    }
+
     @Transactional
     public UserDto addUser(String authHeaderValue) {
         log.debug(":createUser:");
@@ -180,7 +251,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         UserEntity userEntity = userRepository
             .saveAndFlush(UserEntity.builder()
                               .username(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString())
-                              .status(UserStatus.CREATED)
+                              .createdDate(LocalDateTime.now(clock))
                               .tokenSubject(claimSet.getSubject())
                               .tokenName(claimSet.getClaim(NAME_CLAIM).toString())
                               .versionNumber(0L)

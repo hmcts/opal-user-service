@@ -24,7 +24,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @Sql(scripts = "classpath:db.insertData/insert_user_state_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @DisplayName("UserPermissionsService database integration tests")
-class UserPermissionsServiceDatabaseIntegrationTest extends AbstractIntegrationTest {
+class UserPermissionsServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private UserPermissionsService userPermissionsService;
@@ -87,7 +87,7 @@ class UserPermissionsServiceDatabaseIntegrationTest extends AbstractIntegrationT
         assertEquals(500000003L, result.getUserId());
         assertEquals("test-user@HMCTS.NET", result.getUsername());
         assertEquals("Pablo", result.getName());
-        assertEquals("active", result.getStatus().toString());
+        assertEquals("active", result.getStatus());
         assertEquals(2L, result.getVersion().longValue());
         assertTrue(result.getBusinessUnitUsers().isEmpty());
     }

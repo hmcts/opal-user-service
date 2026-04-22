@@ -7,6 +7,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,7 +18,9 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.verification.VerificationMode;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.server.ResponseStatusException;
@@ -42,7 +45,9 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,7 +55,6 @@ import java.math.BigInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -88,6 +92,9 @@ class UserPermissionsServiceTest {
 
     @Mock
     private SecurityEventLoggingService securityEventLoggingService;
+
+    @Spy
+    private Clock clock = Clock.fixed(Instant.parse("2026-04-02T12:30:00Z"), ZoneOffset.UTC);
 
     @Spy
     @InjectMocks
@@ -172,6 +179,32 @@ class UserPermissionsServiceTest {
         verify(userRepository).findByTokenSubject(any());
     }
 
+    @Test
+    @DisplayName("getAuthenticatedUserId returns current authenticated user id")
+    void testGetAuthenticatedUserId() {
+        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
+        SecurityContextHolder.getContext().setAuthentication(jwtAuthToken);
+        when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.of(userEntity));
+
+        long result = service.getAuthenticatedUserId(service);
+
+        assertEquals(USER_ID, result);
+        verify(userRepository).findByTokenSubject(any());
+    }
+
+    @Test
+    @DisplayName("getAuthenticatedUserId throws when authentication is missing")
+    void testGetAuthenticatedUserId_throwsWhenAuthenticationMissing() {
+        SecurityContextHolder.clearContext();
+
+        AccessDeniedException ex = assertThrows(
+            AccessDeniedException.class,
+            () -> service.getAuthenticatedUserId(service)
+        );
+
+        assertEquals("No authenticated user found in the security context.", ex.getMessage());
+    }
+
     @ParameterizedTest
     @NullSource
     @ValueSource(booleans = {false, true})
@@ -234,8 +267,8 @@ class UserPermissionsServiceTest {
         assertEquals(42L, response.getUserId());
         assertEquals("opal-user@hmcts.net", response.getUsername());
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
-        assertNull(response.getStatus());
         assertEquals("John Smith", response.getName());
+        assertEquals("active", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
@@ -258,8 +291,8 @@ class UserPermissionsServiceTest {
         assertEquals(42L, response.getUserId());
         assertEquals("j.s@example.com", response.getUsername());
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
-        assertNull(response.getStatus());
         assertEquals("john.smith", response.getName());
+        assertEquals("active", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
@@ -282,8 +315,8 @@ class UserPermissionsServiceTest {
         assertEquals(42L, response.getUserId());
         assertEquals("j.s@example.com", response.getUsername());
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
-        assertNull(response.getStatus());
         assertEquals("john.smith", response.getName());
+        assertEquals("active", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
@@ -344,6 +377,11 @@ class UserPermissionsServiceTest {
         assertEquals("401 UNAUTHORIZED \"Authentication Token not of type Jwt.\"", ex.getMessage());
     }
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
 
     private String createJwtToken() throws NoSuchAlgorithmException {
         JWTCreator.Builder builder = com.auth0.jwt.JWT.create()
@@ -378,4 +416,5 @@ class UserPermissionsServiceTest {
 
         return new JwtAuthenticationToken(jwt);
     }
+
 }

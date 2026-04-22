@@ -28,6 +28,7 @@ public class UserPermissionsController {
     private final UserPermissionsService userPermissionsService;
 
     @GetMapping("/state")
+    @Deprecated //Replaced by UserPermissionsV2Controller.getUserStateV2
     public ResponseEntity<UserStateDto> getUserState(
         Authentication authentication,
         @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
@@ -37,6 +38,7 @@ public class UserPermissionsController {
     }
 
     @GetMapping("/{userId}/state")
+    @Deprecated  //Replaced by UserPermissionsV2Controller.getUserStateV2
     public ResponseEntity<UserStateDto> getUserState(
         @PathVariable Long userId, Authentication authentication,
         @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {

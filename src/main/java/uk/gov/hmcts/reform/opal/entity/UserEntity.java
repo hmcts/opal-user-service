@@ -1,18 +1,19 @@
 package uk.gov.hmcts.reform.opal.entity;
 
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -57,12 +58,8 @@ public class UserEntity implements Versioned {
     @EqualsAndHashCode.Exclude
     private String description;
 
-    @Column(name = "opal_domain_id")
-    private Short opalDomainId;
-
-    @Column(name = "status", length = 25)
-    @Enumerated(EnumType.STRING)
-    private UserStatus status;
+    @Column(name = "created_date", nullable = false)
+    private LocalDateTime createdDate;
 
     @Column(name = "token_subject", length = 100, unique = true)
     private String tokenSubject;
@@ -73,6 +70,13 @@ public class UserEntity implements Versioned {
     @Column(name = "version_number")
     @Version
     private Long versionNumber;
+
+    @Column(name = "last_login_date")
+    private LocalDateTime lastLoginDate;
+
+    // Use a Set to avoid duplicate entries when fetching across multi-valued joins.
+    @OneToMany(mappedBy = "user")
+    private Set<BusinessUnitUserEntity> businessUnitUsers;
 
     @Override
     public BigInteger getVersion() {

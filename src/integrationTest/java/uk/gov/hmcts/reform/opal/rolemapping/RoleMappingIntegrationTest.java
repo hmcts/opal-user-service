@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.annotation.DirtiesContext;
@@ -38,6 +39,10 @@ import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingRefreshServic
 @Sql(scripts = "classpath:db.insertData/insert_user_state_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @DisplayName("User role mapping refresh integration tests")
+@EnabledIfEnvironmentVariable(
+    named = "RUN_INTEGRATION_TESTS",
+    matches = "true"
+)
 class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
     private static final String PREVIOUS_LAST_UPDATE_AT = "2025-01-01T00:00:00.000";

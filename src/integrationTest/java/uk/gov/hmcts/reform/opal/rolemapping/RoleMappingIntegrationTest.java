@@ -40,7 +40,7 @@ import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingRefreshServic
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @DisplayName("User role mapping refresh integration tests")
 @EnabledIfEnvironmentVariable(
-    named = "RUN_INTEGRATION_TESTS",
+    named = "ROLE_MAPPING_INTEGRATION_TESTS",
     matches = "true"
 )
 class RoleMappingIntegrationTest extends AbstractIntegrationTest {

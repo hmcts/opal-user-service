@@ -19,6 +19,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -169,7 +170,11 @@ public class UserPermissionsService implements UserPermissionsProxy {
         dto.setCacheName(cacheKey);
         String dtoJson = objectToPrettyJson(dto);
         Long cacheTimeout = cacheConfiguration.getUserStateTimeoutMinutes();
-        redisTemplate.opsForValue().set(cacheKey, dtoJson, cacheTimeout, TimeUnit.MINUTES);
+        try {
+            redisTemplate.opsForValue().set(cacheKey, dtoJson, cacheTimeout, TimeUnit.MINUTES);
+        } catch (DataAccessException e) {
+            log.warn("Unable to cache user state for user {}, reason: {}", user.getUsername(), e.getMessage());
+        }
     }
 
     private void logUserAuthenticationEvent(Long userId) {

@@ -8,6 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpStatus;
@@ -39,9 +40,12 @@ import java.util.concurrent.TimeUnit;
 
 import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -227,6 +231,52 @@ class UserPermissionsServiceV2Test {
         assertThat(result).isEqualTo(dto);
         verifyNoInteractions(securityEventLoggingService);
         assertDtoWasCachedForSubject(TOKEN_SUBJECT);
+    }
+
+    @Test
+    void getUserStateV2_whenRedisCachingFails_doesNotThrowAndReturnsDto() {
+
+        // arrange
+        JwtAuthenticationToken authentication = mock(JwtAuthenticationToken.class);
+        when(authentication.getToken()).thenReturn(jwt);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
+        when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
+        when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
+        when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
+        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+
+        doThrow(new DataAccessResourceFailureException("Redis unavailable"))
+            .when(valueOperations)
+            .set(eq("USER_STATE_" + TOKEN_SUBJECT), anyString(), eq(CACHE_TIMEOUT_MINUTES), eq(TimeUnit.MINUTES));
+
+        // act & assert
+        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(proxy, false));
+
+        assertThat(result).isEqualTo(dto);
+        assertThat(result.getCacheName()).isEqualTo("USER_STATE_" + TOKEN_SUBJECT);
+        verifyNoInteractions(securityEventLoggingService);
+    }
+
+    @Test
+    void getUserStateV2IdMethod_whenRedisCachingFails_doesNotThrowAndReturnsDto() {
+
+        // arrange
+        when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
+        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+
+        doThrow(new DataAccessResourceFailureException("Redis unavailable"))
+            .when(valueOperations)
+            .set(eq("USER_STATE_" + TOKEN_SUBJECT), anyString(), eq(CACHE_TIMEOUT_MINUTES), eq(TimeUnit.MINUTES));
+
+        // act & assert
+        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(USER_ID, proxy, false));
+
+        assertThat(result).isEqualTo(dto);
+        assertThat(result.getCacheName()).isEqualTo("USER_STATE_" + TOKEN_SUBJECT);
+        verifyNoInteractions(securityEventLoggingService);
     }
 
     @Test

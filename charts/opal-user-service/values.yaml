@@ -30,7 +30,8 @@ java:
           alias: role_mapping_storage_container_name
         - name: RoleMappingStorageConnectionString
           alias: storage_primary_connection_string
-
+        - name: redis-connection-string
+          alias: REDIS_CONNECTION_STRING
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true
     OPAL_FRONTEND_URL: https://opal-frontend.{{ .Values.global.environment }}.apps.hmcts.net
@@ -40,3 +41,8 @@ java:
     enabled: false
     image:
       tag: '17.5.0'
+redis:
+  image:
+    registry: hmctsprod.azurecr.io
+    repository: imported/bitnami/redis
+  enabled: false

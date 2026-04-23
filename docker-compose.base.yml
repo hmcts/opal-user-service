@@ -21,7 +21,7 @@ services:
       - OPAL_USER_DB_HOST=opal-db
       - OPAL_USER_DB_USERNAME=opal-db-user
       - OPAL_USER_DB_PASSWORD=opal-db-password
-      - OPAL_REDIS_CONNECTION_STRING=redis://redis:6379
+      - REDIS_CONNECTION_STRING=redis://redis:6379
     ports:
       - "${LOGGING_PORT:-4555}:4555"
     networks:

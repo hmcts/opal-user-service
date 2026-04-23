@@ -23,7 +23,7 @@ springdoc:
 spring:
   data:
     redis:
-      url: ${OPAL_REDIS_CONNECTION_STRING:redis://localhost:6379}
+      url: ${REDIS_CONNECTION_STRING:redis://localhost:6379}
   config:
     import: "optional:configtree:/mnt/secrets/opal/"
   application:

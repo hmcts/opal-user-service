@@ -35,7 +35,7 @@ java:
     LAUNCH_DARKLY_ENABLED: false
   postgresql:
     enabled: true
-redis:
+hmcts-redis:
   enabled: true
   master:
     persistence:

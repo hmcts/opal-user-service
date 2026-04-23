@@ -7,6 +7,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static uk.gov.hmcts.reform.opal.TestContainerConfig.REDIS_CONTAINER;
+
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles({"integration"})
@@ -19,8 +21,7 @@ public class BaseIntegrationTest {
         registry.add("spring.datasource.url", TestContainerConfig.POSTGRES_CONTAINER::getJdbcUrl);
         registry.add("spring.datasource.username", TestContainerConfig.POSTGRES_CONTAINER::getUsername);
         registry.add("spring.datasource.password", TestContainerConfig.POSTGRES_CONTAINER::getPassword);
-        registry.add("spring.data.redis.host", TestContainerConfig.REDIS_CONTAINER::getHost);
-        registry.add("spring.data.redis.port", TestContainerConfig.REDIS_CONTAINER::getRedisPort);
+        registry.add("spring.data.redis.url", REDIS_CONTAINER::getRedisURI);
     }
 
 }

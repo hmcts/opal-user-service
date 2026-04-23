@@ -14,7 +14,7 @@ management:
     web:
       base-path: /
       exposure:
-        include: health, info, prometheus
+        include: health, info, prometheus, env
 
 springdoc:
   packagesToScan: uk.gov.hmcts.reform.auth-service.controllers,uk.gov.hmcts.reform.opal.controllers,uk.gov.hmcts.reform.opal.authentication.controller
@@ -143,6 +143,6 @@ cache:
 
 blob:
   storage:
-    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:UseDevelopmentStorage=true}
-    container: ${REPORT_AZURE_STORAGE_CONTAINER:roleMapping}
+    connection-string: ${storage_primary_connection_string:UseDevelopmentStorage=true}
+    container-name: ${role_mapping_storage_container_name:roleMapping}
     blob-name: ${AZURE_BLOB_FILE_NAME}

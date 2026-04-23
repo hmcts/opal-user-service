@@ -37,6 +37,5 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.username", POSTGRES_CONTAINER::getUsername);
         registry.add("spring.datasource.password", POSTGRES_CONTAINER::getPassword);
         registry.add("spring.data.redis.host", REDIS_CONTAINER::getHost);
-        registry.add("spring.data.redis.port", REDIS_CONTAINER::getRedisPort);
-    }
+        registry.add("spring.data.redis.url", REDIS_CONTAINER::getRedisURI);    }
 }

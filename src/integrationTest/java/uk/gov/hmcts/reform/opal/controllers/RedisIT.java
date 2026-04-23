@@ -9,6 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @ActiveProfiles({"integration"})
 @Slf4j(topic = "opal.RedisIT")

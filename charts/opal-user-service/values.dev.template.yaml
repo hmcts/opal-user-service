@@ -22,7 +22,7 @@ java:
         - name: OpalTestUserPassword
           alias: OPAL_TEST_USER_PASSWORD
   environment:
-    REDIS_CONNECTION_STRING: redis://${SERVICE_NAME}-redis-master:6379
+    REDIS_CONNECTION_STRING: redis://${SERVICE_NAME}-hmcts-redis-master:6379
     OPAL_USER_DB_HOST: "{{ .Release.Name }}-postgresql"
     OPAL_USER_DB_NAME: "{{ .Values.postgresql.auth.database}}"
     OPAL_USER_DB_USERNAME: "{{ .Values.postgresql.auth.username}}"

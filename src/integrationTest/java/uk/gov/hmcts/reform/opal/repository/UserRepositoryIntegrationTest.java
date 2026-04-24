@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,12 @@ import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.reform.opal.BaseIntegrationTest;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
@@ -29,11 +36,18 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private UserStateMapper mapper;
 
+    Clock clock;
+
+    @BeforeEach
+    void setUp() {
+        clock = Clock.fixed(Instant.parse("2026-04-14T10:15:30Z"), ZoneId.of("UTC"));
+    }
+
     @Test
     @DisplayName("Test UserStateV2Dto production in isolation")
     void testUserStateV2DtoProductionInIsolation() throws JsonProcessingException {
         UserEntity user = userRepository.findIdWithPermissions(500000000L).orElseThrow();
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
         ObjectMapper objectMapper = new ObjectMapper();
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(EXPECTED_V2_USER_STATE));
@@ -43,7 +57,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
     @DisplayName("Test UserStateV2Dto production in isolation when user has no business units")
     void testUserStateV2DtoProductionInIsolationWhenUserHasNoBusinessUnitUsers() throws JsonProcessingException {
         UserEntity user = userRepository.findIdWithPermissions(500000001L).orElseThrow();
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
         ObjectMapper objectMapper = new ObjectMapper();
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree("""
@@ -51,7 +65,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                      "user_id": 500000001,
                      "username": "opal-test-2@HMCTS.NET",
                      "name": null,
-                     "status": "ACTIVE",
+                     "status": "PENDING",
                      "version": 0,
                      "cache_name": null,
                      "domains": {}
@@ -65,7 +79,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
               "user_id": 500000000,
               "username": "opal-test@HMCTS.NET",
               "name": "Pablo",
-              "status": "ACTIVE",
+              "status": "PENDING",
               "version": 0,
               "cache_name": null,
               "domains": {

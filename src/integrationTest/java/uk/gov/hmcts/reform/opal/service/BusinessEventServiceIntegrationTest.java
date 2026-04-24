@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +20,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
-import tools.jackson.databind.JsonNode;
+
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountSuspensionAttributesAmendedEvent;
@@ -49,7 +51,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should create and persist a business event when all parameters are provided")
-    void logBusinessEvent_persistsExplicitEventDetails() {
+    void logBusinessEvent_persistsExplicitEventDetails() throws JsonProcessingException {
         AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent();
 
         BusinessEventEntity result = businessEventService.logBusinessEvent(
@@ -71,7 +73,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should create and persist a business event using the authenticated user as initiator")
-    void logBusinessEvent_persistsEventDetailsForAuthenticatedUser() {
+    void logBusinessEvent_persistsEventDetailsForAuthenticatedUser() throws JsonProcessingException {
         TestingAuthenticationToken authentication = new TestingAuthenticationToken("principal", "credentials");
         SecurityContextHolder.getContext().setAuthentication(authentication);
         AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent();
@@ -125,7 +127,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
         assertEquals(businessEventCountBeforeCall, businessEventRepository.count());
     }
 
-    private void assertJsonEquals(String expectedJson, String actualJson) {
+    private void assertJsonEquals(String expectedJson, String actualJson) throws JsonProcessingException {
         JsonNode expected = objectMapper.readTree(expectedJson);
         JsonNode actual = objectMapper.readTree(actualJson);
         assertEquals(expected, actual);

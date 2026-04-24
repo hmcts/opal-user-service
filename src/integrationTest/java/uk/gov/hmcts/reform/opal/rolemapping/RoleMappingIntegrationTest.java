@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.opal.rolemapping;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.azure.storage.blob.BlobClient;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,8 +58,6 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private BlobClient blobClient;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void cleanRedis() {
@@ -222,7 +219,8 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
 
         Map<String, List<String>> actual = objectMapper.readValue(
             json,
-            new TypeReference<Map<String, List<String>>>() {}
+            new TypeReference<>() {
+            }
         );
 
         assertEquals(expected, actual);

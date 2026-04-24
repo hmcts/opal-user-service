@@ -26,7 +26,7 @@ public class UserRoleMappingParser {
     public MappingFileProcessingResult parse(Reader reader) throws IOException {
 
         Map<String, ParsedUserMappingBuilder> userMappings = new LinkedHashMap<>();
-        Set<String> NonContigiousEmails = new LinkedHashSet<>();
+        Set<String> nonContigiousEmails = new LinkedHashSet<>();
 
         try (CSVParser parser = CSVFormat.DEFAULT
             .builder()
@@ -56,12 +56,12 @@ public class UserRoleMappingParser {
 
                     log.warn("Email {} appears non-contiguously - marking as invalid", email);
 
-                    NonContigiousEmails.add(email);
+                    nonContigiousEmails.add(email);
                     userMappings.remove(email);
                 }
 
                 // --- Skip if already invalid ---
-                if (NonContigiousEmails.contains(email)) {
+                if (nonContigiousEmails.contains(email)) {
                     previousEmail = email;
                     continue;
                 }
@@ -79,7 +79,7 @@ public class UserRoleMappingParser {
             userMappings.values().stream()
                 .map(ParsedUserMappingBuilder::build)
                 .toList(),
-            NonContigiousEmails
+            nonContigiousEmails
         );
     }
 

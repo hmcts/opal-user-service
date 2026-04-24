@@ -1,7 +1,6 @@
 package uk.gov.hmcts.reform.opal.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,7 +47,6 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
     void testUserStateV2DtoProductionInIsolation() throws JsonProcessingException {
         UserEntity user = userRepository.findIdWithPermissions(500000000L).orElseThrow();
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
-        ObjectMapper objectMapper = new ObjectMapper();
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(EXPECTED_V2_USER_STATE));
     }
@@ -58,7 +56,6 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
     void testUserStateV2DtoProductionInIsolationWhenUserHasNoBusinessUnitUsers() throws JsonProcessingException {
         UserEntity user = userRepository.findIdWithPermissions(500000001L).orElseThrow();
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
-        ObjectMapper objectMapper = new ObjectMapper();
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree("""
                  {

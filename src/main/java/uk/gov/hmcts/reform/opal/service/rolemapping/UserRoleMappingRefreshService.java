@@ -21,20 +21,22 @@ public class UserRoleMappingRefreshService {
     private final MappingFileClient mappingFileClient;
     private final UserRoleMappingParser parser;
     private final UserRoleMappingCacheService cacheService;
-    private final RoleMappingCacheProperties properties;
     private final UserRepository userRepository;
 
     public void refreshMappings() throws IOException {
+
         MappingFileSnapshot snapshot = mappingFileClient.readSnapshot();
         String lastModifiedAt = snapshot.lastModifiedAt();
 
+        // --- Skip if unchanged ---
         if (cacheService.hasLastUpdateAt()) {
             String cachedLastUpdateAt = cacheService.getLastUpdateAt();
+
             if (lastModifiedAt != null && lastModifiedAt.equals(cachedLastUpdateAt)) {
-                cacheService.refreshAllTtls(properties.getUserTtl(), properties.getLastUpdateTtl());
+                cacheService.refreshAllTtls();
+
                 log.info(
-                    "Role Mapping file cache refresh, skipped as file has not changed since last update: "
-                        + " Last Updated at {}",
+                    "Role Mapping file cache refresh skipped - file unchanged. Last Updated at {}",
                     lastModifiedAt
                 );
                 return;
@@ -42,62 +44,81 @@ public class UserRoleMappingRefreshService {
         }
 
         try (Reader reader = new InputStreamReader(snapshot.content(), StandardCharsets.UTF_8)) {
-            ParseResult parseResult = parser.parse(reader);
 
-            Set<String> refreshedKeys = new LinkedHashSet<>();
-            int refreshedCount = 0;
+            MappingFileProcessingResult mappingResult = parser.parse(reader);
 
-            for (ParsedUserMapping userMapping : parseResult.validUsers()) {
-                Optional<UserEntity> userOpt = userRepository
-                    .findByUsernameIgnoreCase(userMapping.emailAddress());
+            Set<String> refreshedSubjects = new LinkedHashSet<>();
+            int failureCount = 0;
+
+            // --- Process valid users ---
+            for (ParsedUserMapping userMapping : mappingResult.validUsers()) {
+
+                Optional<UserEntity> userOpt =
+                    userRepository.findByUsernameIgnoreCase(userMapping.emailAddress());
 
                 if (userOpt.isEmpty()) {
-                    log.error("No user found in DB for email {}, skipping cache write", userMapping.emailAddress());
+                    log.error("No user found in DB for email {}, skipping", userMapping.emailAddress());
+                    failureCount++;
                     continue;
                 }
 
                 String tokenSubject = userOpt.get().getTokenSubject();
+
                 if (tokenSubject == null || tokenSubject.isBlank()) {
-                    log.error("User found for email {} but token_subject is blank, skipping cache write",
-                              userMapping.emailAddress());
+                    log.error("User {} has blank token_subject, skipping", userMapping.emailAddress());
+                    failureCount++;
                     continue;
                 }
 
-                String cacheKey = UserRoleMappingCacheService.ROLE_MAPPING_USER_PREFIX + tokenSubject;
+                try {
+                    cacheService.putUserMapping(tokenSubject, userMapping.businessUnitToRoles());
+                    refreshedSubjects.add(tokenSubject);
 
-                cacheService.putUserMapping(
-                    cacheKey,
-                    userMapping.businessUnitToRoles(),
-                    properties.getUserTtl()
-                );
-
-                refreshedKeys.add(cacheKey);
-                refreshedCount++;
+                } catch (Exception e) {
+                    log.error(
+                        "Failed to cache mapping for user {} (subject {}), skipping",
+                        userMapping.emailAddress(),
+                        tokenSubject,
+                        e
+                    );
+                    failureCount++;
+                }
             }
 
-            for (String invalidEmail : parseResult.invalidEmails()) {
+            // --- Handle invalid users ---
+            for (String invalidEmail : mappingResult.invalidEmails()) {
+
                 userRepository.findByUsernameIgnoreCase(invalidEmail)
-                    .ifPresent(user -> {
+                    .ifPresentOrElse(user -> {
                         String tokenSubject = user.getTokenSubject();
+
                         if (tokenSubject != null && !tokenSubject.isBlank()) {
-                            String cacheKey = UserRoleMappingCacheService.ROLE_MAPPING_USER_PREFIX + tokenSubject;
-                            cacheService.deleteUserKey(cacheKey);
-                            log.error("Invalid repeated CSV rows for email {}, deleted cache key {}",
-                                      invalidEmail, cacheKey);
+                            cacheService.deleteUserMapping(tokenSubject);
+
+                            log.warn(
+                                "Invalid CSV structure for email {}, cache entry removed",
+                                invalidEmail
+                            );
                         } else {
-                            log.error("Invalid repeated CSV rows for email {}, but token_subject is blank",
-                                      invalidEmail);
+                            log.warn(
+                                "Invalid CSV structure for email {}, token_subject missing",
+                                invalidEmail
+                            );
                         }
-                    });
+                    }, () -> log.warn(
+                        "Invalid CSV structure for email {}, user not found in DB",
+                        invalidEmail
+                    ));
             }
 
-            cacheService.deleteStaleUserKeys(refreshedKeys);
-            cacheService.setLastUpdateAt(lastModifiedAt, properties.getLastUpdateTtl());
+            // --- Cleanup ---
+            cacheService.deleteStaleUserMappings(refreshedSubjects);
+            cacheService.setLastUpdateAt(lastModifiedAt);
 
             log.info(
-                "Role Mapping file cache refresh completed successfully {} users have been refreshed. "
-                    + "Last Updated at {}",
-                refreshedCount,
+                "Role Mapping cache refresh completed: {} users refreshed, {} failures. Last Updated at {}",
+                refreshedSubjects.size(),
+                failureCount,
                 lastModifiedAt
             );
         }

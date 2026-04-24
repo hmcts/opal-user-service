@@ -1,9 +1,7 @@
 package uk.gov.hmcts.reform.opal.service.rolemapping;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -17,38 +15,40 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserRoleMappingCacheService {
 
-    public static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
-    public static final String USER_MAPPING_FILE_LAST_UPDATE_AT = "USER_MAPPING_FILE_LAST_UPDATE_AT";
+    private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
+    private static final String USER_MAPPING_FILE_LAST_UPDATE_AT = "USER_MAPPING_FILE_LAST_UPDATE_AT";
 
     private final StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RoleMappingCacheProperties properties;
+    private final ObjectMapper objectMapper;
+
 
     // -------------------------
     // USER MAPPING CACHE
     // -------------------------
 
-    public void putUserMapping(String cacheKey, Object payload, Duration ttl) {
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            redisTemplate.opsForValue().set(cacheKey, json, ttl);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize mapping for " + cacheKey, e);
-        }
+    public void putUserMapping(String tokenSubject, Object payload) {
+        write(buildUserKey(tokenSubject), payload, properties.getUserTtl());
     }
 
-    public void deleteUserKey(String cacheKey) {
-        redisTemplate.delete(cacheKey);
+    public void deleteUserMapping(String tokenSubject) {
+        redisTemplate.delete(buildUserKey(tokenSubject));
     }
 
-    public void deleteStaleUserKeys(Set<String> refreshedKeys) {
+    public void deleteStaleUserMappings(Set<String> refreshedSubjects) {
         Set<String> existingKeys = scanKeys(ROLE_MAPPING_USER_PREFIX + "*");
-        Set<String> staleKeys = new LinkedHashSet<>();
 
-        for (String key : existingKeys) {
-            if (!refreshedKeys.contains(key)) {
-                staleKeys.add(key);
-            }
+        if (existingKeys.isEmpty()) {
+            return;
         }
+
+        Set<String> refreshedKeys = new LinkedHashSet<>();
+        for (String subject : refreshedSubjects) {
+            refreshedKeys.add(buildUserKey(subject));
+        }
+
+        Set<String> staleKeys = new LinkedHashSet<>(existingKeys);
+        staleKeys.removeAll(refreshedKeys);
 
         if (!staleKeys.isEmpty()) {
             redisTemplate.delete(staleKeys);
@@ -67,27 +67,47 @@ public class UserRoleMappingCacheService {
         return redisTemplate.opsForValue().get(USER_MAPPING_FILE_LAST_UPDATE_AT);
     }
 
-    public void setLastUpdateAt(String value, Duration ttl) {
-        redisTemplate.opsForValue().set(USER_MAPPING_FILE_LAST_UPDATE_AT, value, ttl);
+    public void setLastUpdateAt(String value) {
+        redisTemplate.opsForValue().set(
+            USER_MAPPING_FILE_LAST_UPDATE_AT,
+            value,
+            properties.getLastUpdateTtl()
+        );
     }
 
     // -------------------------
     // TTL REFRESH
     // -------------------------
 
-    public void refreshAllTtls(Duration userTtl, Duration lastUpdateTtl) {
+    public void refreshAllTtls() {
         for (String key : scanKeys(ROLE_MAPPING_USER_PREFIX + "*")) {
-            redisTemplate.expire(key, userTtl);
+            redisTemplate.expire(key, properties.getUserTtl());
         }
 
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(USER_MAPPING_FILE_LAST_UPDATE_AT))) {
-            redisTemplate.expire(USER_MAPPING_FILE_LAST_UPDATE_AT, lastUpdateTtl);
+        if (hasLastUpdateAt()) {
+            redisTemplate.expire(
+                USER_MAPPING_FILE_LAST_UPDATE_AT,
+                properties.getLastUpdateTtl()
+            );
         }
     }
 
     // -------------------------
-    // INTERNAL SCAN
+    // INTERNALS
     // -------------------------
+
+    private String buildUserKey(String tokenSubject) {
+        return ROLE_MAPPING_USER_PREFIX + tokenSubject;
+    }
+
+    private void write(String cacheKey, Object payload, java.time.Duration ttl) {
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            redisTemplate.opsForValue().set(cacheKey, json, ttl);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize mapping for key " + cacheKey, e);
+        }
+    }
 
     private Set<String> scanKeys(String pattern) {
         RedisCallback<Set<String>> callback = connection -> {

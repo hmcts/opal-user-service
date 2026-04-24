@@ -1,102 +1,106 @@
 package uk.gov.hmcts.reform.opal.service.rolemapping;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class UserRoleMappingParser {
 
-    public ParseResult parse(Reader reader) throws IOException {
-        Map<String, UserAccumulator> validAccumulators = new LinkedHashMap<>();
+    // --- Column constants ---
+    private static final String EMAIL_ADDRESS = "email_address";
+    private static final String BUSINESS_UNIT_ID = "business_unit_id";
+    private static final String ROLE_ID = "role_id";
+
+    public MappingFileProcessingResult parse(Reader reader) throws IOException {
+
+        Map<String, ParsedUserMappingBuilder> userMappings = new LinkedHashMap<>();
         Set<String> invalidEmails = new LinkedHashSet<>();
-        Set<String> seenEmails = new LinkedHashSet<>();
-        String previousEmail = null;
 
         try (CSVParser parser = CSVFormat.DEFAULT
             .builder()
             .setHeader()
             .setSkipHeaderRecord(true)
-            .setTrim(true)
             .build()
             .parse(reader)) {
 
+            String previousEmail = null;
+
             for (CSVRecord record : parser) {
+
+                // --- Skip malformed rows ---
                 if (record.size() < 3) {
-                    throw new IllegalArgumentException("Invalid CSV row at line " + record.getRecordNumber());
-                }
-
-                String email = normalizeEmail(record.get("email_address"));
-                String businessUnitId = normalizeValue(record.get("business_unit_id"));
-                String roleId = normalizeValue(record.get("role_id"));
-
-                if (email.isEmpty() || businessUnitId.isEmpty() || roleId.isEmpty()) {
-                    throw new IllegalArgumentException("CSV row contains blank required values at line "
-                                                           + record.getRecordNumber());
-                }
-
-                if (!email.equals(previousEmail)) {
-                    if (seenEmails.contains(email)) {
-                        invalidEmails.add(email);
-                        validAccumulators.remove(email);
-                        previousEmail = email;
-                        continue;
-                    }
-                    seenEmails.add(email);
-                    previousEmail = email;
-                }
-
-                if (invalidEmails.contains(email)) {
+                    log.warn("Skipping malformed CSV row {}: {}", record.getRecordNumber(), record);
                     continue;
                 }
 
-                validAccumulators
-                    .computeIfAbsent(email, UserAccumulator::new)
-                    .add(businessUnitId, roleId);
+                String email = record.get(EMAIL_ADDRESS).trim().toLowerCase();
+                String businessUnit = record.get(BUSINESS_UNIT_ID).trim();
+                String role = record.get(ROLE_ID).trim();
+
+                // --- Detect non-contiguous user ---
+                if (previousEmail != null
+                    && !email.equals(previousEmail)
+                    && userMappings.containsKey(email)) {
+
+                    log.warn("Email {} appears non-contiguously - marking as invalid", email);
+
+                    invalidEmails.add(email);
+                    userMappings.remove(email);
+                }
+
+                // --- Skip if already invalid ---
+                if (invalidEmails.contains(email)) {
+                    previousEmail = email;
+                    continue;
+                }
+
+                // --- Add mapping ---
+                userMappings
+                    .computeIfAbsent(email, ParsedUserMappingBuilder::new)
+                    .add(businessUnit, role);
+
+                previousEmail = email;
             }
         }
 
-        List<ParsedUserMapping> validUsers = validAccumulators.values().stream()
-            .map(UserAccumulator::toParsedUserMapping)
-            .toList();
-
-        return new ParseResult(validUsers, invalidEmails);
+        return new MappingFileProcessingResult(
+            userMappings.values().stream()
+                .map(ParsedUserMappingBuilder::build)
+                .toList(),
+            invalidEmails
+        );
     }
 
-    private String normalizeEmail(String value) {
-        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
-    }
+    // --- Helper builder ---
+    private static class ParsedUserMappingBuilder {
 
-    private String normalizeValue(String value) {
-        return value == null ? "" : value.trim();
-    }
-
-    private static final class UserAccumulator {
-        private final String emailAddress;
+        private final String email;
         private final Map<String, Set<String>> businessUnitToRoles = new LinkedHashMap<>();
 
-        private UserAccumulator(String emailAddress) {
-            this.emailAddress = emailAddress;
+        ParsedUserMappingBuilder(String email) {
+            this.email = email;
         }
 
-        private void add(String businessUnitId, String roleId) {
+        void add(String businessUnit, String role) {
             businessUnitToRoles
-                .computeIfAbsent(businessUnitId, ignored -> new LinkedHashSet<>())
-                .add(roleId);
+                .computeIfAbsent(businessUnit, k -> new LinkedHashSet<>())
+                .add(role);
         }
 
-        private ParsedUserMapping toParsedUserMapping() {
-            return new ParsedUserMapping(emailAddress, businessUnitToRoles);
+        ParsedUserMapping build() {
+            return new ParsedUserMapping(email, businessUnitToRoles);
         }
     }
 }

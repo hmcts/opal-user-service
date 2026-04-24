@@ -1,10 +1,13 @@
 package uk.gov.hmcts.reform.opal.service.rolemapping;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.ScanOptions;
@@ -100,12 +103,21 @@ public class UserRoleMappingCacheService {
         return ROLE_MAPPING_USER_PREFIX + tokenSubject;
     }
 
-    private void write(String cacheKey, Object payload, java.time.Duration ttl) {
+    private void write(String cacheKey, Object payload, Duration ttl) {
         try {
             String json = objectMapper.writeValueAsString(payload);
             redisTemplate.opsForValue().set(cacheKey, json, ttl);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to serialize mapping for key " + cacheKey, e);
+
+        } catch (DataAccessException e) {
+            throw new IllegalStateException(
+                "Redis write failed for key " + cacheKey,
+                e
+            );
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(
+                "Failed to serialize mapping for key " + cacheKey,
+                e
+            );
         }
     }
 

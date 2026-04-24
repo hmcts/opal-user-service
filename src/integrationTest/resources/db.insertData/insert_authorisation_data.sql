@@ -69,3 +69,9 @@ VALUES (1,1, 1, 'Fines_Role_1', true, ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'ACC
 INSERT INTO business_unit_user_roles(business_unit_user_role_id, business_unit_user_id, role_id)
 VALUES (1,'L065JG', 1),
        (2,'L065JG', 2);
+
+SELECT setval(
+    'business_unit_user_role_id_seq',
+    COALESCE((SELECT MAX(business_unit_user_role_id) FROM business_unit_user_roles), 1),
+    true
+);

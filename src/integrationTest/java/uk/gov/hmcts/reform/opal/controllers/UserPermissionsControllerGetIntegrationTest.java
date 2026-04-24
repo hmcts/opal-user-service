@@ -51,7 +51,7 @@ import static uk.gov.hmcts.opal.common.dto.ToJsonString.toPrettyJson;
 @ActiveProfiles({"integration"})
 @Slf4j(topic = "opal.UserPermissionsControllerIntegrationTest")
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
-@Sql(scripts = "classpath:db.insertData/insert_user_state_data.sql", executionPhase = BEFORE_TEST_CLASS)
+@Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @DisplayName("UserPermissionsControllerGetIntegrationTest")
 class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTest {
 

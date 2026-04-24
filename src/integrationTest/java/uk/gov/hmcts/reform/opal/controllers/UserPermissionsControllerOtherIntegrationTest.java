@@ -47,7 +47,7 @@ import uk.gov.hmcts.reform.opal.service.JsonSchemaValidationService;
 @ActiveProfiles({"integration"})
 @Slf4j(topic = "opal.UserPermissionsControllerIntegrationTest")
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
-@Sql(scripts = "classpath:db.insertData/insert_user_state_data.sql", executionPhase = BEFORE_TEST_CLASS)
+@Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @DisplayName("UserPermissionsController 'Add' and 'Update' Integration Tests with Security")
 class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationTest {
 

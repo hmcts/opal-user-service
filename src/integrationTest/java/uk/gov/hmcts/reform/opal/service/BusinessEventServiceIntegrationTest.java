@@ -26,6 +26,8 @@ import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 
+import java.time.OffsetDateTime;
+
 @ActiveProfiles({"integration"})
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_CLASS)
@@ -50,7 +52,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should create and persist a business event when all parameters are provided")
     void logBusinessEvent_persistsExplicitEventDetails() {
-        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent();
+        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
         BusinessEventEntity result = businessEventService.logBusinessEvent(
             BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, 500000000L, 500000003L, eventDetails);
@@ -74,7 +76,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     void logBusinessEvent_persistsEventDetailsForAuthenticatedUser() {
         TestingAuthenticationToken authentication = new TestingAuthenticationToken("principal", "credentials");
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent();
+        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
         when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000003L);
 

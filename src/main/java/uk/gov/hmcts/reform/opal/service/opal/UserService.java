@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
+import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.UnitsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.search.UserSearchDto;
@@ -24,6 +25,7 @@ import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 import uk.gov.hmcts.reform.opal.service.UserServiceInterface;
 import uk.gov.hmcts.reform.opal.service.UserServiceProxy;
 
+import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -63,8 +65,10 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     @Override
     public List<UserEntity> searchUsers(UserSearchDto criteria) {
         Page<UserEntity> page = userRepository
-            .findBy(specs.findBySearchCriteria(criteria),
-                    ffq -> ffq.page(Pageable.unpaged()));
+            .findBy(
+                specs.findBySearchCriteria(criteria),
+                ffq -> ffq.page(Pageable.unpaged())
+            );
 
         return page.getContent();
     }
@@ -147,11 +151,12 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
                 BusinessUnitUserEntity::getBusinessUnitUserId,
                 businessUnitUser -> businessUnitUser,
                 (left, right) -> left,
-                LinkedHashMap::new));
+                LinkedHashMap::new
+            ));
     }
 
     private void logBusinessEvent(List<BusinessUnitUserRoleEntity> existingAssignments, UserEntity user,
-        long roleId, Set<Short> businessUnitIds) {
+                                  long roleId, Set<Short> businessUnitIds) {
 
         Set<Short> existingBusinessUnitIds = existingAssignments.stream()
             .map(assignment -> assignment.getBusinessUnitUser().getBusinessUnitId())
@@ -168,15 +173,33 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
             businessEventService.logBusinessEvent(
                 BusinessEventLogType.ROLE_ASSIGNED_TO_USER, user.getUserId(),
                 new RoleAssignedToUserEvent(roleId, addedBusinessUnitIds),
-                businessEventService);
+                businessEventService
+            );
         } else {
             log.debug(
                 ":logBusinessEvent: amended business units: added {}, removed {}",
-                addedBusinessUnitIds, removedBusinessUnitIds);
+                addedBusinessUnitIds, removedBusinessUnitIds
+            );
             businessEventService.logBusinessEvent(
                 BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED, user.getUserId(),
                 new UnitsAssociatedToRoleAmendedEvent(roleId, addedBusinessUnitIds, removedBusinessUnitIds),
-                businessEventService);
+                businessEventService
+            );
         }
+    }
+
+    public void activateUser(UserEntity user) {
+        activateUser(user, OffsetDateTime.now());
+    }
+
+    @Transactional
+    public void activateUser(UserEntity user, OffsetDateTime activationDate) {
+        user.setActivationDate(activationDate);
+        userRepository.save(user);
+        businessEventService.logBusinessEvent(
+            BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
+            user.getUserId(), new AccountActivationInitiatedEvent(activationDate),
+            businessEventService
+        );
     }
 }

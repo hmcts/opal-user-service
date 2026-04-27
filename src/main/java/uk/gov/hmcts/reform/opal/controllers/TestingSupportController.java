@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,7 @@ import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessToken
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 @RestController
@@ -80,6 +82,23 @@ public class TestingSupportController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/users/{userId}")
+    public ResponseEntity<Void> activateUser(
+        @PathVariable Long userId,
+        @RequestBody ActivateUserRequest request) {
+
+        log.debug(":activateUser : userId: {}, activateDate: {}", userId, request.activationDate());
+
+        userService.activateUser(
+            userService.getUser(userId),
+            request.activationDate()
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
     record TestingSupportTokenResponse(@JsonProperty("access_token") String accessToken) {
     }
+
+    record ActivateUserRequest(OffsetDateTime activationDate) {}
 }

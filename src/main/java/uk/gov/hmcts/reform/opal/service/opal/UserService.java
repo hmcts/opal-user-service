@@ -58,17 +58,15 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
 
     @Override
     public UserEntity getUser(Long userId) {
-        return userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+        return userRepository.findById(userId).orElseThrow(() -> new
+            EntityNotFoundException("User not found with id: " + userId));
     }
 
     @Override
     public List<UserEntity> searchUsers(UserSearchDto criteria) {
-        Page<UserEntity> page = userRepository
-            .findBy(
-                specs.findBySearchCriteria(criteria),
-                ffq -> ffq.page(Pageable.unpaged())
-            );
+        Page<UserEntity> page = userRepository.findBy(
+            specs.findBySearchCriteria(criteria),
+            ffq -> ffq.page(Pageable.unpaged()));
 
         return page.getContent();
     }
@@ -82,12 +80,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     @Cacheable(cacheNames = "users", key = "#username")
     public UserState getUserStateByUsername(String username) {
         UserEntity user = userRepository.findByUsername(username);
-        return UserState.builder()
-            .userId(user.getUserId())
-            .userName(user.getUsername())
-            .businessUnitUser(
-                businessUnitUserService.getAuthorisationBusinessUnitPermissionsByUserId(user.getUserId()))
-            .build();
+        return UserState.builder().userId(user.getUserId()).userName(user.getUsername()).businessUnitUser(
+            businessUnitUserService.getAuthorisationBusinessUnitPermissionsByUserId(user.getUserId())).build();
     }
 
     /**
@@ -100,17 +94,13 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     public Optional<UserState> getLimitedUserStateByUsername(String username) {
         Optional<UserEntity> userEntity = Optional.ofNullable(userRepository.findByUsername(username));
 
-        return userEntity.map(u -> UserState.builder()
-            .userId(u.getUserId())
-            .userName(u.getUsername())
-            .businessUnitUser(
-                businessUnitUserService.getLimitedBusinessUnitPermissionsByUserId(u.getUserId()))
-            .build());
+        return userEntity.map(u -> UserState.builder().userId(u.getUserId()).userName(u.getUsername()).businessUnitUser(
+            businessUnitUserService.getLimitedBusinessUnitPermissionsByUserId(u.getUserId())).build());
     }
 
     @Transactional
-    public void addOrReplaceRoleInformationOnUser(
-        long userId, long roleId, Set<Short> businessUnitIds, UserServiceProxy proxy) {
+    public void addOrReplaceRoleInformationOnUser(long userId, long roleId, Set<Short> businessUnitIds,
+                                                  UserServiceProxy proxy) {
         proxy.addOrReplaceRoleInformationOnUser(proxy.getUser(userId), roleId, businessUnitIds);
     }
 
@@ -120,47 +110,49 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
 
         RoleEntity role = roleService.requireRole(roleId);
 
-        List<BusinessUnitUserEntity> alignedBusinessUnitUsers =
-            roleService.getAlignedBusinessUnitUsers(user.getUserId(), businessUnitIds);
+        List<BusinessUnitUserEntity> alignedBusinessUnitUsers = roleService.getAlignedBusinessUnitUsers(
+            user.getUserId(),
+            businessUnitIds);
 
         Set<String> requestedBusinessUnitUserIds = getBusinessUnitUserIds(alignedBusinessUnitUsers);
-        Map<String, BusinessUnitUserEntity> businessUnitUsersById =
-            mapBusinessUnitUsersById(alignedBusinessUnitUsers);
+        Map<String, BusinessUnitUserEntity> businessUnitUsersById = mapBusinessUnitUsersById(alignedBusinessUnitUsers);
 
-        List<BusinessUnitUserRoleEntity> existingAssignments =
-            roleService.getExistingAssignments(user.getUserId(), roleId);
+        List<BusinessUnitUserRoleEntity> existingAssignments = roleService.getExistingAssignments(
+            user.getUserId(),
+            roleId);
 
         logBusinessEvent(existingAssignments, user, roleId, businessUnitIds);
 
         roleService.removeObsoleteAssignments(existingAssignments, requestedBusinessUnitUserIds);
         roleService.addMissingAssignments(
-            existingAssignments, businessUnitUsersById, requestedBusinessUnitUserIds, role);
+            existingAssignments,
+            businessUnitUsersById,
+            requestedBusinessUnitUserIds,
+            role);
     }
 
     private Set<String> getBusinessUnitUserIds(List<BusinessUnitUserEntity> businessUnitUsers) {
-        return businessUnitUsers.stream()
-            .map(BusinessUnitUserEntity::getBusinessUnitUserId)
-            .collect(Collectors.toCollection(LinkedHashSet::new));
+        return businessUnitUsers.stream().map(BusinessUnitUserEntity::getBusinessUnitUserId)
+            .collect(Collectors.toCollection(
+            LinkedHashSet::new));
     }
 
     private Map<String, BusinessUnitUserEntity> mapBusinessUnitUsersById(
         List<BusinessUnitUserEntity> businessUnitUsers) {
 
-        return businessUnitUsers.stream()
-            .collect(Collectors.toMap(
-                BusinessUnitUserEntity::getBusinessUnitUserId,
-                businessUnitUser -> businessUnitUser,
-                (left, right) -> left,
-                LinkedHashMap::new
-            ));
+        return businessUnitUsers.stream().collect(Collectors.toMap(
+            BusinessUnitUserEntity::getBusinessUnitUserId,
+            businessUnitUser -> businessUnitUser,
+            (left, right) -> left,
+            LinkedHashMap::new));
     }
 
-    private void logBusinessEvent(List<BusinessUnitUserRoleEntity> existingAssignments, UserEntity user,
-                                  long roleId, Set<Short> businessUnitIds) {
+    private void logBusinessEvent(List<BusinessUnitUserRoleEntity> existingAssignments,
+                                  UserEntity user, long roleId, Set<Short> businessUnitIds) {
 
         Set<Short> existingBusinessUnitIds = existingAssignments.stream()
-            .map(assignment -> assignment.getBusinessUnitUser().getBusinessUnitId())
-            .collect(Collectors.toCollection(LinkedHashSet::new));
+            .map(assignment -> assignment.getBusinessUnitUser().getBusinessUnitId()).collect(
+            Collectors.toCollection(LinkedHashSet::new));
 
         Set<Short> addedBusinessUnitIds = new LinkedHashSet<>(businessUnitIds);
         addedBusinessUnitIds.removeAll(existingBusinessUnitIds);
@@ -171,20 +163,21 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
         if (existingAssignments.isEmpty()) {
             log.debug(":logBusinessEvent: assigned business units: {}", addedBusinessUnitIds);
             businessEventService.logBusinessEvent(
-                BusinessEventLogType.ROLE_ASSIGNED_TO_USER, user.getUserId(),
+                BusinessEventLogType.ROLE_ASSIGNED_TO_USER,
+                user.getUserId(),
                 new RoleAssignedToUserEvent(roleId, addedBusinessUnitIds),
-                businessEventService
-            );
+                businessEventService);
         } else {
             log.debug(
                 ":logBusinessEvent: amended business units: added {}, removed {}",
-                addedBusinessUnitIds, removedBusinessUnitIds
+                addedBusinessUnitIds,
+                removedBusinessUnitIds
             );
             businessEventService.logBusinessEvent(
-                BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED, user.getUserId(),
+                BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
+                user.getUserId(),
                 new UnitsAssociatedToRoleAmendedEvent(roleId, addedBusinessUnitIds, removedBusinessUnitIds),
-                businessEventService
-            );
+                businessEventService);
         }
     }
 
@@ -194,12 +187,12 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
 
     @Transactional
     public void activateUser(UserEntity user, OffsetDateTime activationDate) {
-        user.setActivationDate(activationDate);
+        user.setActivationDate(activationDate.toLocalDateTime());
         userRepository.save(user);
         businessEventService.logBusinessEvent(
             BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
-            user.getUserId(), new AccountActivationInitiatedEvent(activationDate),
-            businessEventService
-        );
+            user.getUserId(),
+            new AccountActivationInitiatedEvent(activationDate),
+            businessEventService);
     }
 }

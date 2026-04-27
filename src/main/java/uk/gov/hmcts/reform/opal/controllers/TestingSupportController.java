@@ -60,7 +60,7 @@ public class TestingSupportController {
     @GetMapping("/token/user")
     @Operation(summary = "Retrieves the token for a given user")
     public ResponseEntity<TestingSupportTokenResponse> getTokenForUser(@RequestHeader(value = X_USER_EMAIL)
-        String userEmail) {
+                                                                       String userEmail) {
         log.debug(":getTokenForUser: user: {}", userEmail);
         AccessTokenResponse accessTokenResponse = testingSupportAccessTokenService.getTestUserToken(userEmail);
         return ResponseEntity.ok(new TestingSupportTokenResponse(accessTokenResponse.getAccessToken()));
@@ -100,5 +100,6 @@ public class TestingSupportController {
     record TestingSupportTokenResponse(@JsonProperty("access_token") String accessToken) {
     }
 
-    record ActivateUserRequest(OffsetDateTime activationDate) {}
+    record ActivateUserRequest(OffsetDateTime activationDate) {
+    }
 }

@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.opal.entity;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -71,7 +70,7 @@ public class UserEntity implements Versioned {
     private LocalDateTime lastLoginDate;
 
     @Column(name = "activation_date")
-    private OffsetDateTime activationDate;
+    private LocalDateTime activationDate;
 
     // Use a Set to avoid duplicate entries when fetching across multi-valued joins.
     @OneToMany(mappedBy = "user")

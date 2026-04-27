@@ -248,7 +248,7 @@ class UserServiceTest {
         userService.activateUser(user, activationDate);
 
         // Assert
-        assertEquals(activationDate, user.getActivationDate());
+        assertEquals(activationDate.toLocalDateTime(), user.getActivationDate());
 
         verify(userRepository).save(user);
 

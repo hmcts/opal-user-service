@@ -230,6 +230,7 @@ class UserServiceTest {
 
     @Test
     void activateUser_withoutDate_delegatesToOverload() {
+        // Arrange
         OffsetDateTime fixedDateTime = OffsetDateTime.parse("2026-04-27T10:15:30+01:00");
         Clock fixedClock = Clock.fixed(fixedDateTime.toInstant(), fixedDateTime.getOffset());
 
@@ -245,8 +246,10 @@ class UserServiceTest {
 
         UserService spyService = Mockito.spy(userService);
 
+        // Act
         spyService.activateUser(user);
 
+        // Assert
         verify(spyService).activateUser(eq(user), eq(fixedDateTime));
     }
 

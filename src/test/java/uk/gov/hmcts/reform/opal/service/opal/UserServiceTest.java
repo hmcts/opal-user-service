@@ -61,6 +61,9 @@ class UserServiceTest {
     @Mock
     private BusinessEventService businessEventService;
 
+    @Mock
+    private Clock clock;
+
     @InjectMocks
     private UserService userService;
 
@@ -229,28 +232,29 @@ class UserServiceTest {
     }
 
     @Test
-    void activateUser_withoutDate_delegatesToOverload() {
+    void activateUser_withoutDate_usesClockTime_andLogsEvent() {
         // Arrange
         OffsetDateTime fixedDateTime = OffsetDateTime.parse("2026-04-27T10:15:30+01:00");
-        Clock fixedClock = Clock.fixed(fixedDateTime.toInstant(), fixedDateTime.getOffset());
 
-        userService = new UserService(
-            userRepository,
-            businessUnitUserService,
-            roleService,
-            businessEventService,
-            fixedClock
-        );
+        when(clock.instant()).thenReturn(fixedDateTime.toInstant());
+        when(clock.getZone()).thenReturn(fixedDateTime.getOffset());
 
         UserEntity user = user(123L);
 
-        UserService spyService = Mockito.spy(userService);
-
         // Act
-        spyService.activateUser(user);
+        userService.activateUser(user);
 
         // Assert
-        verify(spyService).activateUser(eq(user), eq(fixedDateTime));
+        assertEquals(fixedDateTime.toLocalDateTime(), user.getActivationDate());
+
+        verify(businessEventService).logBusinessEvent(
+            eq(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED),
+            eq(123L),
+            argThat((AccountActivationInitiatedEvent event) ->
+                        event.accountActivationDate().equals(fixedDateTime)
+            ),
+            eq(businessEventService)
+        );
     }
 
     @Test

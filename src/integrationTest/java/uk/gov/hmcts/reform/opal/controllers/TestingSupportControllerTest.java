@@ -12,12 +12,16 @@ import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +29,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -198,5 +203,27 @@ class TestingSupportControllerTest {
 
         verify(userService).addOrReplaceRoleInformationOnUser(
             987L, 101L, Set.of((short) 1, (short) 4, (short) 5), userService);
+    }
+
+    @Test
+    void testActivateUser() throws Exception {
+        OffsetDateTime activationDate = OffsetDateTime.now();
+
+        UserEntity user = UserEntity.builder().userId(987L).build();
+        when(userService.getUser(987L)).thenReturn(user);
+
+        mockMvc.perform(patch("/testing-support/users/987")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                {
+                  "activationDate": "%s"
+                }
+                """.formatted(activationDate)))
+            .andExpect(status().isNoContent());
+
+        verify(userService).activateUser(
+            eq(user),
+            argThat(actual -> actual.toInstant().equals(activationDate.toInstant()))
+        );
     }
 }

@@ -2,13 +2,16 @@ package uk.gov.hmcts.reform.opal.controllers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.verification.VerificationMode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -60,6 +64,9 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
 
     @MockitoSpyBean
     private EventLoggingService eventLoggingService;
+
+    @Autowired
+    StringRedisTemplate redisTemplate;
 
     @ParameterizedTest
     @NullSource
@@ -389,8 +396,13 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @DisplayName("V2 with ID Should return 200 and full V2 user state for a user with permissions")
     void getV2UserStateWithId_returnsFullState(boolean newLogin) throws Exception {
         long userIdWithPermissions = 500000000L;
-        Authentication auth = createJwtPrincipal("k9LpT2xVqR8m","opal-test@HMCTS.NET", "Pablo");
+        String subject = "k9LpT2xVqR8m";
+        Authentication auth = createJwtPrincipal(subject,"opal-test@HMCTS.NET", "Pablo");
         SecurityContextHolder.getContext().setAuthentication(auth);
+        // clear any existing user state in the cache
+        String cacheKey = "USER_STATE_" + subject;
+        redisTemplate.delete(cacheKey);
+
         MockHttpServletRequestBuilder builder = get("/v2" + URL_BASE + "/" + userIdWithPermissions + "/state");
         addLoginHeader(newLogin, builder);
         ResultActions actions = mockMvc.perform(builder);
@@ -416,7 +428,10 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         } else {
             verifyNoInteractions(eventLoggingService);
         }
-
+        // verification of redis caching of user state
+        assertThat(EXPECTED_V2_USER_STATE).isEqualTo(redisTemplate.opsForValue().get(cacheKey));
+        Long ttl = redisTemplate.getExpire(cacheKey, TimeUnit.MINUTES);
+        assertThat(ttl).isBetween(29L, 30L); //30 mins TTL seems to immediately tick down to 29 mins.
     }
 
     @ParameterizedTest
@@ -425,7 +440,8 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     void getV2UserStateWithId_updatesLastLoginDateInDb(boolean newLogin) throws Exception {
         long userIdWithPermissions = 500000000L;
 
-        Authentication auth = createJwtPrincipal("k9LpT2xVqR8m", "opal-test@HMCTS.NET", "Pablo");
+        String subject = "k9LpT2xVqR8m";
+        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         LocalDateTime before = readLastLoginDate(userIdWithPermissions);
@@ -446,6 +462,72 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         } else {
             assertThat(after).isEqualTo(before);
         }
+    }
+
+    @Test
+    @DisplayName("PO-2835 AC2: should refresh cached user state and TTL")
+    void getV2UserStateViaPrincipal_refreshesTtlOfRedisEntry() throws Exception {
+        long userId = 500000000L;
+        String subject = "k9LpT2xVqR8m";
+        String cacheKey = "USER_STATE_" + subject;
+        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        //call once, check we have the initial TTL
+        ResultActions firstCall = mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        String firstBody = firstCall.andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey)))
+            .isEqualTo(objectMapper.readTree(firstBody));
+        Long ttlBeforeRefreshMinutes1 = redisTemplate.getExpire(cacheKey, TimeUnit.MINUTES);
+        assertThat(ttlBeforeRefreshMinutes1).isBetween(29L, 30L);
+
+        // expire the cache entry so that only 5 minutes left
+        redisTemplate.expire(cacheKey, 5, TimeUnit.MINUTES);
+        Long ttlBeforeRefreshMinutes2 = redisTemplate.getExpire(cacheKey, TimeUnit.MINUTES);
+        assertThat(ttlBeforeRefreshMinutes2).isBetween(4L, 5L);
+
+        //call a second time and check we get the new TTL.
+        ResultActions secondCall = mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        String secondBody = secondCall.andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey)))
+            .isEqualTo(objectMapper.readTree(secondBody));
+        Long ttlBeforeRefreshMinutes3 = redisTemplate.getExpire(cacheKey, TimeUnit.MINUTES);
+        assertThat(ttlBeforeRefreshMinutes3).isBetween(29L, 30L);
+    }
+
+    @Test
+    @DisplayName("PO-2835 AC3: cached user state should expire and return no data")
+    void getV2UserStateWithId_cachedStateExpiresAfterTtl() throws Exception {
+        long userId = 500000000L;
+        String subject = "k9LpT2xVqR8m";
+        String cacheKey = "USER_STATE_" + subject;
+        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // Populate cache by calling the API with valid data.
+        mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        assertThat(redisTemplate.opsForValue().get(cacheKey)).isEqualTo(EXPECTED_V2_USER_STATE);
+
+        // Simulate "30 minutes later"
+        Boolean ttlSet = redisTemplate.expire(cacheKey, 1, TimeUnit.SECONDS);
+        assertThat(ttlSet).isTrue();
+
+        // Poll until the entry disappears from Redis
+        String cachedValue = redisTemplate.opsForValue().get(cacheKey);
+        long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (cachedValue != null && System.nanoTime() < deadlineNanos) {
+            Thread.sleep(100L);
+            cachedValue = redisTemplate.opsForValue().get(cacheKey);
+        }
+
+        assertThat(cachedValue).isNull();
     }
 
     private LocalDateTime readLastLoginDate(long userId) {
@@ -470,77 +552,62 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
 
     public static final String EXPECTED_V2_USER_STATE =
         """
-            {
-              "user_id": 500000000,
-              "username": "opal-test@HMCTS.NET",
-              "name": "Pablo",
-              "status": "ACTIVE",
-              "version": 0,
-              "cache_name": null,
-              "domains": {
-                "fines": {
-                  "business_unit_users": [
-                    {
-                      "business_unit_user_id": "L065JG",
-                      "business_unit_id": 70,
-                      "permissions": [
-                        {
-                          "permission_id": 1,
-                          "permission_name": "Create and Manage Draft Accounts"
-                        },
-                        {
-                          "permission_id": 3,
-                          "permission_name": "Account Enquiry"
-                        },
-                        {
-                          "permission_id": 4,
-                          "permission_name": "Collection Order"
-                        },
-                        {
-                          "permission_id": 5,
-                          "permission_name": "Check and Validate Draft Accounts"
-                        },
-                        {
-                          "permission_id": 6,
-                          "permission_name": "Search and View Accounts"
-                        }
-                      ]
-                    },
-                    {
-                      "business_unit_user_id": "L066JG",
-                      "business_unit_id": 68,
-                      "permissions": []
-                    },
-                    {
-                      "business_unit_user_id": "L067JG",
-                      "business_unit_id": 73,
-                      "permissions": []
-                    },
-                    {
-                      "business_unit_user_id": "L073JG",
-                      "business_unit_id": 71,
-                      "permissions": []
-                    },
-                    {
-                      "business_unit_user_id": "L077JG",
-                      "business_unit_id": 67,
-                      "permissions": []
-                    },
-                    {
-                      "business_unit_user_id": "L078JG",
-                      "business_unit_id": 69,
-                      "permissions": []
-                    },
-                    {
-                      "business_unit_user_id": "L080JG",
-                      "business_unit_id": 61,
-                      "permissions": []
-                    }
-                  ]
-                }
-              }
+        {
+          "user_id" : 500000000,
+          "username" : "opal-test@HMCTS.NET",
+          "name" : "Pablo",
+          "status" : "ACTIVE",
+          "version" : 0,
+          "cache_name" : "USER_STATE_k9LpT2xVqR8m",
+          "domains" : {
+            "fines" : {
+              "business_unit_users" : [ {
+                "business_unit_user_id" : "L065JG",
+                "business_unit_id" : 70,
+                "permissions" : [ {
+                  "permission_id" : 1,
+                  "permission_name" : "Create and Manage Draft Accounts"
+                }, {
+                  "permission_id" : 3,
+                  "permission_name" : "Account Enquiry"
+                }, {
+                  "permission_id" : 4,
+                  "permission_name" : "Collection Order"
+                }, {
+                  "permission_id" : 5,
+                  "permission_name" : "Check and Validate Draft Accounts"
+                }, {
+                  "permission_id" : 6,
+                  "permission_name" : "Search and View Accounts"
+                } ]
+              }, {
+                "business_unit_user_id" : "L066JG",
+                "business_unit_id" : 68,
+                "permissions" : [ ]
+              }, {
+                "business_unit_user_id" : "L067JG",
+                "business_unit_id" : 73,
+                "permissions" : [ ]
+              }, {
+                "business_unit_user_id" : "L073JG",
+                "business_unit_id" : 71,
+                "permissions" : [ ]
+              }, {
+                "business_unit_user_id" : "L077JG",
+                "business_unit_id" : 67,
+                "permissions" : [ ]
+              }, {
+                "business_unit_user_id" : "L078JG",
+                "business_unit_id" : 69,
+                "permissions" : [ ]
+              }, {
+                "business_unit_user_id" : "L080JG",
+                "business_unit_id" : 61,
+                "permissions" : [ ]
+              } ]
             }
-        """;
+          }
+        }""";
 
     private JwtAuthenticationToken createJwtPrincipal() {
         return createJwtPrincipal("jjqwGAERGW43","test-user@HMCTS.NET", "Pablo");

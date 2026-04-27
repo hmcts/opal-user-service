@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal;
 
 import com.redis.testcontainers.RedisContainer;
 import lombok.extern.slf4j.Slf4j;
+import com.redis.testcontainers.RedisContainer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;

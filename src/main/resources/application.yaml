@@ -137,6 +137,7 @@ user:
     url: ${OPAL_USER_SERVICE_API_URL:http://localhost:4555}
 
 cache:
+  user-state-timeout-minutes: 30
   role-mapping:
     user-ttl: PT24H
     last-update-ttl: PT1H

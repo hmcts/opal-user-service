@@ -22,6 +22,7 @@ java:
         - name: OpalTestUserPassword
           alias: OPAL_TEST_USER_PASSWORD
   environment:
+    REDIS_CONNECTION_STRING: redis://${SERVICE_NAME}-hmcts-redis-master:6379
     OPAL_USER_DB_HOST: "{{ .Release.Name }}-postgresql"
     OPAL_USER_DB_NAME: "{{ .Values.postgresql.auth.database}}"
     OPAL_USER_DB_USERNAME: "{{ .Values.postgresql.auth.username}}"
@@ -34,3 +35,19 @@ java:
     LAUNCH_DARKLY_ENABLED: false
   postgresql:
     enabled: true
+hmcts-redis:
+  enabled: true
+  master:
+    persistence:
+      enabled: false
+  auth:
+    enabled: false
+    sentinel: false
+  image:
+    registry: hmctsprod.azurecr.io
+    repository: imported/redis
+    tag: 8.2.1
+  sentinel:
+    enabled: false
+  metrics:
+    enabled: false

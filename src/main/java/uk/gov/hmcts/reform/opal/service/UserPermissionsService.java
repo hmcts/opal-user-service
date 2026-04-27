@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.opal.service;
 
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
 import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
 
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -17,6 +19,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -32,6 +36,7 @@ import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
+import uk.gov.hmcts.reform.opal.config.properties.CacheConfiguration;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
@@ -62,8 +67,9 @@ public class UserPermissionsService implements UserPermissionsProxy {
     private final UserMapper userMapper;
     private final AccessTokenService tokenService;
     private final SecurityEventLoggingService securityEventLoggingService;
+    private final StringRedisTemplate redisTemplate;
     private final Clock clock;
-
+    private final CacheConfiguration cacheConfiguration;
 
     @Transactional(readOnly = true)
     @Deprecated //Use getUserStateV2 equivalent method
@@ -128,6 +134,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
             logUserAuthenticationEvent(user.getUserId());
             updateLastLogin(user);
         }
+        cacheUserState(dto, user);
         return dto;
     }
 
@@ -145,6 +152,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
                 logUserAuthenticationEvent(clientUserId);
                 updateLastLogin(user);
             }
+            cacheUserState(dto, user);
             return dto;
         }
     }
@@ -155,6 +163,18 @@ public class UserPermissionsService implements UserPermissionsProxy {
         String subject = extractSubject(jwt);
         UserEntity user = proxy.getUser(subject);
         return user.getUserId();
+    }
+
+    private void cacheUserState(UserStateV2Dto dto, UserEntity user) {
+        String cacheKey = "USER_STATE_" + user.getTokenSubject();
+        dto.setCacheName(cacheKey);
+        String dtoJson = objectToPrettyJson(dto);
+        Long cacheTimeout = cacheConfiguration.getUserStateTimeoutMinutes();
+        try {
+            redisTemplate.opsForValue().set(cacheKey, dtoJson, cacheTimeout, TimeUnit.MINUTES);
+        } catch (DataAccessException e) {
+            log.warn("Unable to cache user state for user {}, reason: {}", user.getUsername(), e.getMessage());
+        }
     }
 
     private void logUserAuthenticationEvent(Long userId) {

@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import static uk.gov.hmcts.reform.opal.TestContainerConfig.POSTGRES_CONTAINER;
+import static uk.gov.hmcts.reform.opal.TestContainerConfig.REDIS_CONTAINER;
 
 @SpringBootTest
 @ActiveProfiles("integration")
@@ -35,5 +36,6 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.url", POSTGRES_CONTAINER::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES_CONTAINER::getUsername);
         registry.add("spring.datasource.password", POSTGRES_CONTAINER::getPassword);
+        registry.add("spring.data.redis.url", REDIS_CONTAINER::getRedisURI);
     }
 }

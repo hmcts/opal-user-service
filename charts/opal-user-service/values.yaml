@@ -26,6 +26,8 @@ java:
           alias: AAD_CLIENT_SECRET
         - name: OpalTestUserPassword
           alias: OPAL_TEST_USER_PASSWORD
+        - name: redis-connection-string
+          alias: REDIS_CONNECTION_STRING
 
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true

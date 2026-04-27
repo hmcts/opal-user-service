@@ -21,6 +21,9 @@ springdoc:
   writer-with-order-by-keys: true
 
 spring:
+  data:
+    redis:
+      url: ${REDIS_CONNECTION_STRING:redis://localhost:6379}
   config:
     import: "optional:configtree:/mnt/secrets/opal/"
   application:
@@ -132,3 +135,6 @@ logging:
 user:
   service:
     url: ${OPAL_USER_SERVICE_API_URL:http://localhost:4555}
+
+cache:
+  user-state-timeout-minutes: 30

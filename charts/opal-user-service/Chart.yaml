@@ -3,10 +3,14 @@ appVersion: "1.0"
 description: A Helm chart for opal-user-service App
 name: opal-user-service
 home: https://github.com/hmcts/opal-user-service
-version: 0.0.41
+version: 0.0.42
 maintainers:
   - name: HMCTS opal team
 dependencies:
   - name: java
     version: 5.3.0
     repository: 'oci://hmctsprod.azurecr.io/helm'
+  - name: hmcts-redis
+    version: 0.8.0
+    repository: "oci://hmctsprod.azurecr.io/helm"
+    condition: hmcts-redis.enabled

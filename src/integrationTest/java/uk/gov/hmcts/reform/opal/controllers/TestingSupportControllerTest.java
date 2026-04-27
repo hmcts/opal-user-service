@@ -222,7 +222,7 @@ class TestingSupportControllerTest {
             .andExpect(status().isNoContent());
 
         verify(userService).activateUser(
-            eq(user),
+            eq(user.getUserId()),
             argThat(actual -> actual.toInstant().equals(activationDate.toInstant()))
         );
     }

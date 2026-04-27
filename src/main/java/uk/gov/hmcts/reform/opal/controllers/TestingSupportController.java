@@ -90,7 +90,7 @@ public class TestingSupportController {
         log.debug(":activateUser : userId: {}, activateDate: {}", userId, request.activationDate());
 
         userService.activateUser(
-            userService.getUser(userId),
+            userId,
             request.activationDate()
         );
 

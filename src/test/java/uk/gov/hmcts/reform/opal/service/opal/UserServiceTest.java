@@ -27,6 +27,7 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -229,28 +230,37 @@ class UserServiceTest {
 
     @Test
     void activateUser_withoutDate_delegatesToOverload() {
+        OffsetDateTime fixedDateTime = OffsetDateTime.parse("2026-04-27T10:15:30+01:00");
+        Clock fixedClock = Clock.fixed(fixedDateTime.toInstant(), fixedDateTime.getOffset());
+
+        userService = new UserService(
+            userRepository,
+            businessUnitUserService,
+            roleService,
+            businessEventService,
+            fixedClock
+        );
+
         UserEntity user = user(123L);
 
         UserService spyService = Mockito.spy(userService);
 
         spyService.activateUser(user);
 
-        verify(spyService).activateUser(eq(user), any(OffsetDateTime.class));
+        verify(spyService).activateUser(eq(user), eq(fixedDateTime));
     }
 
     @Test
-    void activateUser_withDate_setsDate_savesUser_andLogsEvent() {
+    void activateUser_withDate_setsDate_andLogsEvent() {
         // Arrange
         UserEntity user = user(123L);
-        OffsetDateTime activationDate = OffsetDateTime.now();
+        OffsetDateTime activationDate = OffsetDateTime.parse("2026-04-27T10:15:30+01:00");
 
         // Act
         userService.activateUser(user, activationDate);
 
         // Assert
         assertEquals(activationDate.toLocalDateTime(), user.getActivationDate());
-
-        verify(userRepository).save(user);
 
         verify(businessEventService).logBusinessEvent(
             eq(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED),

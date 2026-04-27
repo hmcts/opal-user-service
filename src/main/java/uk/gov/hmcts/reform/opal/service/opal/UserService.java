@@ -25,6 +25,7 @@ import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 import uk.gov.hmcts.reform.opal.service.UserServiceInterface;
 import uk.gov.hmcts.reform.opal.service.UserServiceProxy;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -50,6 +51,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     private final BusinessEventService businessEventService;
 
     private final UserSpecs specs = new UserSpecs();
+
+    private final Clock clock;
 
     @Override
     public UserEntity getUser(String userId) {
@@ -181,14 +184,20 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
         }
     }
 
+    // testing endpoint entry method
+    @Transactional
+    public void activateUser(long userId, OffsetDateTime activationDate) {
+        activateUser(getUser(userId), activationDate);
+    }
+
+    @Transactional
     public void activateUser(UserEntity user) {
-        activateUser(user, OffsetDateTime.now());
+        activateUser(user, OffsetDateTime.now(clock));
     }
 
     @Transactional
     public void activateUser(UserEntity user, OffsetDateTime activationDate) {
         user.setActivationDate(activationDate.toLocalDateTime());
-        userRepository.save(user);
         businessEventService.logBusinessEvent(
             BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
             user.getUserId(),

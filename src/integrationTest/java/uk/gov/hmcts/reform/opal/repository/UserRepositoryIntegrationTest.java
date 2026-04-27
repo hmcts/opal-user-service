@@ -16,8 +16,6 @@ import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;

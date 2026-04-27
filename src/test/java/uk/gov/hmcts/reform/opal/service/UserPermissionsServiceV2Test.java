@@ -246,7 +246,7 @@ class UserPermissionsServiceV2Test {
         when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
-        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         doThrow(new DataAccessResourceFailureException("Redis unavailable"))
             .when(valueOperations)
@@ -265,7 +265,7 @@ class UserPermissionsServiceV2Test {
 
         // arrange
         when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
-        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         doThrow(new DataAccessResourceFailureException("Redis unavailable"))
             .when(valueOperations)

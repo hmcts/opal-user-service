@@ -12,8 +12,11 @@ import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessToken
 import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
+import java.time.OffsetDateTime;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(
@@ -139,4 +142,23 @@ class TestingSupportControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("my@email.com", response.getBody());
     }
+
+    @Test
+    void activateUser_shouldReturnNoContent_andCallService() {
+        // Arrange
+        Long userId = 123L;
+        OffsetDateTime activationDate = OffsetDateTime.parse("2026-04-27T10:15:30+01:00");
+
+        TestingSupportController.ActivateUserRequest request =
+            new TestingSupportController.ActivateUserRequest(activationDate);
+
+        // Act
+        ResponseEntity<Void> response = controller.activateUser(userId, request);
+
+        // Assert
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+
+        verify(userService).activateUser(userId, activationDate);
+    }
+
 }

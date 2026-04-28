@@ -1,8 +1,9 @@
 package uk.gov.hmcts.reform.opal;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -10,11 +11,16 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static uk.gov.hmcts.reform.opal.TestContainerConfig.REDIS_CONTAINER;
 
 @Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    classes = {Application.class, TestContainerConfig.class}
+)
 @ActiveProfiles({"integration"})
-@ContextConfiguration(classes = {TestContainerConfig.class})
 @SuppressWarnings("HideUtilityClassConstructor")
+@AutoConfigureMockMvc
 public class BaseIntegrationTest {
+
+    protected final ObjectMapper objectMapper = new ObjectMapper();
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {

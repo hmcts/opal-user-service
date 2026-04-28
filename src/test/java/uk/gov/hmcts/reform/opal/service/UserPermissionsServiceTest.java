@@ -268,7 +268,7 @@ class UserPermissionsServiceTest {
         assertEquals("opal-user@hmcts.net", response.getUsername());
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
         assertEquals("John Smith", response.getName());
-        assertEquals("active", response.getStatus());
+        assertEquals("pending", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
@@ -292,7 +292,7 @@ class UserPermissionsServiceTest {
         assertEquals("j.s@example.com", response.getUsername());
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
         assertEquals("john.smith", response.getName());
-        assertEquals("active", response.getStatus());
+        assertEquals("pending", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
@@ -316,7 +316,7 @@ class UserPermissionsServiceTest {
         assertEquals("j.s@example.com", response.getUsername());
         assertEquals("hcv732JFVWhf3Fd", response.getSubject());
         assertEquals("john.smith", response.getName());
-        assertEquals("active", response.getStatus());
+        assertEquals("pending", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 

@@ -3,19 +3,19 @@ INSERT INTO users (user_id, token_preferred_username, token_subject, token_name,
 VALUES (500000000, 'opal-test@HMCTS.NET', 'k9LpT2xVqR8m','Pablo', 'password', 'User with 7 business units', CURRENT_TIMESTAMP, 0);
 
 INSERT INTO users (user_id, token_preferred_username, token_subject, description, token_name, version_number,
-                   created_date)
+                   created_date, activation_date)
 VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', 'User with no business units', NULL, 0,
-        CURRENT_TIMESTAMP),
+        CURRENT_TIMESTAMP, NULL),
        (500000002, 'update-user@HMCTS.NET', 'BmMfmuTT9pEdG', 'User for testing \`update\`', NULL, 0,
-        CURRENT_TIMESTAMP),
+        CURRENT_TIMESTAMP, to_date('2026-04-13', 'YYYY-MM-DD')),
        (500000003, 'test-user@HMCTS.NET', 'jjqwGAERGW43', 'Test User for testing', 'Pablo', 2,
-        CURRENT_TIMESTAMP),
+        CURRENT_TIMESTAMP, NULL),
        (500000004, 'test-user@HMCTS.NET', '7324-fh42dEsr', 'Test User for testing', 'Pablo', 2,
-        CURRENT_TIMESTAMP),
+        CURRENT_TIMESTAMP, NULL),
        (500000005, 'update-user@HMCTS.NET', 'QeJjwoWnY-kBmMfm', 'Test User for testing \`update\`', 'Pablo', 7,
-        CURRENT_TIMESTAMP),
+        CURRENT_TIMESTAMP, NULL),
        (500000006, 'no-go-user@HMCTS.NET', '8hqucbw874fg3', 'User with business units but no entitlements', 'No Permissions', 3,
-        CURRENT_TIMESTAMP);
+        CURRENT_TIMESTAMP, NULL);
 
 
 -- Insert business units that are referenced in the business_unit_users script

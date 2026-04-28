@@ -105,7 +105,7 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
             .andExpect(jsonPath("$['username']").value("j.s@example.com"))
             .andExpect(jsonPath("$['subject']").value("kWiw5ddDf32"))
             .andExpect(jsonPath("$['name']").value("john.smith"))
-            .andExpect(jsonPath("$['status']").value("active"))
+            .andExpect(jsonPath("$['status']").value("pending"))
             .andExpect(jsonPath("$['version']").value(0));
 
         jsonSchemaValidationService.validateOrError(body, GET_USER_STATE_RESPONSE_JSON);
@@ -202,7 +202,7 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
             .andExpect(jsonPath("$['user_id']").value(500000005L))
             .andExpect(jsonPath("$['username']").value("j.s@example.com"))
             .andExpect(jsonPath("$['name']").value("john.smith"))
-            .andExpect(jsonPath("$['status']").value("active"))
+            .andExpect(jsonPath("$['status']").value("pending"))
             .andExpect(jsonPath("$['version']").value(8));
 
         jsonSchemaValidationService.validateOrError(body, GET_USER_STATE_RESPONSE_JSON);

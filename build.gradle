@@ -369,6 +369,9 @@ dependencies {
 
   implementation 'com.launchdarkly:launchdarkly-java-server-sdk:7.13.2'
 
+  implementation 'com.azure:azure-storage-blob:12.25.0'
+  implementation 'org.apache.commons:commons-csv:1.10.0'
+
   implementation 'io.rest-assured:rest-assured:6.0.0'
   implementation 'org.flywaydb:flyway-core:12.5.0'
   runtimeOnly 'org.flywaydb:flyway-database-postgresql:12.5.0', {
@@ -431,6 +434,7 @@ dependencies {
   implementation 'org.apache.tomcat.embed:tomcat-embed-el:11.0.21'
   implementation 'org.apache.tomcat:tomcat-annotations-api:11.0.21'
   implementation 'org.apache.commons:commons-lang3:3.20.0'
+
 }
 
 application {

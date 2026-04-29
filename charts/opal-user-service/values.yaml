@@ -34,7 +34,6 @@ java:
           alias: RoleMappingUserFileName
         - name: redis-connection-string
           alias: REDIS_CONNECTION_STRING
-        - name:
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true
     OPAL_FRONTEND_URL: https://opal-frontend.{{ .Values.global.environment }}.apps.hmcts.net

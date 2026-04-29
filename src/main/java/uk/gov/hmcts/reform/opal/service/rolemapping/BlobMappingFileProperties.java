@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = "blob.storage")
+@ConfigurationProperties(prefix = "opal.user-service.blob.storage")
 public class BlobMappingFileProperties {
 
     private String connectionString;

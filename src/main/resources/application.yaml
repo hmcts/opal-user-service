@@ -113,6 +113,12 @@ opal:
     password: ${OPAL_TEST_USER_PASSWORD}
   common:
     domain: user
+  user-service:
+    blob:
+      storage:
+        connection-string: ${AZURE_STORAGE_CONNECTION_STRING:UseDevelopmentStorage=true}
+        container: ${ROLE_MAPPING_STORAGE_CONTAINER_NAME:roleMapping}
+        blob-name: ${ROLE_MAPPING_FILE_NAME:roleMapping.csv}
 
 be-developer-config:
   user-role-permissions: ${BE_DEV_ROLE_PERMISSIONS:}
@@ -141,9 +147,3 @@ cache:
   role-mapping:
     user-ttl: PT24H
     last-update-ttl: PT1H
-
-blob:
-  storage:
-    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:UseDevelopmentStorage=true}
-    container: ${ROLE_MAPPING_STORAGE_CONTAINER_NAME:roleMapping}
-    blob-name: ${AZURE_STORAGE_ACCOUNT_NAME:roleMapping.csv}

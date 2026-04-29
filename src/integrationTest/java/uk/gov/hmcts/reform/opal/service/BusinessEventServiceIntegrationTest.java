@@ -129,6 +129,48 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
         assertEquals(businessEventCountBeforeCall, businessEventRepository.count());
     }
 
+    @Test
+    @DisplayName("Should fallback to system user when no authenticated user is present")
+    void logBusinessEvent_usesSystemUserWhenNoAuthenticatedUser() {
+        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent();
+
+        // Simulate no authenticated user
+        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(null);
+
+        BusinessEventEntity result = businessEventService.logBusinessEvent(
+            BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
+            500000000L,
+            eventDetails,
+            businessEventService
+        );
+
+        assertNotNull(result.getBusinessEventId());
+        assertEquals(-1L, result.getInitiatorUserId());
+
+        BusinessEventEntity savedEntity =
+            businessEventRepository.findById(result.getBusinessEventId()).orElseThrow();
+
+        assertEquals(-1L, savedEntity.getInitiatorUserId());
+    }
+
+    @Test
+    @DisplayName("Should fallback to system user when authentication lookup fails")
+    void logBusinessEvent_usesSystemUserWhenAuthThrows() {
+        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent();
+
+        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService))
+            .thenThrow(new RuntimeException("No auth context"));
+
+        BusinessEventEntity result = businessEventService.logBusinessEvent(
+            BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
+            500000000L,
+            eventDetails,
+            businessEventService
+        );
+
+        assertEquals(-1L, result.getInitiatorUserId());
+    }
+
     private void assertJsonEquals(String expectedJson, String actualJson) throws JsonProcessingException {
         JsonNode expected = objectMapper.readTree(expectedJson);
         JsonNode actual = objectMapper.readTree(actualJson);

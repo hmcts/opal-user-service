@@ -7,5 +7,6 @@ import java.util.Set;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record UnitsAssociatedToRoleAmendedEvent(
-    Long roleId, Set<Short> addedBusinessUnitIds, Set<Short> removedBusinessUnitIds) implements BusinessEvent {
+    Long roleId, Long roleVersion, Set<Short> addedBusinessUnitIds,
+    Set<Short> removedBusinessUnitIds) implements BusinessEvent {
 }

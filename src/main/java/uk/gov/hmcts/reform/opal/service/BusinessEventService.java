@@ -16,6 +16,8 @@ import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 @Slf4j(topic = "opal.BusinessEventServiceInterface")
 public class BusinessEventService implements BusinessEventServiceInterface, BusinessEventServiceProxy {
 
+    // OPAL system user
+    private static final long SYSTEM_USER_ID = -1L;
     private final BusinessEventRepository businessEventRepository;
     private final UserPermissionsService userPermissionsService;
 
@@ -25,8 +27,10 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
         BusinessEventLogType businessEventLogType, Long subjectUserId, T eventDetails,
         BusinessEventServiceProxy businessEventServiceProxy) {
 
-        return businessEventServiceProxy.logBusinessEvent(businessEventLogType, subjectUserId,
-            userPermissionsService.getAuthenticatedUserId(userPermissionsService), eventDetails);
+        return businessEventServiceProxy.logBusinessEvent(
+            businessEventLogType, subjectUserId,
+            resolveInitiatorUserId(), eventDetails
+        );
     }
 
     @Transactional
@@ -36,18 +40,32 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
 
         businessEventLogType.validateEventDetails(eventDetails);
 
+        Long resolvedInitiatorId = initiatorUserId != null ? initiatorUserId : SYSTEM_USER_ID;
+
         BusinessEventEntity businessEventEntity = BusinessEventEntity.builder()
             .eventType(businessEventLogType)
             .subjectUserId(subjectUserId)
-            .initiatorUserId(initiatorUserId)
+            .initiatorUserId(resolvedInitiatorId)
             .eventDetails(objectToJson(eventDetails))
             .build();
 
         BusinessEventEntity savedBusinessEvent = businessEventRepository.saveAndFlush(businessEventEntity);
         log.debug("Logged business event {} for subject user {} by initiator user {}",
-                 savedBusinessEvent.getEventType(),
-                 savedBusinessEvent.getSubjectUserId(),
-                 savedBusinessEvent.getInitiatorUserId());
+            savedBusinessEvent.getEventType(),
+            savedBusinessEvent.getSubjectUserId(),
+            savedBusinessEvent.getInitiatorUserId());
+
         return savedBusinessEvent;
+
+    }
+
+    private Long resolveInitiatorUserId() {
+        try {
+            Long userId = userPermissionsService.getAuthenticatedUserId(userPermissionsService);
+            return userId != null ? userId : SYSTEM_USER_ID;
+        } catch (Exception ex) {
+            log.debug("No authenticated user found, defaulting to system user");
+            return SYSTEM_USER_ID;
+        }
     }
 }

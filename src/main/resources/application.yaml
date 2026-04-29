@@ -144,6 +144,6 @@ cache:
 
 blob:
   storage:
-    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:UseDevelopmentStorage=true}
-    container: ${REPORT_AZURE_STORAGE_CONTAINER:roleMapping}
-    blob-name: ${AZURE_BLOB_FILE_NAME}
+    connection-string: ${RoleMappingStorageConnectionString:UseDevelopmentStorage=true}
+    container: ${RoleMappingStorageContainerName:roleMapping}
+    blob-name: ${RoleMappingUserBlobName:roleMapping.csv}

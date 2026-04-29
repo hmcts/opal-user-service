@@ -27,11 +27,11 @@ java:
         - name: OpalTestUserPassword
           alias: OPAL_TEST_USER_PASSWORD
         - name: role-mapping-storage-container-name
-          alias: RoleMappingStorageContainerName
+          alias: ROLE_MAPPING_STORAGE_CONTAINER_NAME
         - name: storage-connection-string
-          alias: StorageConnectionString
+          alias: AZURE_STORAGE_CONNECTION_STRING
         - name: storage-account-name
-          alias: RoleMappingUserFileName
+          alias: AZURE_STORAGE_ACCOUNT_NAME
         - name: redis-connection-string
           alias: REDIS_CONNECTION_STRING
   environment:

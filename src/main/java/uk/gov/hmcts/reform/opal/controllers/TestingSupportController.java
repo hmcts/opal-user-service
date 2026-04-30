@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,7 @@ import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 @RestController
@@ -58,7 +60,7 @@ public class TestingSupportController {
     @GetMapping("/token/user")
     @Operation(summary = "Retrieves the token for a given user")
     public ResponseEntity<TestingSupportTokenResponse> getTokenForUser(@RequestHeader(value = X_USER_EMAIL)
-        String userEmail) {
+                                                                       String userEmail) {
         log.debug(":getTokenForUser: user: {}", userEmail);
         AccessTokenResponse accessTokenResponse = testingSupportAccessTokenService.getTestUserToken(userEmail);
         return ResponseEntity.ok(new TestingSupportTokenResponse(accessTokenResponse.getAccessToken()));
@@ -80,6 +82,24 @@ public class TestingSupportController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/users/{userId}")
+    public ResponseEntity<Void> activateUser(
+        @PathVariable Long userId,
+        @RequestBody ActivateUserRequest request) {
+
+        log.debug(":activateUser : userId: {}, activateDate: {}", userId, request.activationDate());
+
+        userService.activateUser(
+            userId,
+            request.activationDate()
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
     record TestingSupportTokenResponse(@JsonProperty("access_token") String accessToken) {
+    }
+
+    record ActivateUserRequest(OffsetDateTime activationDate) {
     }
 }

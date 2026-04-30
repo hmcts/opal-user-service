@@ -84,9 +84,6 @@ public class UserEntity implements Versioned {
     @Column(name = "last_login_date")
     private LocalDateTime lastLoginDate;
 
-    @Column(name = "activation_date")
-    private LocalDateTime activationDate;
-
     // Use a Set to avoid duplicate entries when fetching across multi-valued joins.
     @OneToMany(mappedBy = "user")
     private Set<BusinessUnitUserEntity> businessUnitUsers;

@@ -14,7 +14,6 @@ import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
-import uk.gov.hmcts.reform.opal.launchdarkly.FeatureToggleService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
 import java.time.OffsetDateTime;

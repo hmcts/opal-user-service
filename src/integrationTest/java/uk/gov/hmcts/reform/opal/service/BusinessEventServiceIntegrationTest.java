@@ -54,7 +54,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should create and persist a business event when all parameters are provided")
     void logBusinessEvent_persistsExplicitEventDetails() throws JsonProcessingException {
-        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent();
+        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
         BusinessEventEntity result = businessEventService.logBusinessEvent(
             BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, 500000000L, 500000003L, eventDetails);

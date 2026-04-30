@@ -126,7 +126,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
         List<BusinessUnitUserRoleEntity> existingAssignments =
             roleService.getExistingAssignments(user.getUserId(), roleId);
 
-        logBusinessEvent(existingAssignments, user, roleId, businessUnitIds);
+        logBusinessEvent(existingAssignments, user, role, businessUnitIds);
 
         roleService.removeObsoleteAssignments(existingAssignments, requestedBusinessUnitUserIds);
         roleService.addMissingAssignments(
@@ -151,7 +151,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     }
 
     private void logBusinessEvent(List<BusinessUnitUserRoleEntity> existingAssignments, UserEntity user,
-        long roleId, Set<Short> businessUnitIds) {
+        RoleEntity role, Set<Short> businessUnitIds) {
 
         Set<Short> existingBusinessUnitIds = existingAssignments.stream()
             .map(assignment -> assignment.getBusinessUnitUser().getBusinessUnitId())
@@ -167,7 +167,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
             log.debug(":logBusinessEvent: assigned business units: {}", addedBusinessUnitIds);
             businessEventService.logBusinessEvent(
                 BusinessEventLogType.ROLE_ASSIGNED_TO_USER, user.getUserId(),
-                new RoleAssignedToUserEvent(roleId, addedBusinessUnitIds),
+                new RoleAssignedToUserEvent(role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds),
                 businessEventService);
         } else {
             log.debug(
@@ -175,7 +175,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
                 addedBusinessUnitIds, removedBusinessUnitIds);
             businessEventService.logBusinessEvent(
                 BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED, user.getUserId(),
-                new UnitsAssociatedToRoleAmendedEvent(roleId, addedBusinessUnitIds, removedBusinessUnitIds),
+                new UnitsAssociatedToRoleAmendedEvent(
+                    role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds, removedBusinessUnitIds),
                 businessEventService);
         }
     }

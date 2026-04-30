@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
+import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.UnitsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.search.UserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
@@ -131,6 +132,37 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
         roleService.removeObsoleteAssignments(existingAssignments, requestedBusinessUnitUserIds);
         roleService.addMissingAssignments(
             existingAssignments, businessUnitUsersById, requestedBusinessUnitUserIds, role);
+    }
+
+    @Transactional
+    public void deleteRoleFromUser(long userId, long roleId, UserServiceProxy proxy) {
+        proxy.deleteRoleFromUser(proxy.getUser(userId), roleId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRoleFromUser(UserEntity user, long roleId) {
+        RoleEntity role = roleService.requireRole(roleId);
+
+        List<BusinessUnitUserRoleEntity> existingAssignments =
+            roleService.getExistingAssignments(user.getUserId(), roleId);
+
+        if (existingAssignments.isEmpty()) {
+            return;
+        }
+
+        Set<Short> removedBusinessUnitIds = existingAssignments.stream()
+            .map(assignment -> assignment.getBusinessUnitUser().getBusinessUnitId())
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        roleService.removeAssignments(existingAssignments);
+
+        businessEventService.logBusinessEvent(
+            BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER,
+            user.getUserId(),
+            new RoleUnassignedFromUserEvent(roleId, removedBusinessUnitIds, role.getVersionNumber()),
+            businessEventService
+        );
     }
 
     private Set<String> getBusinessUnitUserIds(List<BusinessUnitUserEntity> businessUnitUsers) {

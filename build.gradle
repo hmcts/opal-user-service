@@ -370,7 +370,7 @@ dependencies {
   implementation 'com.launchdarkly:launchdarkly-java-server-sdk:7.13.2'
 
   implementation 'com.azure:azure-storage-blob:12.25.0'
-  implementation 'org.apache.commons:commons-csv:1.10.0'
+  implementation 'org.apache.commons:commons-csv:1.14.1'
 
   implementation 'io.rest-assured:rest-assured:6.0.0'
   implementation 'org.flywaydb:flyway-core:12.5.0'

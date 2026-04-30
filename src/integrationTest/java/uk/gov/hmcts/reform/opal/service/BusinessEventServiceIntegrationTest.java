@@ -132,7 +132,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should fallback to system user when no authenticated user is present")
     void logBusinessEvent_usesSystemUserWhenNoAuthenticatedUser() {
-        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent();
+        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
         // Simulate no authenticated user
         when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(null);
@@ -156,7 +156,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should fallback to system user when authentication lookup fails")
     void logBusinessEvent_usesSystemUserWhenAuthThrows() {
-        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent();
+        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
         when(userPermissionsService.getAuthenticatedUserId(userPermissionsService))
             .thenThrow(new RuntimeException("No auth context"));

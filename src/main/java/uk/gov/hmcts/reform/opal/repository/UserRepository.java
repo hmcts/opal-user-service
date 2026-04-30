@@ -17,6 +17,9 @@ public interface UserRepository extends JpaRepository<UserEntity, Long>,
 
     Optional<UserEntity> findByTokenSubject(String tokenSubject);
 
+    Optional<UserEntity> findByUsernameIgnoreCase(String tokenPreferredUsername);
+
+
     @EntityGraph(attributePaths = {
         "businessUnitUsers",
         "businessUnitUsers.businessUnit",

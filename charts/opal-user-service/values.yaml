@@ -26,9 +26,14 @@ java:
           alias: AAD_CLIENT_SECRET
         - name: OpalTestUserPassword
           alias: OPAL_TEST_USER_PASSWORD
+        - name: role-mapping-storage-container-name
+          alias: ROLE_MAPPING_STORAGE_CONTAINER_NAME
+        - name: storage-connection-string
+          alias: AZURE_STORAGE_CONNECTION_STRING
+        - name: storage-account-name
+          alias: AZURE_STORAGE_ACCOUNT_NAME
         - name: redis-connection-string
           alias: REDIS_CONNECTION_STRING
-
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true
     OPAL_FRONTEND_URL: https://opal-frontend.{{ .Values.global.environment }}.apps.hmcts.net
@@ -38,3 +43,5 @@ java:
     enabled: false
     image:
       tag: '17.5.0'
+hmcts-redis:
+  enabled: false

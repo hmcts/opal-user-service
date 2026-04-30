@@ -1,9 +1,11 @@
 package uk.gov.hmcts.reform.opal.mappers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Domain;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.DomainDto;
@@ -17,6 +19,9 @@ import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -38,18 +43,30 @@ public interface UserStateMapper {
     @Mapping(source = "userEntity.username", target = "username")
     @Mapping(source = "businessUnitUsers", target = "businessUnitUsers")
     @Mapping(source = "userEntity.tokenName", target = "name")
-    @Mapping(target = "status", constant = "active")
+    @Mapping(source = "userEntity", target = "status", qualifiedByName = "mapLowerCaseStatus")
     @Mapping(source = "userEntity.version", target = "version")
-    UserStateDto toUserStateDto(UserEntity userEntity, List<BusinessUnitUserDto> businessUnitUsers);
+    UserStateDto toUserStateDto(UserEntity userEntity,
+                                List<BusinessUnitUserDto> businessUnitUsers,
+                                @Context Clock clock);
 
     @Mapping(source = "userEntity.userId", target = "userId")
     @Mapping(source = "userEntity.username", target = "username")
     @Mapping(source = "userEntity.tokenName", target = "name")
-    @Mapping(target = "status", constant = "ACTIVE")
+    @Mapping(source = "userEntity", target = "status", qualifiedByName = "mapUpperCaseStatus")
     @Mapping(source = "userEntity.version", target = "version")
     @Mapping(target = "cacheName", ignore = true)
     @Mapping(target = "domains", expression = "java(mapBusinessUnitUsersToDomains(userEntity.getBusinessUnitUsers()))")
-    UserStateV2Dto toUserStateV2Dto(UserEntity userEntity);
+    UserStateV2Dto toUserStateV2Dto(UserEntity userEntity, @Context Clock clock);
+
+    @Named("mapLowerCaseStatus")
+    default String mapLowerCaseStatus(UserEntity userEntity, @Context Clock clock) {
+        return mapUpperCaseStatus(userEntity, clock).toLowerCase();
+    }
+
+    @Named("mapUpperCaseStatus")
+    default String mapUpperCaseStatus(UserEntity userEntity, @Context Clock clock) {
+        return userEntity.getStatusFromTime(LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC)).name();
+    }
 
     /**
      * Helper method called by the service to map a BusinessUnitUserEntity and its associated

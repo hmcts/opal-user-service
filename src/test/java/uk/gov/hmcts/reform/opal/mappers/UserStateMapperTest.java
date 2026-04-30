@@ -2,7 +2,13 @@ package uk.gov.hmcts.reform.opal.mappers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
@@ -12,15 +18,24 @@ import uk.gov.hmcts.reform.opal.entity.DomainEntity;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
+import java.math.BigInteger;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class UserStateMapperTest {
 
     private final UserStateMapper mapper = new UserStateMapperImplementation();
+    private final Clock clock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -33,6 +48,39 @@ class UserStateMapperTest {
     String permCO = Permissions.COLLECTION_ORDER.name();
     String permSAVA = Permissions.SEARCH_AND_VIEW_ACCOUNTS.name();
     String permBadName = "BAD_NAME";
+
+    LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
+
+    @Mock
+    UserEntity user;
+
+    @BeforeEach
+    void setUp() {
+        when(user.getUserId()).thenReturn(123L);
+        when(user.getTokenName()).thenReturn("token");
+        when(user.getUsername()).thenReturn("username");
+        when(user.getVersion()).thenReturn(BigInteger.valueOf(321L));
+        when(user.getStatusFromTime(nowUtc)).thenReturn(UserEntity.Status.ACTIVE);
+    }
+
+    @Test
+    void toUserStateDto_mapsUserFieldsAndBusinessUnitUsers() {
+        // Arrange
+        BusinessUnitUserDto buu1 = mock(BusinessUnitUserDto.class);
+        BusinessUnitUserDto buu2 = mock(BusinessUnitUserDto.class);
+        List<BusinessUnitUserDto> businessUnitUsers = List.of(buu1, buu2);
+
+        // Act
+        UserStateDto dto = mapper.toUserStateDto(user, businessUnitUsers, clock);
+
+        // Assert
+        assertThat(dto.getUserId()).isEqualTo(123L);
+        assertThat(dto.getUsername()).isEqualTo("username");
+        assertThat(dto.getName()).isEqualTo("token");
+        assertThat(dto.getVersion()).isEqualTo(BigInteger.valueOf(321L));
+        assertThat(dto.getStatus()).isEqualTo("active");
+        assertThat(dto.getBusinessUnitUsers()).containsExactly(buu1, buu2);
+    }
 
     @Test
     void toUserStateV2Dto() throws JsonProcessingException {
@@ -50,10 +98,10 @@ class UserStateMapperTest {
             buildBusinessUnitUserEntity("GHI789", confiscations, (short) 51, Set.of(role5))
         );
 
-        UserEntity user = buildUserEntity(businessUnitUserEntityList);
+        when(user.getBusinessUnitUsers()).thenReturn(businessUnitUserEntityList);
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         String expected = """
@@ -142,10 +190,10 @@ class UserStateMapperTest {
         BusinessUnitUserEntity businessUnitUserEntity =
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role1));
 
-        UserEntity user = buildUserEntity(Set.of(businessUnitUserEntity));
+        when(user.getBusinessUnitUsers()).thenReturn(Set.of(businessUnitUserEntity));
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -191,10 +239,10 @@ class UserStateMapperTest {
         BusinessUnitUserEntity businessUnitUserEntity =
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role1, role2));
 
-        UserEntity user = buildUserEntity(Set.of(businessUnitUserEntity));
+        when(user.getBusinessUnitUsers()).thenReturn(Set.of(businessUnitUserEntity));
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -225,10 +273,10 @@ class UserStateMapperTest {
     void toUserStateV2_WhenBusinessUnitUsersNull() throws JsonProcessingException {
 
         //Arrange
-        UserEntity user = buildUserEntity(null);
+        when(user.getBusinessUnitUsers()).thenReturn(null);;
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -239,10 +287,10 @@ class UserStateMapperTest {
     void toUserStateV2_WhenBusinessUnitUsersEmpty() throws JsonProcessingException {
 
         //Arrange
-        UserEntity user = buildUserEntity(emptySet());
+        when(user.getBusinessUnitUsers()).thenReturn(emptySet());
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -257,10 +305,10 @@ class UserStateMapperTest {
             .businessUnit(BusinessUnitEntity.builder().domain(fines).businessUnitId((short)4).build())
             .businessUnitUserRoleList(null)
             .build();
-        UserEntity user = buildUserEntity(Set.of(buu));
+        when(user.getBusinessUnitUsers()).thenReturn(Set.of(buu));
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -294,10 +342,10 @@ class UserStateMapperTest {
         Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of())
         );
-        UserEntity user = buildUserEntity(businessUnitUserEntityList);
+        when(user.getBusinessUnitUsers()).thenReturn(businessUnitUserEntityList);
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -333,10 +381,10 @@ class UserStateMapperTest {
             .businessUnit(null)
             .build();
 
-        UserEntity user = buildUserEntity(Set.of(buu));
+        when(user.getBusinessUnitUsers()).thenReturn(Set.of(buu));
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -360,10 +408,10 @@ class UserStateMapperTest {
         Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
             buildBusinessUnitUserEntity("ABC123", null, (short)41, Set.of())
         );
-        UserEntity user = buildUserEntity(businessUnitUserEntityList);
+        when(user.getBusinessUnitUsers()).thenReturn(businessUnitUserEntityList);
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -393,17 +441,6 @@ class UserStateMapperTest {
             );
         }
         return buu;
-    }
-
-    private UserEntity buildUserEntity(Set<BusinessUnitUserEntity> businessUnitUserEntityList) {
-        return UserEntity.builder()
-            .userId(123L)
-            .tokenName("token")
-            .tokenSubject("subject")
-            .username("username")
-            .businessUnitUsers(businessUnitUserEntityList)
-            .versionNumber(321L)
-            .build();
     }
 
     private String expectedUserStateWithNoBusinessUnits() {

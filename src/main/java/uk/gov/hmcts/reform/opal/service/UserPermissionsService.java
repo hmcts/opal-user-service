@@ -129,7 +129,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
 
         log.debug(":getUserState: found User: {}", username);
-        UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
         if (Optional.ofNullable(newLogin).orElse(false)) {
             logUserAuthenticationEvent(user.getUserId());
             updateLastLogin(user);
@@ -145,7 +145,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
             return proxy.getUserStateV2(proxy, newLogin);
         } else {
             UserEntity user = proxy.getUserV2(userId);
-            UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user);
+            UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
             if (Optional.ofNullable(newLogin).orElse(false)) {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 Long clientUserId = proxy.getUserId(authentication, proxy);
@@ -206,7 +206,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
                 ))
                 .toList();
 
-            return userStateMapper.toUserStateDto(user, businessUnitUsers);
+            return userStateMapper.toUserStateDto(user, businessUnitUsers, clock);
         }
 
         // 3. Group entitlements by the BusinessUnitUser's ID (a String)
@@ -228,7 +228,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
             .toList();
 
         // 6. Pass the user entity and the BUU list to the mapper.
-        return userStateMapper.toUserStateDto(user, buuDtos);
+        return userStateMapper.toUserStateDto(user, buuDtos, clock);
     }
 
     private void compare(String fromToken, String fromDb, Long userId, String reason, Versioned versioned) {
@@ -278,7 +278,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
                               .build());
 
         log.debug(":createUser: name: {}, new id: {}", userEntity.getTokenName(), userEntity.getUserId());
-        return userMapper.toUserDto(userEntity);
+        return userMapper.toUserDto(userEntity, clock);
     }
 
     @Transactional
@@ -301,7 +301,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
             UserEntity updatedUser = userRepository.saveAndFlush(existingUser);
 
             log.debug(":updatedUser: name: {}, user id: {}", updatedUser.getTokenName(), updatedUser.getUserId());
-            return userMapper.toUserDto(updatedUser);
+            return userMapper.toUserDto(updatedUser, clock);
         }
     }
 
@@ -321,7 +321,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         UserEntity updatedUser = userRepository.saveAndFlush(existingUser);
 
         log.debug(":updatedUser: name: {}, user id: {}", updatedUser.getTokenName(), updatedUser.getUserId());
-        return userMapper.toUserDto(updatedUser);
+        return userMapper.toUserDto(updatedUser, clock);
     }
 
     public Jwt getJwtToken(Authentication authentication) {

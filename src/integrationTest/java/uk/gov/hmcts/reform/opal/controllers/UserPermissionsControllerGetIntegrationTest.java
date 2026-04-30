@@ -136,7 +136,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .andExpect(header().string("ETag", "\"0\""))
             .andExpect(jsonPath("$['user_id']").value(500000001))
             .andExpect(jsonPath("$['username']").value("opal-test-2@HMCTS.NET"))
-            .andExpect(jsonPath("$['status']").value("active"))
+            .andExpect(jsonPath("$['status']").value("pending"))
             .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
 
         boolean testNewLogin = Boolean.TRUE.equals(newLogin);
@@ -165,7 +165,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .andExpect(jsonPath("$['user_id']").value(500000003))
             .andExpect(jsonPath("$['username']").value("test-user@HMCTS.NET"))
             .andExpect(jsonPath("$['name']").value("Pablo"))
-            .andExpect(jsonPath("$['status']").value("active"))
+            .andExpect(jsonPath("$['status']").value("pending"))
             .andExpect(jsonPath("$['version']").value(2))
             .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
 
@@ -194,7 +194,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .andExpect(jsonPath("$['user_id']").value(500000003))
             .andExpect(jsonPath("$['username']").value("test-user@HMCTS.NET"))
             .andExpect(jsonPath("$['name']").value("Pablo"))
-            .andExpect(jsonPath("$['status']").value("active"))
+            .andExpect(jsonPath("$['status']").value("pending"))
             .andExpect(jsonPath("$['version']").value(2))
             .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
 
@@ -223,7 +223,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .andExpect(jsonPath("$['user_id']").value(500000003))
             .andExpect(jsonPath("$['username']").value("test-user@HMCTS.NET"))
             .andExpect(jsonPath("$['name']").value("Pablo"))
-            .andExpect(jsonPath("$['status']").value("active"))
+            .andExpect(jsonPath("$['status']").value("pending"))
             .andExpect(jsonPath("$['version']").value(2))
             .andExpect(jsonPath("$['business_unit_users']", hasSize(0)));
 
@@ -556,7 +556,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
           "user_id" : 500000000,
           "username" : "opal-test@HMCTS.NET",
           "name" : "Pablo",
-          "status" : "ACTIVE",
+          "status" : "PENDING",
           "version" : 0,
           "cache_name" : "USER_STATE_k9LpT2xVqR8m",
           "domains" : {

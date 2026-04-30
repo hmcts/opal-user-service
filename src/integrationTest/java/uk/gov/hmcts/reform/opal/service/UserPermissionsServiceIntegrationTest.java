@@ -87,7 +87,7 @@ class UserPermissionsServiceIntegrationTest extends AbstractIntegrationTest {
         assertEquals(500000003L, result.getUserId());
         assertEquals("test-user@HMCTS.NET", result.getUsername());
         assertEquals("Pablo", result.getName());
-        assertEquals("active", result.getStatus());
+        assertEquals("pending", result.getStatus());
         assertEquals(2L, result.getVersion().longValue());
         assertTrue(result.getBusinessUnitUsers().isEmpty());
     }

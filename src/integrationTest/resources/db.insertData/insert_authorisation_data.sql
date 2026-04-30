@@ -21,13 +21,13 @@ VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', 'User with no busin
 -- Insert business units that are referenced in the business_unit_users script
 INSERT INTO business_units (business_unit_id, business_unit_name, business_unit_code, business_unit_type,
                             opal_domain_id)
-VALUES (61, 'Test BU 61', 'T61', 'TEST', 1),
-       (67, 'Test BU 67', 'T67', 'TEST', 1),
-       (68, 'Test BU 68', 'T68', 'TEST', 1),
-       (69, 'Test BU 69', 'T69', 'TEST', 1),
-       (70, 'Test BU 70', 'T70', 'TEST', 1),
-       (71, 'Test BU 71', 'T71', 'TEST', 1),
-       (73, 'Test BU 73', 'T73', 'TEST', 1);
+VALUES (61, 'Test BU 61', 'T61', 'Accounting Division', 1),
+       (67, 'Test BU 67', 'T67', 'Accounting Division', 1),
+       (68, 'Test BU 68', 'T68', 'Accounting Division', 1),
+       (69, 'Test BU 69', 'T69', 'Accounting Division', 1),
+       (70, 'Test BU 70', 'T70', 'Accounting Division', 1),
+       (71, 'Test BU 71', 'T71', 'Accounting Division', 1),
+       (73, 'Test BU 73', 'T73', 'Accounting Division', 1);
 
 
 -- Insert application functions (permissions) from Flyway script V20240730_006

@@ -29,3 +29,7 @@ applicationinsights-agent-*.jar
 *.log
 /functional-test-report/
 /smoke-test-report/
+
+# Bruno
+# Ignore real Bruno environment files
+bruno/environments/*.bru

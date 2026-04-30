@@ -369,7 +369,7 @@ dependencies {
 
   implementation 'com.launchdarkly:launchdarkly-java-server-sdk:7.13.2'
 
-  implementation 'com.azure:azure-storage-blob:12.25.0'
+  implementation 'com.azure:azure-storage-blob:12.33.3'
   implementation 'org.apache.commons:commons-csv:1.10.0'
 
   implementation 'io.rest-assured:rest-assured:6.0.0'

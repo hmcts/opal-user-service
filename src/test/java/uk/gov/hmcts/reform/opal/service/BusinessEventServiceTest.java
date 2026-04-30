@@ -95,4 +95,61 @@ class BusinessEventServiceTest {
                 + " for event type ACCOUNT_DEACTIVATION_DATE_AMENDED",
             exception.getMessage());
     }
+
+    @Test
+    void logBusinessEvent_usesSystemUserWhenNoAuthenticatedUser() {
+        RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, Set.of((short) 11));
+        BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(12L).build();
+
+        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(null);
+        when(businessEventRepository.saveAndFlush(any(BusinessEventEntity.class))).thenReturn(savedEntity);
+
+        businessEventService.logBusinessEvent(
+            BusinessEventLogType.ROLE_ASSIGNED_TO_USER, 42L, eventDetails, businessEventService);
+
+        ArgumentCaptor<BusinessEventEntity> entityCaptor = ArgumentCaptor.forClass(BusinessEventEntity.class);
+        verify(businessEventRepository).saveAndFlush(entityCaptor.capture());
+
+        BusinessEventEntity capturedEntity = entityCaptor.getValue();
+        assertEquals(-1L, capturedEntity.getInitiatorUserId());
+    }
+
+    @Test
+    void logBusinessEvent_usesSystemUserWhenAuthenticationThrows() {
+        RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, Set.of((short) 11));
+        BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(13L).build();
+
+        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService))
+            .thenThrow(new RuntimeException("No auth context"));
+        when(businessEventRepository.saveAndFlush(any(BusinessEventEntity.class))).thenReturn(savedEntity);
+
+        businessEventService.logBusinessEvent(
+            BusinessEventLogType.ROLE_ASSIGNED_TO_USER, 42L, eventDetails, businessEventService);
+
+        ArgumentCaptor<BusinessEventEntity> entityCaptor = ArgumentCaptor.forClass(BusinessEventEntity.class);
+        verify(businessEventRepository).saveAndFlush(entityCaptor.capture());
+
+        BusinessEventEntity capturedEntity = entityCaptor.getValue();
+        assertEquals(-1L, capturedEntity.getInitiatorUserId());
+    }
+
+    @Test
+    void logBusinessEvent_defaultsToSystemUserWhenExplicitInitiatorIsNull() {
+        AccountDeactivationDateAmendedEvent eventDetails = new AccountDeactivationDateAmendedEvent();
+        BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(14L).build();
+
+        when(businessEventRepository.saveAndFlush(any(BusinessEventEntity.class))).thenReturn(savedEntity);
+
+        businessEventService.logBusinessEvent(
+            BusinessEventLogType.ACCOUNT_DEACTIVATION_DATE_AMENDED,
+            42L,
+            null,
+            eventDetails);
+
+        ArgumentCaptor<BusinessEventEntity> entityCaptor = ArgumentCaptor.forClass(BusinessEventEntity.class);
+        verify(businessEventRepository).saveAndFlush(entityCaptor.capture());
+
+        BusinessEventEntity capturedEntity = entityCaptor.getValue();
+        assertEquals(-1L, capturedEntity.getInitiatorUserId());
+    }
 }

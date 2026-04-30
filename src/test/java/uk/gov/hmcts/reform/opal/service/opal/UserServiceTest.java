@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
+import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.UnitsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.search.UserSearchDto;
@@ -26,6 +27,8 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 
+import java.time.Clock;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +60,9 @@ class UserServiceTest {
 
     @Mock
     private BusinessEventService businessEventService;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private UserService userService;
@@ -221,6 +227,54 @@ class UserServiceTest {
             argThat((RoleAssignedToUserEvent event) ->
                 event.roleId().equals(201L)
                     && event.addedBusinessUnitIds().equals(Set.of((short) 11, (short) 14, (short) 15))),
+            eq(businessEventService)
+        );
+    }
+
+    @Test
+    void activateUser_withoutDate_usesClockTime_andLogsEvent() {
+        // Arrange
+        OffsetDateTime fixedDateTime = OffsetDateTime.parse("2026-04-27T10:15:30+01:00");
+
+        when(clock.instant()).thenReturn(fixedDateTime.toInstant());
+        when(clock.getZone()).thenReturn(fixedDateTime.getOffset());
+
+        UserEntity user = user(123L);
+
+        // Act
+        userService.activateUser(user);
+
+        // Assert
+        assertEquals(fixedDateTime.toLocalDateTime(), user.getActivationDate());
+
+        verify(businessEventService).logBusinessEvent(
+            eq(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED),
+            eq(123L),
+            argThat((AccountActivationInitiatedEvent event) ->
+                        event.accountActivationDate().equals(fixedDateTime)
+            ),
+            eq(businessEventService)
+        );
+    }
+
+    @Test
+    void activateUser_withDate_setsDate_andLogsEvent() {
+        // Arrange
+        UserEntity user = user(123L);
+        OffsetDateTime activationDate = OffsetDateTime.parse("2026-04-27T10:15:30+01:00");
+
+        // Act
+        userService.activateUser(user, activationDate);
+
+        // Assert
+        assertEquals(activationDate.toLocalDateTime(), user.getActivationDate());
+
+        verify(businessEventService).logBusinessEvent(
+            eq(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED),
+            eq(123L),
+            argThat((AccountActivationInitiatedEvent event) ->
+                        event.accountActivationDate().equals(activationDate)
+            ),
             eq(businessEventService)
         );
     }

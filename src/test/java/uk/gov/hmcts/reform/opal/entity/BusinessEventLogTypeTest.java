@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.time.OffsetDateTime;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -43,7 +44,8 @@ class BusinessEventLogTypeTest {
 
     private static Stream<Arguments> matchingEvents() {
         return Stream.of(
-            Arguments.of(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, new AccountActivationInitiatedEvent()),
+            Arguments.of(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, new AccountActivationInitiatedEvent(
+                OffsetDateTime.now())),
             Arguments.of(
                 BusinessEventLogType.ACCOUNT_SUSPENSION_ATTRIBUTES_AMENDED,
                 new AccountSuspensionAttributesAmendedEvent()
@@ -69,7 +71,7 @@ class BusinessEventLogTypeTest {
     }
 
     private static Stream<Arguments> mismatchedEvents() {
-        AccountActivationInitiatedEvent activationEvent = new AccountActivationInitiatedEvent();
+        AccountActivationInitiatedEvent activationEvent = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
         return matchingEvents()
             .map(Arguments::get)

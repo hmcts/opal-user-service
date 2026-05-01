@@ -44,25 +44,22 @@ class RoleRepositoryIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    @DisplayName("Test role repository finds current active roles")
-    void testRoleRepositoryFindsCurrentActiveRoles() {
+    @DisplayName("Test role repository finds current role")
+    void testRoleRepositoryFindsCurrentRole() {
         assertThat(roleRepository.existsByRoleId(1L)).isTrue();
-        assertThat(roleRepository.existsByRoleIdAndIsActiveTrue(1L)).isTrue();
-        assertThat(roleRepository.countByRoleIdAndIsActiveTrue(1L)).isEqualTo(1);
+        assertThat(roleRepository.countByRoleId(1L)).isEqualTo(1);
 
-        RoleEntity role = roleRepository.findByRoleIdAndIsActiveTrue(1L).orElseThrow();
+        RoleEntity role = roleRepository.findByRoleId(1L).orElseThrow();
         assertThat(role.getRoleId()).isEqualTo(1L);
         assertThat(role.getVersionNumber()).isEqualTo(2L);
-        assertThat(role.isActive()).isTrue();
     }
 
     @Test
     @DisplayName("Test role repository returns empty for missing roles")
     void testRoleRepositoryReturnsEmptyForMissingRoles() {
         assertThat(roleRepository.existsByRoleId(999L)).isFalse();
-        assertThat(roleRepository.existsByRoleIdAndIsActiveTrue(999L)).isFalse();
-        assertThat(roleRepository.countByRoleIdAndIsActiveTrue(999L)).isZero();
-        assertThat(roleRepository.findByRoleIdAndIsActiveTrue(999L)).isEmpty();
+        assertThat(roleRepository.countByRoleId(999L)).isZero();
+        assertThat(roleRepository.findByRoleId(999L)).isEmpty();
     }
 
     private RoleEntity findRoleByName(Integer domainId, String roleName) {

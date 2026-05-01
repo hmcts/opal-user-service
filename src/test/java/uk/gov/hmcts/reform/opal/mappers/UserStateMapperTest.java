@@ -422,7 +422,6 @@ class UserStateMapperTest {
         return RoleEntity.builder()
             .name(name)
             .applicationFunctionList(permNames)
-            .isActive(active)
             .build();
     }
 

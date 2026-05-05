@@ -1,4 +1,8 @@
 package uk.gov.hmcts.reform.opal.dto.businessevent;
 
-public record AccountActivationInitiatedEvent() implements BusinessEvent {
+import java.time.OffsetDateTime;
+
+public record AccountActivationInitiatedEvent(OffsetDateTime accountActivationDate) implements BusinessEvent {
+
 }
+

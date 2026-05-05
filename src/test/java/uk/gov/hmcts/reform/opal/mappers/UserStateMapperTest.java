@@ -36,23 +36,22 @@ class UserStateMapperTest {
 
     private final UserStateMapper mapper = new UserStateMapperImplementation();
     private final Clock clock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC);
-
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    DomainEntity fines = DomainEntity.builder().name("fines").build();
-    DomainEntity confiscations = DomainEntity.builder().name("confiscation").build();
+    private final DomainEntity fines = DomainEntity.builder().name("fines").build();
+    private final DomainEntity confiscations = DomainEntity.builder().name("confiscation").build();
 
-    String permAE = Permissions.ACCOUNT_ENQUIRY.name();
-    String permAEN = Permissions.ACCOUNT_ENQUIRY_NOTES.name();
-    String permCVDA = Permissions.CHECK_VALIDATE_DRAFT_ACCOUNTS.name();
-    String permCO = Permissions.COLLECTION_ORDER.name();
-    String permSAVA = Permissions.SEARCH_AND_VIEW_ACCOUNTS.name();
-    String permBadName = "BAD_NAME";
+    private final String permAE = Permissions.ACCOUNT_ENQUIRY.name();
+    private final String permAEN = Permissions.ACCOUNT_ENQUIRY_NOTES.name();
+    private final String permCVDA = Permissions.CHECK_VALIDATE_DRAFT_ACCOUNTS.name();
+    private final String permCO = Permissions.COLLECTION_ORDER.name();
+    private final String permSAVA = Permissions.SEARCH_AND_VIEW_ACCOUNTS.name();
+    private final String permBadName = "BAD_NAME";
 
-    LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
+    private final LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
 
     @Mock
-    UserEntity user;
+    private UserEntity user;
 
     @BeforeEach
     void setUp() {
@@ -65,15 +64,12 @@ class UserStateMapperTest {
 
     @Test
     void toUserStateDto_mapsUserFieldsAndBusinessUnitUsers() {
-        // Arrange
         BusinessUnitUserDto buu1 = mock(BusinessUnitUserDto.class);
         BusinessUnitUserDto buu2 = mock(BusinessUnitUserDto.class);
         List<BusinessUnitUserDto> businessUnitUsers = List.of(buu1, buu2);
 
-        // Act
         UserStateDto dto = mapper.toUserStateDto(user, businessUnitUsers, clock);
 
-        // Assert
         assertThat(dto.getUserId()).isEqualTo(123L);
         assertThat(dto.getUsername()).isEqualTo("username");
         assertThat(dto.getName()).isEqualTo("token");
@@ -84,26 +80,22 @@ class UserStateMapperTest {
 
     @Test
     void toUserStateV2Dto() throws JsonProcessingException {
-
-        //Arrange
-        RoleEntity role1 = buildRole("role1", List.of(permAE, permBadName, permAEN), true);
-        RoleEntity role2 = buildRole("role2", List.of(permAE, permCVDA, permCO), true);
-        RoleEntity role3inactive = buildRole("role3inactive", List.of(permSAVA, permCO), false);
-        RoleEntity role4 = buildRole("role4", List.of(permCO, permAEN), true);
-        RoleEntity role5 = buildRole("role5", List.of(permSAVA, permAE), true);
+        RoleEntity role1 = buildRole("role1", List.of(permAE, permBadName, permAEN));
+        RoleEntity role2 = buildRole("role2", List.of(permAE, permCVDA, permCO));
+        RoleEntity role3 = buildRole("role3", List.of(permSAVA, permCO));
+        RoleEntity role4 = buildRole("role4", List.of(permCO, permAEN));
+        RoleEntity role5 = buildRole("role5", List.of(permSAVA, permAE));
 
         Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role1, role2)),
-            buildBusinessUnitUserEntity("DEF456", fines, (short) 42, Set.of(role3inactive, role4)),
+            buildBusinessUnitUserEntity("DEF456", fines, (short) 42, Set.of(role3, role4)),
             buildBusinessUnitUserEntity("GHI789", confiscations, (short) 51, Set.of(role5))
         );
 
         when(user.getBusinessUnitUsers()).thenReturn(businessUnitUserEntityList);
 
-        //Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
         String expected = """
             {
               "user_id": 123,
@@ -166,6 +158,10 @@ class UserStateMapperTest {
                         {
                           "permission_id": 4,
                           "permission_name": "Collection Order"
+                        },
+                        {
+                          "permission_id": 6,
+                          "permission_name": "Search and View Accounts"
                         }
                       ]
                     }
@@ -178,24 +174,19 @@ class UserStateMapperTest {
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expected));
         assertThat(expected).doesNotContain(permBadName);
-
     }
 
     @Test
     void toUserStateV2Dto_badFunctionNamesSkipped() throws JsonProcessingException {
-
-        //Arrange
-        RoleEntity role1 = buildRole("role1", List.of(permAE, permBadName, permAEN), true);
+        RoleEntity role1 = buildRole("role1", List.of(permAE, permBadName, permAEN));
 
         BusinessUnitUserEntity businessUnitUserEntity =
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role1));
 
         when(user.getBusinessUnitUsers()).thenReturn(Set.of(businessUnitUserEntity));
 
-        //Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree("""
                  {
@@ -230,87 +221,84 @@ class UserStateMapperTest {
     }
 
     @Test
-    void toUserStateV2Dto_WhenAllRolesInactive() throws JsonProcessingException {
-
-        //Arrange
-        RoleEntity role1 = buildRole("role1", List.of(permAE, permAEN), false);
-        RoleEntity role2 = buildRole("role2", List.of(permAE, permCVDA), false);
+    void toUserStateV2Dto_WhenRolesPresent() throws JsonProcessingException {
+        RoleEntity role1 = buildRole("role1", List.of(permAE, permAEN));
+        RoleEntity role2 = buildRole("role2", List.of(permAE, permCVDA));
 
         BusinessUnitUserEntity businessUnitUserEntity =
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role1, role2));
 
         when(user.getBusinessUnitUsers()).thenReturn(Set.of(businessUnitUserEntity));
 
-        //Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree("""
-                {
-                  "user_id": 123,
-                  "username": "username",
-                  "name": "token",
-                  "status": "ACTIVE",
-                  "version": 321,
-                  "cache_name": null,
-                  "domains": {
-                    "fines": {
-                      "business_unit_users": [
+            {
+              "user_id": 123,
+              "username": "username",
+              "name": "token",
+              "status": "ACTIVE",
+              "version": 321,
+              "cache_name": null,
+              "domains": {
+                "fines": {
+                  "business_unit_users": [
+                    {
+                      "business_unit_user_id": "ABC123",
+                      "business_unit_id": 41,
+                      "permissions": [
                         {
-                          "business_unit_user_id": "ABC123",
-                          "business_unit_id": 41,
-                          "permissions": []
+                          "permission_id": 2,
+                          "permission_name": "Account Enquiry - Account Notes"
+                        },
+                        {
+                          "permission_id": 3,
+                          "permission_name": "Account Enquiry"
+                        },
+                        {
+                          "permission_id": 5,
+                          "permission_name": "Check and Validate Draft Accounts"
                         }
                       ]
                     }
-                  }
+                  ]
                 }
+              }
+            }
             """));
     }
 
     @Test
     void toUserStateV2_WhenBusinessUnitUsersNull() throws JsonProcessingException {
+        when(user.getBusinessUnitUsers()).thenReturn(null);
 
-        //Arrange
-        when(user.getBusinessUnitUsers()).thenReturn(null);;
-
-        //Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expectedUserStateWithNoBusinessUnits()));
     }
 
     @Test
     void toUserStateV2_WhenBusinessUnitUsersEmpty() throws JsonProcessingException {
-
-        //Arrange
         when(user.getBusinessUnitUsers()).thenReturn(emptySet());
 
-        //Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expectedUserStateWithNoBusinessUnits()));
     }
 
     @Test
     void toUserStateV2_WhenBusinessUnitUserHasNullBusinessUnitUserRoleList() throws JsonProcessingException {
-
-        //Arrange
         BusinessUnitUserEntity buu = BusinessUnitUserEntity.builder()
-            .businessUnit(BusinessUnitEntity.builder().domain(fines).businessUnitId((short)4).build())
+            .businessUnit(BusinessUnitEntity.builder().domain(fines).businessUnitId((short) 4).build())
             .businessUnitUserRoleList(null)
             .build();
         when(user.getBusinessUnitUsers()).thenReturn(Set.of(buu));
 
-        //Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree("""
                 {
@@ -337,17 +325,13 @@ class UserStateMapperTest {
 
     @Test
     void toUserStateV2_WhenBusinessUnitUserHasEmptyBusinessUnitUserRoleList() throws JsonProcessingException {
-
-        //Arrange
         Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of())
         );
         when(user.getBusinessUnitUsers()).thenReturn(businessUnitUserEntityList);
 
-        //Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree("""
                      {
@@ -374,8 +358,6 @@ class UserStateMapperTest {
 
     @Test
     void toUserStateV2_WhenBusinessUnitOfBusinessUnitUserEntityIsNull() throws JsonProcessingException {
-
-        //Arrange
         BusinessUnitUserEntity buu = BusinessUnitUserEntity.builder()
             .businessUnitUserRoleList(emptySet())
             .businessUnit(null)
@@ -383,10 +365,8 @@ class UserStateMapperTest {
 
         when(user.getBusinessUnitUsers()).thenReturn(Set.of(buu));
 
-        //Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree("""
                  {
@@ -403,22 +383,18 @@ class UserStateMapperTest {
 
     @Test
     void toUserStateV2_WhenDomainNull() throws JsonProcessingException {
-
-        //Arrange
         Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
-            buildBusinessUnitUserEntity("ABC123", null, (short)41, Set.of())
+            buildBusinessUnitUserEntity("ABC123", null, (short) 41, Set.of())
         );
         when(user.getBusinessUnitUsers()).thenReturn(businessUnitUserEntityList);
 
-        //Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expectedUserStateWithNoBusinessUnits()));
     }
 
-    private RoleEntity buildRole(String name, List<String> permNames, boolean active) {
+    private RoleEntity buildRole(String name, List<String> permNames) {
         return RoleEntity.builder()
             .name(name)
             .applicationFunctionList(permNames)

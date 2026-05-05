@@ -3,6 +3,8 @@ import org.flywaydb.gradle.task.FlywayMigrateTask
 buildscript {
   dependencies {
     classpath("org.flywaydb:flyway-database-postgresql:12.5.0")
+    classpath("io.cucumber:query:14.7.0")
+    classpath("io.cucumber:messages:30.1.0")
   }
 }
 

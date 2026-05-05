@@ -12,39 +12,40 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
-@ComponentScan(
-    basePackages = {
-        "uk.gov.hmcts.reform.opal",
-        "uk.gov.hmcts.opal.common"
-    },
-    excludeFilters = @ComponentScan.Filter(
+@ComponentScan(basePackages = {"uk.gov.hmcts.reform.opal", "uk.gov.hmcts.opal.common"},
+    excludeFilters =
+    @ComponentScan.Filter(
         type = FilterType.ANNOTATION,
-        classes = RestController.class
-    )
-)
+        classes = RestController.class))
 @EnableFeignClients(basePackages = "uk.gov.hmcts.opal")
 @SuppressWarnings("HideUtilityClassConstructor")
 public class Application {
 
-    private static final String AUTOMATED_TASK_ARG =
-        "AutomatedTask:UserRoleMappingFileRefresh";
+    static final String AUTOMATED_TASK_ARG = "AutomatedTask:UserRoleMappingFileRefresh";
 
     public static void main(final String[] args) {
-        boolean automatedTask = Arrays.asList(args).contains(AUTOMATED_TASK_ARG);
+        System.exit(start(args));
+    }
+
+    static int start(final String[] args) {
+        boolean automatedTask = isAutomatedTask(args);
 
         SpringApplication app = new SpringApplication(Application.class);
 
         if (automatedTask) {
-            app.setDefaultProperties(Map.of(
-                "opal.automated-task", "true"
-            ));
+            app.setDefaultProperties(Map.of("opal.automated-task", "true"));
         }
 
         ConfigurableApplicationContext context = app.run(args);
 
         if (automatedTask) {
-            int exitCode = SpringApplication.exit(context);
-            System.exit(exitCode);
+            return SpringApplication.exit(context);
         }
+
+        return 0;
+    }
+
+    static boolean isAutomatedTask(final String[] args) {
+        return Arrays.asList(args).contains(AUTOMATED_TASK_ARG);
     }
 }

@@ -102,8 +102,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     }
 
     @Transactional
-    public void addOrReplaceRoleInformationOnUser(long userId, long roleId, Set<Short> businessUnitIds,
-                                                  UserServiceProxy proxy) {
+    public void addOrReplaceRoleInformationOnUser(
+        long userId, long roleId, Set<Short> businessUnitIds, UserServiceProxy proxy) {
         proxy.addOrReplaceRoleInformationOnUser(proxy.getUser(userId), roleId, businessUnitIds);
     }
 
@@ -124,7 +124,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
             user.getUserId(),
             roleId);
 
-        logBusinessEvent(existingAssignments, user, roleId, businessUnitIds);
+        logBusinessEvent(existingAssignments, user, role, businessUnitIds);
 
         roleService.removeObsoleteAssignments(existingAssignments, requestedBusinessUnitUserIds);
         roleService.addMissingAssignments(
@@ -150,8 +150,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
             LinkedHashMap::new));
     }
 
-    private void logBusinessEvent(List<BusinessUnitUserRoleEntity> existingAssignments,
-                                  UserEntity user, long roleId, Set<Short> businessUnitIds) {
+    private void logBusinessEvent(List<BusinessUnitUserRoleEntity> existingAssignments, UserEntity user,
+        RoleEntity role, Set<Short> businessUnitIds) {
 
         Set<Short> existingBusinessUnitIds = existingAssignments.stream()
             .map(assignment -> assignment.getBusinessUnitUser().getBusinessUnitId()).collect(
@@ -166,9 +166,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
         if (existingAssignments.isEmpty()) {
             log.debug(":logBusinessEvent: assigned business units: {}", addedBusinessUnitIds);
             businessEventService.logBusinessEvent(
-                BusinessEventLogType.ROLE_ASSIGNED_TO_USER,
-                user.getUserId(),
-                new RoleAssignedToUserEvent(roleId, addedBusinessUnitIds),
+                BusinessEventLogType.ROLE_ASSIGNED_TO_USER, user.getUserId(),
+                new RoleAssignedToUserEvent(role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds),
                 businessEventService);
         } else {
             log.debug(
@@ -177,9 +176,9 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
                 removedBusinessUnitIds
             );
             businessEventService.logBusinessEvent(
-                BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
-                user.getUserId(),
-                new UnitsAssociatedToRoleAmendedEvent(roleId, addedBusinessUnitIds, removedBusinessUnitIds),
+                BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED, user.getUserId(),
+                new UnitsAssociatedToRoleAmendedEvent(
+                    role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds, removedBusinessUnitIds),
                 businessEventService);
         }
     }

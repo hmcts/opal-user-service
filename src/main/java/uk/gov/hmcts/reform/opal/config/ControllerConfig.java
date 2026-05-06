@@ -20,5 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
     ),
     useDefaultFilters = false
 )
+// config class which turns controllers on or off depending on automated task running
 public class ControllerConfig {
 }

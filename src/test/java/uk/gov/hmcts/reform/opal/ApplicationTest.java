@@ -2,20 +2,18 @@ package uk.gov.hmcts.reform.opal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.context.ConfigurableApplicationContext;
 
 class ApplicationTest {
@@ -47,13 +45,13 @@ class ApplicationTest {
             assertThat(exitCode).isZero();
 
             SpringApplication app = construction.constructed().get(0);
-            verify(app, never()).setDefaultProperties(anyMap());
+            verify(app, never()).setWebApplicationType(WebApplicationType.NONE);
             verify(app).run(new String[0]);
         }
     }
 
     @Test
-    void startShouldSetAutomatedTaskPropertyAndExitWhenAutomatedTaskArgIsPresent() {
+    void startShouldSetWebApplicationTypeNoneAndExitWhenAutomatedTaskArgIsPresent() {
         ConfigurableApplicationContext context = mock(ConfigurableApplicationContext.class);
 
         try (MockedConstruction<SpringApplication> construction =
@@ -71,7 +69,7 @@ class ApplicationTest {
             assertThat(exitCode).isZero();
 
             SpringApplication app = construction.constructed().get(0);
-            verify(app).setDefaultProperties(Map.of("opal.automated-task", "true"));
+            verify(app).setWebApplicationType(WebApplicationType.NONE);
             verify(app).run(new String[] {"AutomatedTask:UserRoleMappingFileRefresh"});
             springApplicationStatic.verify(() -> SpringApplication.exit(context));
         }

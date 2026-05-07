@@ -1,38 +1,50 @@
 package uk.gov.hmcts.reform.opal.rolemapping;
 
-import lombok.extern.slf4j.Slf4j;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
+import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingRefreshService;
 
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.io.IOException;
 
 @ActiveProfiles("integration")
-@TestPropertySource(properties = "opal.automated-task=true")
-@Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
-@Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_CLASS)
+@SpringBootTest(properties = {
+    "opal.automated-task=true",
+    "spring.main.web-application-type=none"
+})
 @DisplayName("UserServiceAutomatedTaskModeIntegrationTest")
-@Slf4j(topic = "opal.UserServiceAutomatedTaskModeIntegrationTest")
-@EnabledIfEnvironmentVariable(
-    named = "ROLE_MAPPING_INTEGRATION_TESTS",
-    matches = "true"
-)
 class UserServiceAutomatedTaskModeIntegrationTest extends AbstractIntegrationTest {
 
-    private static final String URL_BASE = "/users";
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @MockitoBean
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private UserRoleMappingRefreshService userRoleMappingRefreshService;
 
     @Test
-    @DisplayName("AC1: should return 404 when AutomatedTask is enabled")
-    void shouldReturn404WhenAutomatedTaskIsEnabled() throws Exception {
-        long userIdWithPermissions = 500000000L;
+    @DisplayName("Should not create web layer in automated task mode")
+    void shouldNotCreateWebLayer() {
+        assertThat(applicationContext.containsBean("dispatcherServlet")).isFalse();
+        assertThat(applicationContext.getBeansOfType(org.springframework.web.servlet.DispatcherServlet.class))
+            .isEmpty();
+    }
 
-        mockMvc.perform(get(URL_BASE + "/" + userIdWithPermissions + "/state"))
-            .andExpect(status().isNotFound());
+    @Test
+    @DisplayName("Should call refreshMappings on startup")
+    void shouldCallRefreshMappingsOnStartup() throws IOException {
+        verify(userRoleMappingRefreshService, times(1)).refreshMappings();
     }
 }

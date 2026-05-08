@@ -83,8 +83,7 @@ class TestingSupportControllerTest {
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(
             new TestingSupportController.TestingSupportTokenResponse(TEST_TOKEN),
-            responseEntity.getBody()
-        );
+            responseEntity.getBody());
     }
 
     @Test
@@ -96,8 +95,7 @@ class TestingSupportControllerTest {
         // Act and Assert
         assertThrows(
             RuntimeException.class,
-            () -> controller.getToken()
-        );
+            () -> controller.getToken());
     }
 
     @Test
@@ -115,8 +113,7 @@ class TestingSupportControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(
             new TestingSupportController.TestingSupportTokenResponse(TEST_TOKEN),
-            response.getBody()
-        );
+            response.getBody());
     }
 
     @Test
@@ -128,8 +125,7 @@ class TestingSupportControllerTest {
         // Act and Assert
         assertThrows(
             RuntimeException.class,
-            () -> controller.getTokenForUser(TEST_USER_EMAIL)
-        );
+            () -> controller.getTokenForUser(TEST_USER_EMAIL));
     }
 
     @Test
@@ -161,4 +157,10 @@ class TestingSupportControllerTest {
         verify(userService).activateUser(userId, activationDate);
     }
 
+    @Test
+    void deleteRoleFromUser_returnsNoContent() {
+        ResponseEntity<Void> response = controller.deleteRoleFromUser(123L, 456L);
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+    }
 }

@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -37,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest
 @ContextConfiguration(classes = TestingSupportController.class)
 @ActiveProfiles({"integration"})
-class TestingSupportControllerTest {
+class TestingSupportIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -116,16 +117,11 @@ class TestingSupportControllerTest {
 
     @Test
     void testGetTokenForUserFailure() throws Exception {
-        AccessTokenResponse accessTokenResponse = new AccessTokenResponse();
-        accessTokenResponse.setAccessToken("testAccessToken");
-
-        when(testingSupportAccessTokenService.getTestUserToken(anyString())).thenReturn(accessTokenResponse);
+        when(testingSupportAccessTokenService.getTestUserToken(anyString()))
+            .thenThrow(new ResponseStatusException(INTERNAL_SERVER_ERROR, "upstream boom"));
 
         mockMvc.perform(get("/testing-support/token/user").header("X-User-Email", "test@example.com"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.access_token").value("testAccessToken"))
-            .andExpect(jsonPath("$.user_state").doesNotExist());
+            .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -223,7 +219,14 @@ class TestingSupportControllerTest {
 
         verify(userService).activateUser(
             eq(user.getUserId()),
-            argThat(actual -> actual.toInstant().equals(activationDate.toInstant()))
-        );
+            argThat(actual -> actual.toInstant().equals(activationDate.toInstant())));
+    }
+
+    @Test
+    void testDeleteRoleFromUser() throws Exception {
+        mockMvc.perform(delete("/testing-support/users/987/roles/101"))
+            .andExpect(status().isNoContent());
+
+        verify(userService).deleteRoleFromUser(987L, 101L, userService);
     }
 }

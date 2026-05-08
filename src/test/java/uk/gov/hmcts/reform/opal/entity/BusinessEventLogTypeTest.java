@@ -56,13 +56,16 @@ class BusinessEventLogTypeTest {
             ),
             Arguments.of(
                 BusinessEventLogType.ROLE_ASSIGNED_TO_USER,
-                new RoleAssignedToUserEvent(101L, Set.of((short) 11))
+                new RoleAssignedToUserEvent(101L, 1L, Set.of((short) 11))
             ),
             Arguments.of(
                 BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
-                new UnitsAssociatedToRoleAmendedEvent(101L, Set.of((short) 11), Set.of((short) 12))
+                new UnitsAssociatedToRoleAmendedEvent(101L, 1L, Set.of((short) 11), Set.of((short) 12))
             ),
-            Arguments.of(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER, new RoleUnassignedFromUserEvent()),
+            Arguments.of(
+                BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER,
+                new RoleUnassignedFromUserEvent(101L, Set.of((short) 11, (short) 12), 4L)
+            ),
             Arguments.of(
                 BusinessEventLogType.FUNCTIONS_ASSOCIATED_TO_ROLE_AMENDED,
                 new FunctionsAssociatedToRoleAmendedEvent()
@@ -78,7 +81,7 @@ class BusinessEventLogTypeTest {
             .map(arguments -> Arguments.of(
                 arguments[0],
                 arguments[0] == BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED
-                    ? new RoleUnassignedFromUserEvent()
+                    ? new RoleUnassignedFromUserEvent(101L, Set.of((short) 11), 4L)
                     : activationEvent
             ));
     }

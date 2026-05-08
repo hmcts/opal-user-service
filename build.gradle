@@ -367,7 +367,7 @@ dependencies {
   implementation "org.apache.logging.log4j:log4j-to-slf4j:${log4JVersion}"
   implementation 'com.google.guava:guava:33.6.0-jre'
 
-  implementation 'com.launchdarkly:launchdarkly-java-server-sdk:7.13.2'
+  implementation 'com.launchdarkly:launchdarkly-java-server-sdk:7.13.4'
 
   implementation 'com.azure:azure-storage-blob:12.25.0'
   implementation 'org.apache.commons:commons-csv:1.10.0'

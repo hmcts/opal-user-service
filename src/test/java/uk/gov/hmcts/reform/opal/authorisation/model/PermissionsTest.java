@@ -8,13 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class PermissionsTest {
 
     @Test
-    void toPermissionOrNull_returnsPermissionForValidFunctionName() {
-        Permissions permission = Permissions.toPermissionOrNull("ACCOUNT_ENQUIRY");
+    void toPermissionOrNull_returnsPermissionForValidDescription() {
+        Permissions permission = Permissions.toPermissionOrNull(Permissions.ACCOUNT_ENQUIRY.description);
         assertEquals(Permissions.ACCOUNT_ENQUIRY, permission);
     }
 
     @Test
-    void toPermissionOrNull_returnsNullForInvalidFunctionName() {
+    void toPermissionOrNull_returnsNullForInvalidDescription() {
         Permissions permission = Permissions.toPermissionOrNull("NOT_A_PERMISSION");
         assertNull(permission);
     }

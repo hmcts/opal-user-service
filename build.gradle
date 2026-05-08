@@ -381,7 +381,7 @@ dependencies {
 
   compileOnly 'org.projectlombok:lombok:1.18.46'
   annotationProcessor 'org.projectlombok:lombok:1.18.46'
-  annotationProcessor 'org.hibernate.orm:hibernate-processor:7.3.2.Final'
+  annotationProcessor 'org.hibernate.orm:hibernate-processor:7.3.3.Final'
 
   testCompileOnly 'org.projectlombok:lombok:1.18.46'
   testAnnotationProcessor 'org.projectlombok:lombok:1.18.46'

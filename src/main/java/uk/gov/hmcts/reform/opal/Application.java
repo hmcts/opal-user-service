@@ -1,10 +1,12 @@
 package uk.gov.hmcts.reform.opal;
 
 import java.util.Arrays;
+import java.util.Map;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -18,30 +20,26 @@ public class Application {
 
     static final String AUTOMATED_TASK_ARG =
         "AutomatedTask:UserRoleMappingFileRefresh";
+    static final String AUTOMATED_TASK_PROPERTY = "opal.automated-task";
 
     public static void main(final String[] args) {
-        System.exit(start(args));
+        if (isAutomatedTask(args)) {
+            System.exit(runAutomatedTask(args));
+        } else {
+            SpringApplication.run(Application.class, args);
+        }
     }
 
-    static int start(final String[] args) {
-        boolean automatedTask = isAutomatedTask(args);
+    static int runAutomatedTask(final String[] args) {
+        ConfigurableApplicationContext context = new SpringApplicationBuilder(Application.class)
+            .web(WebApplicationType.NONE)
+            .properties(Map.of(AUTOMATED_TASK_PROPERTY, "true"))
+            .run(args);
 
-        SpringApplication app = new SpringApplication(Application.class);
-
-        if (automatedTask) {
-            app.setWebApplicationType(WebApplicationType.NONE);
-        }
-
-        ConfigurableApplicationContext context = app.run(args);
-
-        if (automatedTask) {
-            return SpringApplication.exit(context);
-        }
-
-        return 0;
+        return SpringApplication.exit(context);
     }
 
     static boolean isAutomatedTask(final String[] args) {
-        return Arrays.asList(args).contains(AUTOMATED_TASK_ARG);
+        return Arrays.stream(args).anyMatch(AUTOMATED_TASK_ARG::equals);
     }
 }

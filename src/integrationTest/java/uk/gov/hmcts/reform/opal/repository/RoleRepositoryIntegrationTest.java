@@ -37,7 +37,7 @@ class RoleRepositoryIntegrationTest extends BaseIntegrationTest {
             "Create and Manage Draft Accounts", "Account Enquiry");
         assertThat(finesRole2.getVersionNumber()).isEqualTo(3);
         assertThat(finesRole2.getApplicationFunctionList()).containsExactly(
-            "Collection Order", "Check and Validate Draft Accounts", "Search and View Accounts");
+            "Collection Order", "Check and Validate Draft Accounts", "Search and view accounts");
         assertThat(confiscationRole3.getVersionNumber()).isEqualTo(2);
         assertThat(confiscationRole3.getApplicationFunctionList()).containsExactly(
             "Create and Manage Draft Accounts", "Collection Order");

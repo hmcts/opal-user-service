@@ -38,6 +38,26 @@ public final class TestHttpClient {
         return send(requestBuilder.build());
     }
 
+    public static TestHttpResponse put(String url, String body, Map<String, String> headers) {
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .PUT(HttpRequest.BodyPublishers.ofString(body == null ? "" : body));
+
+        headers.forEach(requestBuilder::header);
+
+        return send(requestBuilder.build());
+    }
+
+    public static TestHttpResponse patch(String url, String body, Map<String, String> headers) {
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .method("PATCH", HttpRequest.BodyPublishers.ofString(body == null ? "" : body));
+
+        headers.forEach(requestBuilder::header);
+
+        return send(requestBuilder.build());
+    }
+
     private static TestHttpResponse send(HttpRequest request) {
         try {
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());

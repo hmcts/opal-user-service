@@ -1,26 +1,19 @@
 package uk.gov.hmcts.reform.opal.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
-
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountSuspensionAttributesAmendedEvent;
@@ -29,6 +22,14 @@ import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 
 import java.time.OffsetDateTime;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 
 @ActiveProfiles({"integration"})
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
@@ -51,83 +52,129 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Test
-    @DisplayName("Should create and persist a business event when all parameters are provided")
-    void logBusinessEvent_persistsExplicitEventDetails() throws JsonProcessingException {
-        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
-        BusinessEventEntity result = businessEventService.logBusinessEvent(
-            BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, 500000000L, 500000003L, eventDetails);
+    @TestPropertySource(properties = {
+        "opal.feature-flags.is-legacy-mode=true"
+    })
+    @Nested
+    public class LegacyMode extends AbstractIntegrationTest {
+        @Test
+        @DisplayName("Should use system user when legacy mode")
+        void logBusinessEvent_usesSystemUserWhenLegacyMode() {
+            AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
-        assertNotNull(result.getBusinessEventId());
-        assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, result.getEventType());
-        assertEquals(500000000L, result.getSubjectUserId());
-        assertEquals(500000003L, result.getInitiatorUserId());
-        assertJsonEquals(objectToPrettyJson(eventDetails), result.getEventDetails());
-
-        BusinessEventEntity savedEntity = businessEventRepository.findById(result.getBusinessEventId()).orElseThrow();
-        assertEquals(result.getBusinessEventId(), savedEntity.getBusinessEventId());
-        assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, savedEntity.getEventType());
-        assertEquals(500000000L, savedEntity.getSubjectUserId());
-        assertEquals(500000003L, savedEntity.getInitiatorUserId());
-        assertJsonEquals(objectToPrettyJson(eventDetails), savedEntity.getEventDetails());
-    }
-
-    @Test
-    @DisplayName("Should create and persist a business event using the authenticated user as initiator")
-    void logBusinessEvent_persistsEventDetailsForAuthenticatedUser() throws JsonProcessingException {
-        TestingAuthenticationToken authentication = new TestingAuthenticationToken("principal", "credentials");
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
-
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000003L);
-
-        BusinessEventEntity result = businessEventService.logBusinessEvent(
-            BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
-            500000000L,
-            eventDetails,
-            businessEventService
-        );
-
-        assertNotNull(result.getBusinessEventId());
-        assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, result.getEventType());
-        assertEquals(500000000L, result.getSubjectUserId());
-        assertEquals(500000003L, result.getInitiatorUserId());
-        assertJsonEquals(objectToPrettyJson(eventDetails), result.getEventDetails());
-
-        BusinessEventEntity savedEntity = businessEventRepository.findById(result.getBusinessEventId()).orElseThrow();
-        assertEquals(result.getBusinessEventId(), savedEntity.getBusinessEventId());
-        assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, savedEntity.getEventType());
-        assertEquals(500000000L, savedEntity.getSubjectUserId());
-        assertEquals(500000003L, savedEntity.getInitiatorUserId());
-        assertJsonEquals(objectToPrettyJson(eventDetails), savedEntity.getEventDetails());
-
-        verify(userPermissionsService).getAuthenticatedUserId(userPermissionsService);
-    }
-
-    @Test
-    @DisplayName("Should reject event details when they do not match the business event type")
-    void logBusinessEvent_rejectsMismatchedEventDetailsType() {
-        AccountSuspensionAttributesAmendedEvent eventDetails = new AccountSuspensionAttributesAmendedEvent();
-        long businessEventCountBeforeCall = businessEventRepository.count();
-
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> businessEventService.logBusinessEvent(
+            BusinessEventEntity result = businessEventService.logBusinessEvent(
                 BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
                 500000000L,
-                500000003L,
-                eventDetails
-            )
-        );
+                eventDetails,
+                businessEventService
+            );
 
-        assertEquals(
-            "eventDetails must be of type AccountActivationInitiatedEvent"
-                + " for event type ACCOUNT_ACTIVATION_INITIATED",
-            exception.getMessage()
-        );
-        assertEquals(businessEventCountBeforeCall, businessEventRepository.count());
+            assertEquals(-1L, result.getInitiatorUserId());
+        }
     }
+
+    @TestPropertySource(properties = {
+        "opal.feature-flags.is-legacy-mode=false"
+    })
+    @Nested
+    public class OpalMode extends AbstractIntegrationTest {
+        @Test
+        @DisplayName("Should create and persist a business event when all parameters are provided")
+        void logBusinessEvent_persistsExplicitEventDetails() throws JsonProcessingException {
+            AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
+
+            BusinessEventEntity result = businessEventService.logBusinessEvent(
+                BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, 500000000L, 500000003L, eventDetails);
+
+            assertNotNull(result.getBusinessEventId());
+            assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, result.getEventType());
+            assertEquals(500000000L, result.getSubjectUserId());
+            assertEquals(500000003L, result.getInitiatorUserId());
+            assertJsonEquals(objectToPrettyJson(eventDetails), result.getEventDetails());
+
+            BusinessEventEntity savedEntity =
+                businessEventRepository.findById(result.getBusinessEventId()).orElseThrow();
+            assertEquals(result.getBusinessEventId(), savedEntity.getBusinessEventId());
+            assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, savedEntity.getEventType());
+            assertEquals(500000000L, savedEntity.getSubjectUserId());
+            assertEquals(500000003L, savedEntity.getInitiatorUserId());
+            assertJsonEquals(objectToPrettyJson(eventDetails), savedEntity.getEventDetails());
+        }
+
+        @Test
+        @DisplayName("Should create and persist a business event using the authenticated user as initiator")
+        void logBusinessEvent_persistsEventDetailsForAuthenticatedUser() throws JsonProcessingException {
+            TestingAuthenticationToken authentication = new TestingAuthenticationToken("principal", "credentials");
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
+
+            when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
+
+            BusinessEventEntity result = businessEventService.logBusinessEvent(
+                BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
+                500000000L,
+                eventDetails,
+                businessEventService
+            );
+
+            assertNotNull(result.getBusinessEventId());
+            assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, result.getEventType());
+            assertEquals(500000000L, result.getSubjectUserId());
+            assertEquals(500000003L, result.getInitiatorUserId());
+            assertJsonEquals(objectToPrettyJson(eventDetails), result.getEventDetails());
+
+            BusinessEventEntity savedEntity =
+                businessEventRepository.findById(result.getBusinessEventId()).orElseThrow();
+            assertEquals(result.getBusinessEventId(), savedEntity.getBusinessEventId());
+            assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, savedEntity.getEventType());
+            assertEquals(500000000L, savedEntity.getSubjectUserId());
+            assertEquals(500000003L, savedEntity.getInitiatorUserId());
+            assertJsonEquals(objectToPrettyJson(eventDetails), savedEntity.getEventDetails());
+
+            verify(userPermissionsService).getAuthenticatedUserId();
+        }
+
+        @Test
+        @DisplayName("Should reject event details when they do not match the business event type")
+        void logBusinessEvent_rejectsMismatchedEventDetailsType() {
+            AccountSuspensionAttributesAmendedEvent eventDetails = new AccountSuspensionAttributesAmendedEvent();
+            long businessEventCountBeforeCall = businessEventRepository.count();
+
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> businessEventService.logBusinessEvent(
+                    BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
+                    500000000L,
+                    500000003L,
+                    eventDetails
+                )
+            );
+
+            assertEquals(
+                "eventDetails must be of type AccountActivationInitiatedEvent"
+                    + " for event type ACCOUNT_ACTIVATION_INITIATED",
+                exception.getMessage()
+            );
+            assertEquals(businessEventCountBeforeCall, businessEventRepository.count());
+        }
+
+        @Test
+        @DisplayName("Should use logged in user when not legacy mode")
+        void logBusinessEvent_usesLoggedInUserWhenNotLegacyMode() {
+            AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
+            when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
+            BusinessEventEntity result = businessEventService.logBusinessEvent(
+                BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
+                500000000L,
+                eventDetails,
+                businessEventService
+            );
+
+            assertEquals(500000003L, result.getInitiatorUserId());
+        }
+    }
+
 
     private void assertJsonEquals(String expectedJson, String actualJson) throws JsonProcessingException {
         JsonNode expected = objectMapper.readTree(expectedJson);

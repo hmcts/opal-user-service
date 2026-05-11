@@ -106,7 +106,7 @@ tasks.withType(Test).configureEach {
 }
 
 test {
-  failFast = true
+  failFast = false
 }
 
 tasks.register("bundleOpenApi", JavaExec) {
@@ -156,7 +156,7 @@ tasks.register('integration', Test) {
   group = "Verification"
   testClassesDirs = sourceSets.integrationTest.output.classesDirs
   classpath = sourceSets.integrationTest.runtimeClasspath
-  failFast = true
+  failFast = false
 }
 
 
@@ -171,6 +171,7 @@ tasks.register('functionalOpal', Test) {
   testLogging.showStandardStreams = true
   gradle.startParameter.continueOnFailure = true
   environment("DEFAULT_APP_MODE", "opal")
+  environment("IS_LEGACY_MODE", false)
   include '**/OpalTestRunner.class'
 
 }
@@ -184,6 +185,7 @@ tasks.register('functionalLegacy', Test) {
   gradle.startParameter.continueOnFailure = true
   testLogging.showStandardStreams = true
   environment("DEFAULT_APP_MODE", "legacy")
+  environment("IS_LEGACY_MODE", true)
 
   include '**/LegacyTestRunner.class'
 }
@@ -335,7 +337,8 @@ ext['tomcat.version'] = '10.1.43'
 
 dependencies {
 
-  implementation 'uk.gov.hmcts:opal-common-lib:0.3.9'
+  implementation 'uk.gov.hmcts:opal-common-lib:0.3.10'
+  implementation 'uk.gov.hmcts:spring-exception-handler:1.0.1'
 
   implementation 'org.springframework.boot:spring-boot-starter-web'
   implementation 'org.springframework.boot:spring-boot-starter-actuator'

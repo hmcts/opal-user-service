@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleService;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
     classes =
         {
             TestingSupportController.class,
-            FeatureToggleService.class
+            FeatureToggleApi.class
         },
     properties = {
         "opal.testing-support-endpoints.enabled=true"
@@ -38,7 +38,7 @@ class TestingSupportControllerTest {
     private TestingSupportController controller;
 
     @MockitoBean
-    private FeatureToggleService featureToggleService;
+    private FeatureToggleApi featureToggleApi;
 
     @MockitoBean
     private TestingSupportAccessTokenService testingSupportAccessTokenService;
@@ -51,7 +51,7 @@ class TestingSupportControllerTest {
 
     @Test
     void isFeatureEnabled() {
-        when(featureToggleService.isFeatureEnabled("my-feature")).thenReturn(true);
+        when(featureToggleApi.isFeatureEnabled("my-feature")).thenReturn(true);
 
         ResponseEntity<Boolean> response = controller.isFeatureEnabled("my-feature");
 
@@ -61,7 +61,7 @@ class TestingSupportControllerTest {
 
     @Test
     void getFeatureFlagValue() {
-        when(featureToggleService.getFeatureValue("my-feature")).thenReturn("value");
+        when(featureToggleApi.getFeatureValue("my-feature","")).thenReturn("value");
 
         ResponseEntity<String> response = controller.getFeatureValue("my-feature");
 

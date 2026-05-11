@@ -64,8 +64,8 @@ INSERT INTO roles (role_id, version_number, opal_domain_id, role_name, is_active
 VALUES (1,1, 1, 'Fines_Role_1', true, ARRAY['Create and Manage Draft Accounts', 'Account Enquiry - Account Notes']),
        (1,2, 1, 'Fines_Role_1', true, ARRAY['Create and Manage Draft Accounts', 'Account Enquiry']),
        (2,1, 1, 'Fines_Role_2', true, ARRAY['Collection Order']),
-       (2,2, 1, 'Fines_Role_2', true, ARRAY['Check and Validate Draft Accounts', 'Search and View Accounts']),
-       (2,3, 1, 'Fines_Role_2', true, ARRAY['Collection Order', 'Check and Validate Draft Accounts', 'Search and View Accounts']),
+       (2,2, 1, 'Fines_Role_2', true, ARRAY['Check and Validate Draft Accounts', 'Search and view accounts']),
+       (2,3, 1, 'Fines_Role_2', true, ARRAY['Collection Order', 'Check and Validate Draft Accounts', 'Search and view accounts']),
        (3,1, 2, 'Confiscation_Role_3', true, ARRAY['Create and Manage Draft Accounts']),
        (3,2, 2, 'Confiscation_Role_3', true, ARRAY['Create and Manage Draft Accounts', 'Collection Order']);
 

@@ -125,7 +125,7 @@ class UserStateMapperTest {
                         },
                         {
                           "permission_id": 6,
-                          "permission_name": "Search and View Accounts"
+                          "permission_name": "Search and view accounts"
                         }
                       ]
                     }

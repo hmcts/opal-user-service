@@ -54,7 +54,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should add role assignments and log assigned event")
     void addOrReplaceRoleInformationOnUser_addsRoleAssignments() throws JsonProcessingException {
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000003L);
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
 
         final long businessEventCountBeforeCall = businessEventRepository.count();
 
@@ -77,7 +77,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should replace existing role assignments and log amended event")
     void addOrReplaceRoleInformationOnUser_replacesRoleAssignments() throws JsonProcessingException {
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000003L);
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
 
         final long businessEventCountBeforeCall = businessEventRepository.count();
 
@@ -143,7 +143,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should remove role assignments and log unassigned event")
     void deleteRoleFromUser_removesRoleAssignments() throws JsonProcessingException {
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000003L);
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
 
         final long businessEventCountBeforeCall = businessEventRepository.count();
 

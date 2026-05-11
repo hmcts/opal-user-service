@@ -1,12 +1,5 @@
 package uk.gov.hmcts.reform.opal.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountDeactivationDateAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
@@ -22,6 +16,14 @@ import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 
 import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BusinessEventServiceTest {
@@ -32,6 +34,9 @@ class BusinessEventServiceTest {
     @Mock
     private UserPermissionsService userPermissionsService;
 
+    @Mock
+    private FeatureToggleApi featureToggleApi;
+
     @InjectMocks
     private BusinessEventService businessEventService;
 
@@ -40,18 +45,25 @@ class BusinessEventServiceTest {
         SecurityContextHolder.clearContext();
     }
 
+    public void setupFeatureFlags(boolean isLegacyMode) {
+        when(featureToggleApi.isFeatureEnabledWithPropertyValueDefault(
+            "is-legacy-mode",
+            "opal.feature-flags.is-legacy-mode",
+            false)).thenReturn(isLegacyMode);
+    }
+
     @Test
     void logBusinessEvent_usesAuthenticatedUserAsInitiator() {
         RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, 1L, Set.of((short) 11));
         BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(10L).build();
 
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(99L);
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(99L);
         when(businessEventRepository.saveAndFlush(any(BusinessEventEntity.class))).thenReturn(savedEntity);
 
         final BusinessEventEntity result = businessEventService.logBusinessEvent(
             BusinessEventLogType.ROLE_ASSIGNED_TO_USER, 42L, eventDetails, businessEventService);
 
-        verify(userPermissionsService).getAuthenticatedUserId(userPermissionsService);
+        verify(userPermissionsService).getAuthenticatedUserId();
         ArgumentCaptor<BusinessEventEntity> entityCaptor = ArgumentCaptor.forClass(BusinessEventEntity.class);
         verify(businessEventRepository).saveAndFlush(entityCaptor.capture());
 
@@ -60,7 +72,7 @@ class BusinessEventServiceTest {
         assertEquals(42L, capturedEntity.getSubjectUserId());
         assertEquals(99L, capturedEntity.getInitiatorUserId());
         assertEquals("{\"role_id\":201,\"role_version\":1,\"added_business_unit_ids\":[11]}",
-                     capturedEntity.getEventDetails());
+            capturedEntity.getEventDetails());
         assertSame(savedEntity, result);
     }
 
@@ -98,30 +110,11 @@ class BusinessEventServiceTest {
     }
 
     @Test
-    void logBusinessEvent_usesSystemUserWhenNoAuthenticatedUser() {
-        RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, Set.of((short) 11));
-        BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(12L).build();
-
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(null);
-        when(businessEventRepository.saveAndFlush(any(BusinessEventEntity.class))).thenReturn(savedEntity);
-
-        businessEventService.logBusinessEvent(
-            BusinessEventLogType.ROLE_ASSIGNED_TO_USER, 42L, eventDetails, businessEventService);
-
-        ArgumentCaptor<BusinessEventEntity> entityCaptor = ArgumentCaptor.forClass(BusinessEventEntity.class);
-        verify(businessEventRepository).saveAndFlush(entityCaptor.capture());
-
-        BusinessEventEntity capturedEntity = entityCaptor.getValue();
-        assertEquals(-1L, capturedEntity.getInitiatorUserId());
-    }
-
-    @Test
-    void logBusinessEvent_usesSystemUserWhenAuthenticationThrows() {
-        RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, Set.of((short) 11));
+    void logBusinessEvent_usesSystemUserWhenAppModeIsLegacy() {
+        setupFeatureFlags(true);
+        RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, 1L, Set.of((short) 11));
         BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(13L).build();
 
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService))
-            .thenThrow(new RuntimeException("No auth context"));
         when(businessEventRepository.saveAndFlush(any(BusinessEventEntity.class))).thenReturn(savedEntity);
 
         businessEventService.logBusinessEvent(
@@ -132,25 +125,27 @@ class BusinessEventServiceTest {
 
         BusinessEventEntity capturedEntity = entityCaptor.getValue();
         assertEquals(-1L, capturedEntity.getInitiatorUserId());
+
+        verifyNoInteractions(userPermissionsService);
     }
 
     @Test
-    void logBusinessEvent_defaultsToSystemUserWhenExplicitInitiatorIsNull() {
-        AccountDeactivationDateAmendedEvent eventDetails = new AccountDeactivationDateAmendedEvent();
-        BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(14L).build();
+    void logBusinessEvent_usesLoggedInUserWhenAppModeIsNotLegacy() {
+        setupFeatureFlags(false);
+        RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, 1L, Set.of((short) 11));
+        BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(13L).build();
 
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(99L);
         when(businessEventRepository.saveAndFlush(any(BusinessEventEntity.class))).thenReturn(savedEntity);
 
         businessEventService.logBusinessEvent(
-            BusinessEventLogType.ACCOUNT_DEACTIVATION_DATE_AMENDED,
-            42L,
-            null,
-            eventDetails);
+            BusinessEventLogType.ROLE_ASSIGNED_TO_USER, 42L, eventDetails, businessEventService);
 
         ArgumentCaptor<BusinessEventEntity> entityCaptor = ArgumentCaptor.forClass(BusinessEventEntity.class);
         verify(businessEventRepository).saveAndFlush(entityCaptor.capture());
 
         BusinessEventEntity capturedEntity = entityCaptor.getValue();
-        assertEquals(-1L, capturedEntity.getInitiatorUserId());
+        assertEquals(99L, capturedEntity.getInitiatorUserId());
+        verify(userPermissionsService).getAuthenticatedUserId();
     }
 }

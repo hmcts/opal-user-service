@@ -12,12 +12,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -80,7 +82,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000003L);
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
 
         BusinessEventEntity result = businessEventService.logBusinessEvent(
             BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
@@ -102,7 +104,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
         assertEquals(500000003L, savedEntity.getInitiatorUserId());
         assertJsonEquals(objectToPrettyJson(eventDetails), savedEntity.getEventDetails());
 
-        verify(userPermissionsService).getAuthenticatedUserId(userPermissionsService);
+        verify(userPermissionsService).getAuthenticatedUserId();
     }
 
     @Test
@@ -129,47 +131,49 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
         assertEquals(businessEventCountBeforeCall, businessEventRepository.count());
     }
 
-    @Test
-    @DisplayName("Should fallback to system user when no authenticated user is present")
-    void logBusinessEvent_usesSystemUserWhenNoAuthenticatedUser() {
-        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
-        // Simulate no authenticated user
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(null);
+    @TestPropertySource(properties = {
+        "opal.feature-flags.is-legacy-mode=true"
+    })
+    @Nested
+    public class LegacyMode extends AbstractIntegrationTest {
+        @Test
+        @DisplayName("Should use system user when legacy mode")
+        void logBusinessEvent_usesSystemUserWhenLegacyMode() {
+            AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
-        BusinessEventEntity result = businessEventService.logBusinessEvent(
-            BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
-            500000000L,
-            eventDetails,
-            businessEventService
-        );
+            BusinessEventEntity result = businessEventService.logBusinessEvent(
+                BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
+                500000000L,
+                eventDetails,
+                businessEventService
+            );
 
-        assertNotNull(result.getBusinessEventId());
-        assertEquals(-1L, result.getInitiatorUserId());
-
-        BusinessEventEntity savedEntity =
-            businessEventRepository.findById(result.getBusinessEventId()).orElseThrow();
-
-        assertEquals(-1L, savedEntity.getInitiatorUserId());
+            assertEquals(-1L, result.getInitiatorUserId());
+        }
     }
 
-    @Test
-    @DisplayName("Should fallback to system user when authentication lookup fails")
-    void logBusinessEvent_usesSystemUserWhenAuthThrows() {
-        AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
+    @TestPropertySource(properties = {
+        "opal.feature-flags.is-opal-mode=true"
+    })
+    @Nested
+    public class OpalMode extends AbstractIntegrationTest {
+        @Test
+        @DisplayName("Should use logged in user when not legacy mode")
+        void logBusinessEvent_usesLoggedInUserWhenNotLegacyMode() {
+            AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
+            when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
+            BusinessEventEntity result = businessEventService.logBusinessEvent(
+                BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
+                500000000L,
+                eventDetails,
+                businessEventService
+            );
 
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService))
-            .thenThrow(new RuntimeException("No auth context"));
-
-        BusinessEventEntity result = businessEventService.logBusinessEvent(
-            BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
-            500000000L,
-            eventDetails,
-            businessEventService
-        );
-
-        assertEquals(-1L, result.getInitiatorUserId());
+            assertEquals(500000003L, result.getInitiatorUserId());
+        }
     }
+
 
     private void assertJsonEquals(String expectedJson, String actualJson) throws JsonProcessingException {
         JsonNode expected = objectMapper.readTree(expectedJson);

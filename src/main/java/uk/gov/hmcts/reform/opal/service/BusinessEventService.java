@@ -1,15 +1,17 @@
 package uk.gov.hmcts.reform.opal.service;
 
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToJson;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uk.gov.hmcts.common.exceptions.standard.InternalServerErrorException;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.reform.opal.dto.businessevent.BusinessEvent;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
+
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToJson;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
     private static final long SYSTEM_USER_ID = -1L;
     private final BusinessEventRepository businessEventRepository;
     private final UserPermissionsService userPermissionsService;
+    private final FeatureToggleApi featureToggleApi;
 
     @Transactional
     @Override
@@ -40,12 +43,10 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
 
         businessEventLogType.validateEventDetails(eventDetails);
 
-        Long resolvedInitiatorId = initiatorUserId != null ? initiatorUserId : SYSTEM_USER_ID;
-
         BusinessEventEntity businessEventEntity = BusinessEventEntity.builder()
             .eventType(businessEventLogType)
             .subjectUserId(subjectUserId)
-            .initiatorUserId(resolvedInitiatorId)
+            .initiatorUserId(initiatorUserId)
             .eventDetails(objectToJson(eventDetails))
             .build();
 
@@ -61,11 +62,18 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
 
     private Long resolveInitiatorUserId() {
         try {
-            Long userId = userPermissionsService.getAuthenticatedUserId(userPermissionsService);
-            return userId != null ? userId : SYSTEM_USER_ID;
+            if (featureToggleApi.isFeatureEnabledWithPropertyValueDefault(
+                "is-legacy-mode",
+                "opal.feature-flags.is-legacy-mode",
+                false)
+            ) {
+                return SYSTEM_USER_ID;
+            } else {
+                return userPermissionsService.getAuthenticatedUserId();
+            }
         } catch (Exception ex) {
-            log.debug("No authenticated user found, defaulting to system user");
-            return SYSTEM_USER_ID;
+            throw new InternalServerErrorException("Failed to resolve initiator user ID for business event logging",
+                "No authenticated user found or failed to determine LEGACY mode", ex);
         }
     }
 }

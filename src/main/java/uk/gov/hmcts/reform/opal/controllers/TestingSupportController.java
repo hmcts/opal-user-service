@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleService;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
@@ -35,19 +35,19 @@ public class TestingSupportController {
 
     private static final String X_USER_EMAIL = "X-User-Email";
 
-    private final FeatureToggleService featureToggleService;
+    private final FeatureToggleApi featureToggleApi;
     private final TestingSupportAccessTokenService testingSupportAccessTokenService;
     private final AccessTokenService userAccessTokenService;
     private final UserService userService;
 
     @GetMapping("/launchdarkly/bool/{featureKey}")
     public ResponseEntity<Boolean> isFeatureEnabled(@PathVariable String featureKey) {
-        return ResponseEntity.ok(this.featureToggleService.isFeatureEnabled(featureKey));
+        return ResponseEntity.ok(this.featureToggleApi.isFeatureEnabled(featureKey));
     }
 
     @GetMapping("/launchdarkly/string/{featureKey}")
     public ResponseEntity<String> getFeatureValue(@PathVariable String featureKey) {
-        return ResponseEntity.ok(this.featureToggleService.getFeatureValue(featureKey));
+        return ResponseEntity.ok(this.featureToggleApi.getFeatureValue(featureKey,""));
     }
 
     @GetMapping("/token/test-user")

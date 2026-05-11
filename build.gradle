@@ -106,7 +106,7 @@ tasks.withType(Test).configureEach {
 }
 
 test {
-  failFast = true
+  failFast = false
 }
 
 tasks.register("bundleOpenApi", JavaExec) {
@@ -335,7 +335,8 @@ ext['tomcat.version'] = '10.1.43'
 
 dependencies {
 
-  implementation 'uk.gov.hmcts:opal-common-lib:0.3.9'
+  implementation 'uk.gov.hmcts:opal-common-lib:0.3.10'
+  implementation 'uk.gov.hmcts:spring-exception-handler:1.0.1'
 
   implementation 'org.springframework.boot:spring-boot-starter-web'
   implementation 'org.springframework.boot:spring-boot-starter-actuator'

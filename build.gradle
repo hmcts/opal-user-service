@@ -172,8 +172,6 @@ tasks.register('functionalOpal', Test) {
   gradle.startParameter.continueOnFailure = true
   environment("DEFAULT_APP_MODE", "opal")
   environment("IS_LEGACY_MODE", false)
-
-  IS_LEGACY_MODE
   include '**/OpalTestRunner.class'
 
 }

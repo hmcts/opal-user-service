@@ -590,7 +590,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
                   "permission_name" : "Check and Validate Draft Accounts"
                 }, {
                   "permission_id" : 6,
-                  "permission_name" : "Search and View Accounts"
+                  "permission_name" : "Search and view accounts"
                 } ]
               }, {
                 "business_unit_user_id" : "L066JG",

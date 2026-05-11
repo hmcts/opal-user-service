@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.opal.service.synchronise;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,6 +27,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_METHOD)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @DisplayName("SynchroniseBusinessUnitUsersService integration tests")
+@Slf4j(topic = "opal.SynchroniseBusinessUnitUsersServiceIntegrationTest")
 class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
@@ -38,6 +40,9 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should update existing business unit user when business unit and user differ")
     void refreshBusinessUnitUsers_updatesExistingBusinessUnitUser() throws SynchronisePermissionsException {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
+        Map<String, Object> rowBefore = getBusinessUnitUserRow("L081JG");
+        assertThat(asInt(rowBefore.get("business_unit_id"))).isEqualTo(67);
+        assertThat(asLong(rowBefore.get("user_id"))).isEqualTo(500000006L);
 
         refreshBusinessUnitUsersService.refreshBusinessUnitUsers(
             user,
@@ -101,6 +106,8 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
         assertThat(userRoleMappingCount("L092JG")).isZero();
     }
 
+    // Bad BU_ID
+
     @Test
     @DisplayName("Should reject unknown business unit and leave existing business unit users unchanged")
     void refreshBusinessUnitUsers_rejectsUnknownBusinessUnit() {
@@ -137,6 +144,8 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
         assertThat(getBusinessUnitUserRow("L082JG")).isEqualTo(rowBefore);
     }
+
+    // Bad BUU_ID
 
     @ParameterizedTest
     @NullSource

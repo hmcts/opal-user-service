@@ -16,6 +16,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -30,11 +31,13 @@ import java.util.Set;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "businessUnitUserId")
+@ToString(onlyExplicitlyIncluded = true)
 public class BusinessUnitUserEntity {
 
     @Id
     @Column(name = "business_unit_user_id", length = 6)
     @EqualsAndHashCode.Include
+    @ToString.Include
     private String businessUnitUserId;
 
     @ManyToOne(fetch = FetchType.LAZY)

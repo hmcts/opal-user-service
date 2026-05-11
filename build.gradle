@@ -16,7 +16,7 @@ plugins {
   id 'uk.gov.hmcts.java' version '0.12.68'
   id 'org.flywaydb.flyway' version '12.5.0'
   id 'net.serenity-bdd.serenity-gradle-plugin' version '5.3.9'
-  id "org.openapi.generator" version "7.21.0"
+  id "org.openapi.generator" version "7.22.0"
 }
 
 ext {
@@ -335,7 +335,7 @@ ext['tomcat.version'] = '10.1.43'
 
 dependencies {
 
-  implementation 'uk.gov.hmcts:opal-common-lib:0.3.8'
+  implementation 'uk.gov.hmcts:opal-common-lib:0.3.9'
 
   implementation 'org.springframework.boot:spring-boot-starter-web'
   implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -367,8 +367,8 @@ dependencies {
   implementation "org.apache.logging.log4j:log4j-to-slf4j:${log4JVersion}"
   implementation 'com.google.guava:guava:33.6.0-jre'
 
-  implementation 'com.azure:azure-storage-blob:12.25.0'
-  implementation 'org.apache.commons:commons-csv:1.10.0'
+  implementation 'com.azure:azure-storage-blob:12.33.4'
+  implementation 'org.apache.commons:commons-csv:1.14.1'
 
   implementation 'io.rest-assured:rest-assured:6.0.0'
   implementation 'org.flywaydb:flyway-core:12.5.0'
@@ -396,7 +396,7 @@ dependencies {
   testImplementation 'org.springframework.boot:spring-boot-devtools'
   testImplementation 'org.springframework.boot:spring-boot-testcontainers'
   testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-  testImplementation 'com.auth0:java-jwt:4.5.1'
+  testImplementation 'com.auth0:java-jwt:4.5.2'
   testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
   testImplementation 'org.testcontainers:testcontainers-postgresql'
   testImplementation 'com.redis:testcontainers-redis'
@@ -417,9 +417,9 @@ dependencies {
   testImplementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
 
   implementation 'org.openapitools:jackson-databind-nullable:0.2.10'
-  openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.40"
-  openapiImplementation "io.swagger.core.v3:swagger-models:2.2.48"
-  openapiImplementation "io.swagger.core.v3:swagger-core:2.2.48"
+  openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.41"
+  openapiImplementation "io.swagger.core.v3:swagger-models:2.2.49"
+  openapiImplementation "io.swagger.core.v3:swagger-core:2.2.49"
   openapiImplementation platform("com.fasterxml.jackson:jackson-bom:2.21.3")
   openapiImplementation "com.fasterxml.jackson.core:jackson-databind"
   openapiImplementation "com.fasterxml.jackson.core:jackson-core"
@@ -427,10 +427,10 @@ dependencies {
 
 
   //Added to override dependency version to resolve vulnerability
-  implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.21'
-  implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.21'
-  implementation 'org.apache.tomcat.embed:tomcat-embed-el:11.0.21'
-  implementation 'org.apache.tomcat:tomcat-annotations-api:11.0.21'
+  implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.22'
+  implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.22'
+  implementation 'org.apache.tomcat.embed:tomcat-embed-el:11.0.22'
+  implementation 'org.apache.tomcat:tomcat-annotations-api:11.0.22'
   implementation 'org.apache.commons:commons-lang3:3.20.0'
 
 }

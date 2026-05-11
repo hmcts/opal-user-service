@@ -42,11 +42,11 @@ class UserStateMapperTest {
     DomainEntity fines = DomainEntity.builder().name("fines").build();
     DomainEntity confiscations = DomainEntity.builder().name("confiscation").build();
 
-    String permAE = Permissions.ACCOUNT_ENQUIRY.name();
-    String permAEN = Permissions.ACCOUNT_ENQUIRY_NOTES.name();
-    String permCVDA = Permissions.CHECK_VALIDATE_DRAFT_ACCOUNTS.name();
-    String permCO = Permissions.COLLECTION_ORDER.name();
-    String permSAVA = Permissions.SEARCH_AND_VIEW_ACCOUNTS.name();
+    String permAE = Permissions.ACCOUNT_ENQUIRY.description;
+    String permAEN = Permissions.ACCOUNT_ENQUIRY_NOTES.description;
+    String permCVDA = Permissions.CHECK_VALIDATE_DRAFT_ACCOUNTS.description;
+    String permCO = Permissions.COLLECTION_ORDER.description;
+    String permSAVA = Permissions.SEARCH_AND_VIEW_ACCOUNTS.description;
     String permBadName = "BAD_NAME";
 
     LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);

@@ -41,12 +41,13 @@ public enum Permissions {
         };
     }
 
-    public static Permissions toPermissionOrNull(String function) {
-        try {
-            return Permissions.valueOf(function);
-        } catch (IllegalArgumentException e) {
-            log.error("Permission could not be mapped: {}", function);
-            return null;
+    public static Permissions toPermissionOrNull(String functionDescription) {
+        for (Permissions permission : Permissions.values()) {
+            if (permission.description.equals(functionDescription)) {
+                return permission;
+            }
         }
+        log.error("Permission could not be mapped: {}", functionDescription);
+        return null;
     }
 }

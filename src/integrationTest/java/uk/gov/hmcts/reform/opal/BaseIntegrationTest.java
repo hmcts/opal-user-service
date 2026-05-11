@@ -8,6 +8,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static uk.gov.hmcts.reform.opal.LegacyStubContainerConfig.legacyGatewayUrl;
 import static uk.gov.hmcts.reform.opal.TestContainerConfig.REDIS_CONTAINER;
 
 @Testcontainers
@@ -28,6 +29,7 @@ public class BaseIntegrationTest {
         registry.add("spring.datasource.username", TestContainerConfig.POSTGRES_CONTAINER::getUsername);
         registry.add("spring.datasource.password", TestContainerConfig.POSTGRES_CONTAINER::getPassword);
         registry.add("spring.data.redis.url", REDIS_CONTAINER::getRedisURI);
+        registry.add("legacy-gateway.url", () -> legacyGatewayUrl());
     }
 
 }

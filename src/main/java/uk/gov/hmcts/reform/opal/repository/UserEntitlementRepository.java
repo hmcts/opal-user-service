@@ -15,6 +15,8 @@ public interface UserEntitlementRepository extends JpaRepository<UserEntitlement
 
     List<UserEntitlementEntity> findAllByBusinessUnitUser_BusinessUnitUserId(String businessUnitUserId);
 
+    void deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(List<String> businessUnitUserIds);
+
     /**
      * Finds all entitlements for a given userId.Eagerly fetches all parent objects
      * (the business unit user, the user itself, the business unit, and the function name)

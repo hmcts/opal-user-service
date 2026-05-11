@@ -20,4 +20,6 @@ public interface RoleRepository extends JpaRepository<RoleEntity, Long>, JpaSpec
     long countByRoleIdAndIsActiveTrue(Long roleId);
 
     Optional<RoleEntity> findByRoleIdAndIsActiveTrue(Long roleId);
+
+    RoleEntity findByName(String name);
 }

@@ -10,11 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
 import uk.gov.hmcts.reform.opal.dto.search.BusinessUnitUserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
+import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
+import uk.gov.hmcts.reform.opal.entity.RoleEntity;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.jpa.BusinessUnitUserSpecs;
 import uk.gov.hmcts.reform.opal.service.BusinessUnitUserServiceInterface;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,6 +47,19 @@ public class BusinessUnitUserService implements BusinessUnitUserServiceInterface
                     ffq -> ffq.page(Pageable.unpaged()));
 
         return page.getContent();
+    }
+
+    @Override
+    public Set<RoleEntity> findAllRolesOfUser(UserEntity user) {
+        List<BusinessUnitUserEntity> buuList = businessUnitUserRepository.findAllByUser_UserId(user.getUserId());
+        Set<RoleEntity> roleSet = new HashSet<>();
+        for (BusinessUnitUserEntity buu : buuList) {
+            for (BusinessUnitUserRoleEntity buuroleEntity : buu.getBusinessUnitUserRoleList()) {
+                RoleEntity roleEntity = buuroleEntity.getRole();
+                roleSet.add(roleEntity);
+            }
+        }
+        return roleSet;
     }
 
     /**

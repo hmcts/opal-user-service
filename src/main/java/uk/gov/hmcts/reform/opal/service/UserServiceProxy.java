@@ -9,4 +9,6 @@ public interface UserServiceProxy {
     UserEntity getUser(Long userId);
 
     void addOrReplaceRoleInformationOnUser(UserEntity user, long roleId, Set<Short> businessUnitIds);
+
+    void deleteRoleFromUser(UserEntity user, long roleId);
 }

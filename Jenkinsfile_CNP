@@ -7,6 +7,8 @@ def product = "opal"
 def component = "user-service"
 
 withPipeline(type, product, component) {
+  env.OPAL_LEGACY_STUB_IMAGE = 'hmctsprod.azurecr.io/opal/legacy-db-stub:latest'
+
   afterAlways('functionalTest:dev') {
     steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'functional-test-report/**/*'
 

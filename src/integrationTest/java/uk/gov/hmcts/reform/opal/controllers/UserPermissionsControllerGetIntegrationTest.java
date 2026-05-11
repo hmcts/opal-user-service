@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,6 +69,8 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
 
     @Autowired
     StringRedisTemplate redisTemplate;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @ParameterizedTest
     @NullSource
@@ -412,7 +416,10 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         actions.andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        assertThat(body).isEqualTo(objectMapper.readTree(EXPECTED_V2_USER_STATE).toString());
+        JsonNode expectedNode = objectMapper.readTree(EXPECTED_V2_USER_STATE);
+        JsonNode actualNode = objectMapper.readTree(body);
+        assertThat(actualNode).isEqualTo(expectedNode);
+
         if (newLogin) {
             verify(eventLoggingService).logEvent(
                 eq("User Authentication"),
@@ -429,7 +436,10 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             verifyNoInteractions(eventLoggingService);
         }
         // verification of redis caching of user state
-        assertThat(EXPECTED_V2_USER_STATE).isEqualTo(redisTemplate.opsForValue().get(cacheKey));
+        JsonNode actualFromCacheNode = objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey));
+        assertThat(actualFromCacheNode).isEqualTo(expectedNode);
+
+
         Long ttl = redisTemplate.getExpire(cacheKey, TimeUnit.MINUTES);
         assertThat(ttl).isBetween(29L, 30L); //30 mins TTL seems to immediately tick down to 29 mins.
     }
@@ -513,7 +523,9 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        assertThat(redisTemplate.opsForValue().get(cacheKey)).isEqualTo(EXPECTED_V2_USER_STATE);
+        JsonNode expectedNode = objectMapper.readTree(EXPECTED_V2_USER_STATE);
+        JsonNode actualNode = objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey));
+        assertThat(actualNode).isEqualTo(expectedNode);
 
         // Simulate "30 minutes later"
         Boolean ttlSet = redisTemplate.expire(cacheKey, 1, TimeUnit.SECONDS);

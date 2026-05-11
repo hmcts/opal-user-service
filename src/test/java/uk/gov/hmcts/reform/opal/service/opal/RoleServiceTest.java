@@ -178,6 +178,18 @@ class RoleServiceTest {
         verify(businessUnitUserRoleRepository, never()).saveAll(any());
     }
 
+    @Test
+    void removeAssignments_deletesProvidedAssignments() {
+        List<BusinessUnitUserRoleEntity> assignments = List.of(
+            assignment("BU001", 1L, 201L),
+            assignment("BU002", 1L, 201L)
+        );
+
+        roleService.removeAssignments(assignments);
+
+        verify(businessUnitUserRoleRepository).deleteAll(assignments);
+    }
+
     private BusinessUnitUserEntity businessUnitUser(String businessUnitUserId, Long userId, Short businessUnitId) {
         return BusinessUnitUserEntity.builder()
             .businessUnitUserId(businessUnitUserId)

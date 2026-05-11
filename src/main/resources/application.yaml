@@ -108,7 +108,7 @@ launchdarkly:
 
 opal:
   feature-flags:
-    is-legacy-mode: ${IS_LEGACY_MODE:false}
+    is-legacy-mode: ${IS_LEGACY_MODE:true}
   frontend:
     url: ${OPAL_FRONTEND_URL:http://localhost:4200}
   azure:

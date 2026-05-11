@@ -171,6 +171,9 @@ tasks.register('functionalOpal', Test) {
   testLogging.showStandardStreams = true
   gradle.startParameter.continueOnFailure = true
   environment("DEFAULT_APP_MODE", "opal")
+  environment("IS_LEGACY_MODE", false)
+
+  IS_LEGACY_MODE
   include '**/OpalTestRunner.class'
 
 }
@@ -184,6 +187,7 @@ tasks.register('functionalLegacy', Test) {
   gradle.startParameter.continueOnFailure = true
   testLogging.showStandardStreams = true
   environment("DEFAULT_APP_MODE", "legacy")
+  environment("IS_LEGACY_MODE", true)
 
   include '**/LegacyTestRunner.class'
 }

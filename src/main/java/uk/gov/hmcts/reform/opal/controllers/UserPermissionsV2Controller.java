@@ -29,6 +29,6 @@ public class UserPermissionsV2Controller {
 
         log.debug(":GET:getUserStateV2: userId: {}, new login: {}", userId, newLogin);
         return buildResponse(userPermissionsService
-                                 .getUserStateV2(userId, userPermissionsService, newLogin));
+                                 .getUserStateV2(userId, newLogin));
     }
 }

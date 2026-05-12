@@ -57,7 +57,7 @@ class UserPermissionsControllerTest {
             .username(expectedUsername)
             .build();
 
-        given(userPermissionsService.getUserState(anyLong(), any(), any(), any())).willReturn(returnedDto);
+        given(userPermissionsService.getUserState(anyLong(), any(), any())).willReturn(returnedDto);
 
         Authentication auth = createAuthentication(expectedUsername);
 
@@ -68,7 +68,7 @@ class UserPermissionsControllerTest {
         // Assert
         assertNotNull(result);
         assertEquals(expectedUsername, result.getUsername());
-        verify(userPermissionsService).getUserState(eq(0L), same(auth), same(userPermissionsService), isNull());
+        verify(userPermissionsService).getUserState(eq(0L), same(auth), isNull());
     }
 
     @Test
@@ -82,7 +82,7 @@ class UserPermissionsControllerTest {
             .username(expectedUsername)
             .build();
 
-        given(userPermissionsService.getUserState(any(), any(), any())).willReturn(returnedDto);
+        given(userPermissionsService.getUserState(any(), any())).willReturn(returnedDto);
         Authentication auth = createAuthentication(expectedUsername);
 
         // Act
@@ -92,7 +92,7 @@ class UserPermissionsControllerTest {
         // Assert
         assertNotNull(result);
         assertEquals(expectedUsername, result.getUsername());
-        verify(userPermissionsService).getUserState(same(auth), same(userPermissionsService), isNull());
+        verify(userPermissionsService).getUserState(same(auth), isNull());
     }
 
     private JwtAuthenticationToken createAuthentication(String preferredName) {
@@ -129,7 +129,7 @@ class UserPermissionsControllerTest {
         returnedDto.setUserId(123L);
         returnedDto.setUsername("opal-test@HMCTS.NET");
         returnedDto.setVersionNumber(7L);
-        given(userPermissionsService.updateUser(any(), any(), any(), any())).willReturn(returnedDto);
+        given(userPermissionsService.updateUser(any(), any(), any())).willReturn(returnedDto);
 
         // Act
         ResponseEntity<UserDto> response = controller.updateUser(1L, "bearer token-value", "if-match");
@@ -143,7 +143,7 @@ class UserPermissionsControllerTest {
         assertEquals("\"7\"", headers.getETag());
         assertNotNull(result);
         assertEquals("opal-test@HMCTS.NET", result.getUsername());
-        verify(userPermissionsService).updateUser(eq(1L), eq("bearer token-value"), same(userPermissionsService),
+        verify(userPermissionsService).updateUser(eq(1L), eq("bearer token-value"),
                                                   eq("if-match"));
     }
 
@@ -154,7 +154,7 @@ class UserPermissionsControllerTest {
         returnedDto.setUserId(123L);
         returnedDto.setUsername("opal-test@HMCTS.NET");
         returnedDto.setVersionNumber(7L);
-        given(userPermissionsService.updateUser(any(), any(), any())).willReturn(returnedDto);
+        given(userPermissionsService.updateUser(any(), any())).willReturn(returnedDto);
 
         // Act
         ResponseEntity<UserDto> response = controller.updateUser("bearer token-value", "if-match");
@@ -168,7 +168,7 @@ class UserPermissionsControllerTest {
         assertEquals("\"7\"", headers.getETag());
         assertNotNull(result);
         assertEquals("opal-test@HMCTS.NET", result.getUsername());
-        verify(userPermissionsService).updateUser(eq("bearer token-value"), same(userPermissionsService),
+        verify(userPermissionsService).updateUser(eq("bearer token-value"),
                                                   eq("if-match"));
     }
 

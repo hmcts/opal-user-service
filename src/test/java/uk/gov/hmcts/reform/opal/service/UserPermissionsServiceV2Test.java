@@ -38,19 +38,21 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 
 @ExtendWith(MockitoExtension.class)
 class UserPermissionsServiceV2Test {
@@ -92,9 +94,6 @@ class UserPermissionsServiceV2Test {
     private Jwt jwt;
 
     @Mock
-    private UserPermissionsProxy proxy;
-
-    @Mock
     private Clock clock;
 
     @Mock
@@ -114,6 +113,7 @@ class UserPermissionsServiceV2Test {
 
     @BeforeEach
     void setUp() {
+        service = spy(service);
         userEntity = UserEntity.builder()
             .userId(USER_ID)
             .username(TOKEN_PREFERRED_USERNAME)
@@ -193,13 +193,13 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
+        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(proxy, true);
+        UserStateV2Dto result = service.getUserStateV2(true);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -219,13 +219,13 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
+        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(proxy, false);
+        UserStateV2Dto result = service.getUserStateV2(false);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -243,7 +243,7 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
+        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
@@ -253,7 +253,7 @@ class UserPermissionsServiceV2Test {
             .set(eq("USER_STATE_" + TOKEN_SUBJECT), anyString(), eq(CACHE_TIMEOUT_MINUTES), eq(TimeUnit.MINUTES));
 
         // act & assert
-        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(proxy, false));
+        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(false));
 
         assertThat(result).isEqualTo(dto);
         assertThat(result.getCacheName()).isEqualTo("USER_STATE_" + TOKEN_SUBJECT);
@@ -264,7 +264,8 @@ class UserPermissionsServiceV2Test {
     void getUserStateV2IdMethod_whenRedisCachingFails_doesNotThrowAndReturnsDto() {
 
         // arrange
-        when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
+        doReturn(userEntity).when(service).getUserV2(USER_ID);
+
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         doThrow(new DataAccessResourceFailureException("Redis unavailable"))
@@ -272,7 +273,7 @@ class UserPermissionsServiceV2Test {
             .set(eq("USER_STATE_" + TOKEN_SUBJECT), anyString(), eq(CACHE_TIMEOUT_MINUTES), eq(TimeUnit.MINUTES));
 
         // act & assert
-        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(USER_ID, proxy, false));
+        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(USER_ID, false));
 
         assertThat(result).isEqualTo(dto);
         assertThat(result.getCacheName()).isEqualTo("USER_STATE_" + TOKEN_SUBJECT);
@@ -290,7 +291,7 @@ class UserPermissionsServiceV2Test {
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.getUserStateV2(proxy, true)
+            () -> service.getUserStateV2(true)
         );
         assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertEquals("401 UNAUTHORIZED \"Authentication Token not of type Jwt.\"", ex.getMessage());
@@ -309,7 +310,7 @@ class UserPermissionsServiceV2Test {
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.getUserStateV2(proxy, true)
+            () -> service.getUserStateV2(true)
         );
         assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertEquals("401 UNAUTHORIZED \"Subject not found.\"", ex.getMessage());
@@ -325,13 +326,13 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
+        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
         when(jwt.getClaimAsString("preferred_username")).thenReturn(null);
 
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.getUserStateV2(proxy, true)
+            () -> service.getUserStateV2(true)
         );
         assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertEquals("401 UNAUTHORIZED \"Claim not found: preferred_username\"", ex.getMessage());
@@ -350,13 +351,13 @@ class UserPermissionsServiceV2Test {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
+        doReturn(userEntity).when(service).getUserV2(USER_ID);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
         Long clientUserId = 123L;
-        when(proxy.getUserId(authentication, proxy)).thenReturn(clientUserId);
+        doReturn(clientUserId).when(service).getUserId(authentication);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(USER_ID, proxy, true);
+        UserStateV2Dto result = service.getUserStateV2(USER_ID, true);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -370,11 +371,11 @@ class UserPermissionsServiceV2Test {
     void getUserStateV2IdMethod_NonNewLoginWhenIdIsNonZero() {
 
         // Arrange
-        when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
+        doReturn(userEntity).when(service).getUserV2(USER_ID);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(USER_ID, proxy, false);
+        UserStateV2Dto result = service.getUserStateV2(USER_ID, false);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -386,10 +387,10 @@ class UserPermissionsServiceV2Test {
     void getUserStateV2IdMethod_WhenIdIsZero() {
 
         // Arrange
-        when(proxy.getUserStateV2(proxy, true)).thenReturn(dto);
+        doReturn(dto).when(service).getUserStateV2(true);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(0L, proxy, true);
+        UserStateV2Dto result = service.getUserStateV2(0L, true);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -410,13 +411,13 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
+        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(proxy, true);
+        UserStateV2Dto result = service.getUserStateV2(true);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -438,14 +439,15 @@ class UserPermissionsServiceV2Test {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
+        doReturn(userEntity).when(service).getUserV2(USER_ID);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         Long clientUserId = 123L;
-        when(proxy.getUserId(authentication, proxy)).thenReturn(clientUserId);
+
+        doReturn(clientUserId).when(service).getUserId(authentication);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(USER_ID, proxy, true);
+        UserStateV2Dto result = service.getUserStateV2(USER_ID, true);
 
         // Assert
         assertThat(result).isEqualTo(dto);

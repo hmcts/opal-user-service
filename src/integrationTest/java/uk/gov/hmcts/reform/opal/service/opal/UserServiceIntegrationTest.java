@@ -54,7 +54,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should add role assignments and log assigned event")
     void addOrReplaceRoleInformationOnUser_addsRoleAssignments() throws JsonProcessingException {
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000003L);
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
 
         final long businessEventCountBeforeCall = businessEventRepository.count();
 
@@ -77,7 +77,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("Should replace existing role assignments and log amended event")
     void addOrReplaceRoleInformationOnUser_replacesRoleAssignments() throws JsonProcessingException {
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000003L);
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
 
         final long businessEventCountBeforeCall = businessEventRepository.count();
 
@@ -140,6 +140,54 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(businessEventRepository.count()).isEqualTo(businessEventCountBeforeCall);
     }
 
+    @Test
+    @DisplayName("Should remove role assignments and log unassigned event")
+    void deleteRoleFromUser_removesRoleAssignments() throws JsonProcessingException {
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
+
+        final long businessEventCountBeforeCall = businessEventRepository.count();
+
+        userService.deleteRoleFromUser(500000000L, 1L, userService);
+
+        assertThat(getAssignedBusinessUnitUserIds(500000000L, 1L)).isEmpty();
+        assertThat(getAssignedBusinessUnitIds(500000000L, 1L)).isEmpty();
+        assertThat(businessEventRepository.count()).isEqualTo(businessEventCountBeforeCall + 1);
+
+        BusinessEventEntity businessEvent = findLatestBusinessEvent();
+        assertThat(businessEvent.getEventType()).isEqualTo(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER);
+        assertThat(businessEvent.getSubjectUserId()).isEqualTo(500000000L);
+        assertThat(businessEvent.getInitiatorUserId()).isEqualTo(500000003L);
+        assertRoleUnassignedEventDetails(businessEvent.getEventDetails(), 1L, Set.of((short) 70), 2L);
+    }
+
+    @Test
+    @DisplayName("Should do nothing when the user does not have the role")
+    void deleteRoleFromUser_returnsWhenNoAssignmentsExist() {
+        long businessEventCountBeforeCall = businessEventRepository.count();
+        List<BusinessUnitUserRoleEntity> assignmentsBeforeCall =
+            businessUnitUserRoleRepository.findAllByBusinessUnitUser_User_UserIdAndRole_RoleId(500000006L, 1L);
+
+        userService.deleteRoleFromUser(500000006L, 1L, userService);
+
+        assertThat(
+            businessUnitUserRoleRepository.findAllByBusinessUnitUser_User_UserIdAndRole_RoleId(500000006L, 1L)
+        ).usingRecursiveFieldByFieldElementComparator().containsExactlyElementsOf(assignmentsBeforeCall);
+        assertThat(businessEventRepository.count()).isEqualTo(businessEventCountBeforeCall);
+    }
+
+    @Test
+    @DisplayName("Should reject missing role during delete without changing state")
+    void deleteRoleFromUser_rejectsMissingRole() {
+        final long businessEventCountBeforeCall = businessEventRepository.count();
+
+        assertThrows(
+            jakarta.persistence.EntityNotFoundException.class,
+            () -> userService.deleteRoleFromUser(500000000L, 999L, userService)
+        );
+
+        assertThat(businessEventRepository.count()).isEqualTo(businessEventCountBeforeCall);
+    }
+
     private BusinessEventEntity findLatestBusinessEvent() {
         return businessEventRepository.findAll().stream()
             .max(Comparator.comparing(BusinessEventEntity::getBusinessEventId))
@@ -185,5 +233,16 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(actual.get("removed_business_unit_ids"))
             .extracting(JsonNode::shortValue)
             .containsExactlyInAnyOrderElementsOf(removedBusinessUnitIds);
+    }
+
+    private void assertRoleUnassignedEventDetails(
+        String actualJson, Long roleId, Set<Short> businessUnitIds, Long roleVersion) throws JsonProcessingException {
+
+        JsonNode actual = objectMapper.readTree(actualJson);
+        assertThat(actual.get("role_id").longValue()).isEqualTo(roleId);
+        assertThat(actual.get("business_unit_ids"))
+            .extracting(JsonNode::shortValue)
+            .containsExactlyInAnyOrderElementsOf(businessUnitIds);
+        assertThat(actual.get("role_version").longValue()).isEqualTo(roleVersion);
     }
 }

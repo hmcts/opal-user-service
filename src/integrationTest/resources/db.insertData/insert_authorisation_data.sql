@@ -1,5 +1,8 @@
 -- Insert users from Flyway script V20240729_003
 INSERT INTO users (user_id, token_preferred_username, token_subject, token_name, password, description, created_date, version_number)
+VALUES (-1, 'opal-system-user', 'opal-system-user', 'opal-system-user', NULL, 'System user for business event initiator auditing', CURRENT_TIMESTAMP, 0);
+
+INSERT INTO users (user_id, token_preferred_username, token_subject, token_name, password, description, created_date, version_number)
 VALUES (500000000, 'opal-test@HMCTS.NET', 'k9LpT2xVqR8m','Pablo', 'password', 'User with 7 business units', CURRENT_TIMESTAMP, 0);
 
 INSERT INTO users (user_id, token_preferred_username, token_subject, description, token_name, version_number,
@@ -58,11 +61,11 @@ VALUES (112687, 'L065JG', 41), -- BU 70 gets 'Account Enquiry - Account Notes'
        (500001, 'L080JG', 500); -- BU 61 gets 'Collection Order'
 
 INSERT INTO roles (role_id, version_number, opal_domain_id, role_name, is_active, application_function_list)
-VALUES (1,1, 1, 'Fines_Role_1', true, ARRAY['Create and Manage Draft Accounts', 'Account Enquiry - Account Notes']),
-       (1,2, 1, 'Fines_Role_1', true, ARRAY['Create and Manage Draft Accounts', 'Account Enquiry']),
-       (2,1, 1, 'Fines_Role_2', true, ARRAY['Collection Order']),
-       (2,2, 1, 'Fines_Role_2', true, ARRAY['Check and Validate Draft Accounts', 'Search and View Accounts']),
-       (2,3, 1, 'Fines_Role_2', true, ARRAY['Collection Order', 'Check and Validate Draft Accounts', 'Search and View Accounts']),
+VALUES (1,1, 1, 'Fines_Role_1', true, ARRAY['Create and Manage Draft Accounts', 'Account Enquiry - Account Notes','Account Maintenance']),
+       (1,2, 1, 'Fines_Role_1', true, ARRAY['Create and Manage Draft Accounts', 'Account Enquiry','Account Maintenance']),
+       (2,1, 1, 'Fines_Role_2', true, ARRAY['Collection Order','Account Maintenance']),
+       (2,2, 1, 'Fines_Role_2', true, ARRAY['Check and Validate Draft Accounts', 'Search and view accounts']),
+       (2,3, 1, 'Fines_Role_2', true, ARRAY['Collection Order', 'Check and Validate Draft Accounts', 'Search and view accounts']),
        (3,1, 2, 'Confiscation_Role_3', true, ARRAY['Create and Manage Draft Accounts']),
        (3,2, 2, 'Confiscation_Role_3', true, ARRAY['Create and Manage Draft Accounts', 'Collection Order']);
 

@@ -31,7 +31,7 @@ public class SynchronisePermissionsService {
     @Lazy
     private final UserService userService;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public void synchronise(UserEntity user) {
 
         //1. Fetch Libra user id's  from the legacy system

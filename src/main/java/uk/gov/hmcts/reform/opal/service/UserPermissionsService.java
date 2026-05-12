@@ -51,6 +51,7 @@ import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
+import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsException;
 import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsService;
 
 import java.time.Clock;
@@ -167,7 +168,7 @@ public class UserPermissionsService {
                 synchronisePermissionsService.synchronise(user);
             } catch (RuntimeException e) {
                 log.warn("Synchronising permissions from Legacy failed", e);
-                throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Permissions synchronization failed", e);
+                throw new SynchronisePermissionsException("Permissions synchronization failed", e);
             }
             // synchronise() was processed in a different transaction, so we need to refresh user entity
             userService.refreshUser(user);

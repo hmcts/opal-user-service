@@ -38,7 +38,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @ActiveProfiles({"integration"})
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_METHOD)
-@Import(SynchronisePermissionsServiceIntegrationTest.TestLegacyUserServiceConfiguration.class)
+@Import(SynchronisePermissionsServiceIntegrationTest.LegacyUserServiceStubConfiguration.class)
 @DisplayName("SynchronisePermissionsService integration tests")
 class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTest {
 
@@ -55,12 +55,21 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
     private StringRedisTemplate redisTemplate;
 
     @Autowired
-    private TestLegacyUserService legacyUserService;
+    private LegacyUserServiceStub legacyUserService;
 
     @AfterEach
     void clearSecurityContext() {
         SecurityContextHolder.clearContext();
         legacyUserService.reset();
+    }
+
+    @TestConfiguration
+    static class LegacyUserServiceStubConfiguration {
+        @Bean
+        @Primary
+        LegacyUserServiceStub legacyUserServiceStub() {
+            return new LegacyUserServiceStub();
+        }
     }
 
     @Test
@@ -277,16 +286,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         return ((Number) value).longValue();
     }
 
-    @TestConfiguration
-    static class TestLegacyUserServiceConfiguration {
-        @Bean
-        @Primary
-        TestLegacyUserService testLegacyUserService() {
-            return new TestLegacyUserService();
-        }
-    }
-
-    static class TestLegacyUserService extends LegacyUserService {
+    static class LegacyUserServiceStub extends LegacyUserService {
 
         private volatile LegacyGetUserResponse getUserResponse = LegacyGetUserResponse.builder()
             .count(1)

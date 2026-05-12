@@ -48,7 +48,8 @@ public class SynchroniseBusinessUnitUsersService {
             if (maybeBusinessUnitEntity.isPresent()) {
                 businessUnit = maybeBusinessUnitEntity.get();
             } else {
-                log.error("legacyBusinessUnitUser not found for businessUnit {}", legacyBusinessUnitUser.getBusinessUnitId());
+                log.error("legacyBusinessUnitUser not found for businessUnit {}",
+                          legacyBusinessUnitUser.getBusinessUnitId());
                 throw new SynchronisePermissionsException("legacyBusinessUnitUser not found for businessUnit");
             }
 

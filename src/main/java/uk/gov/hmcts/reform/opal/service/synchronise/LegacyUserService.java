@@ -1,7 +1,11 @@
 package uk.gov.hmcts.reform.opal.service.synchronise;
 
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.reform.opal.dto.synchronise.*;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUser;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersRequest;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersResponse;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserRequest;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserResponse;
 
 import java.util.List;
 

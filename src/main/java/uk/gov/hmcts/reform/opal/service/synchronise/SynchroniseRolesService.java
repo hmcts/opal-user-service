@@ -33,7 +33,8 @@ public class SynchroniseRolesService {
     private final RoleMappingCacheLookupService roleMappingCacheLookupService;
 
     @Transactional
-    public void process(UserEntity user, List<LegacyBusinessUnitUser> legacyBuuList) throws SynchronisePermissionsException {
+    public void process(UserEntity user, List<LegacyBusinessUnitUser> legacyBuuList)
+        throws SynchronisePermissionsException {
 
         Map<Long, Set<Short>> roleMap = roleMappingCacheLookupService.getRoleMappingByTokenSubject(
             user.getTokenSubject()

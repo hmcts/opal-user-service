@@ -22,7 +22,9 @@ public class RoleMappingCacheLookupService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
-    public Map<Long, Set<Short>> getRoleMappingByTokenSubject(String tokenSubject) throws SynchronisePermissionsException {
+    public Map<Long, Set<Short>> getRoleMappingByTokenSubject(String tokenSubject)
+        throws SynchronisePermissionsException {
+
         String cacheKey = ROLE_MAPPING_USER_PREFIX + tokenSubject;
         String roleMappingCacheString = redisTemplate.opsForValue().get(cacheKey);
         Map<String, Set<String>> cacheMap = readCacheMap(roleMappingCacheString);
@@ -37,7 +39,9 @@ public class RoleMappingCacheLookupService {
         }
     }
 
-    private Map<Long, Set<Short>> convertCacheMap(Map<String, Set<String>> cacheMap) throws SynchronisePermissionsException {
+    private Map<Long, Set<Short>> convertCacheMap(Map<String, Set<String>> cacheMap)
+        throws SynchronisePermissionsException {
+
         Map<Long, Set<Short>> converted = new HashMap<>();
         for (Map.Entry<String, Set<String>> entry : cacheMap.entrySet()) {
             Long roleId = parseRoleId(entry.getKey());

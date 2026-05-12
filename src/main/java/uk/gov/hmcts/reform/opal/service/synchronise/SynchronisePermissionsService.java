@@ -6,7 +6,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.hmcts.reform.opal.dto.synchronise.*;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUser;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersRequest;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersResponse;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserRequest;
+import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserResponse;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.service.opal.BusinessUnitUserService;
@@ -46,7 +50,7 @@ public class SynchronisePermissionsService {
             );
             log.debug("legacyBusinessUnitUsersResponse: {}", legacyBusinessUnitUsersResponse);
 
-            //3. Update any business_unit_users in the database that does not match the data returned from the legacy API
+            //3. Update any business_unit_users in the database that do not match the data returned from the legacy API
             List<LegacyBusinessUnitUser> legacyBuuList = legacyBusinessUnitUsersResponse.getBusinessUnitUsers();
             refreshBusinessUnitUsersService.refreshBusinessUnitUsers(user, legacyBuuList);
 

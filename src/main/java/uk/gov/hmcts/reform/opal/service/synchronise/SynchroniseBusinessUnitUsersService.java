@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+// Implements Step 3 of https://tools.hmcts.net/jira/browse/PO-2831
+
 @Service
 @AllArgsConstructor
 @Slf4j(topic = "opal.SynchroniseBusinessUnitUsersService")

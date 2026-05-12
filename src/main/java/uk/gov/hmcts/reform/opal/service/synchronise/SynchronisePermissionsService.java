@@ -15,6 +15,8 @@ import uk.gov.hmcts.reform.opal.service.opal.UserService;
 import java.util.List;
 import java.util.Set;
 
+// Implements https://tools.hmcts.net/jira/browse/PO-2831
+
 @Service
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.SynchronisePermissionsService")

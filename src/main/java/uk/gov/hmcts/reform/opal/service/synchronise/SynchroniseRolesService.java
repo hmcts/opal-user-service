@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+// Implements Steps 4-6 of https://tools.hmcts.net/jira/browse/PO-2831
+
 @Service
 @AllArgsConstructor
 @Slf4j(topic = "opal.SynchroniseRolesService")

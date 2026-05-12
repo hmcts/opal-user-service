@@ -15,6 +15,7 @@ import uk.gov.hmcts.reform.opal.service.opal.UserService;
 import java.util.List;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -63,7 +64,9 @@ class SynchronisePermissionsServiceTest {
         when(businessUnitUserService.findAllRolesOfUser(user)).thenReturn(Set.of(role1, role2));
 
         // Act
-        synchronisePermissionsService.synchronise(user);
+        assertThatThrownBy(() -> synchronisePermissionsService.synchronise(user))
+            .isInstanceOf(SynchronisePermissionsException.class)
+            .hasMessage("refresh failed");
 
         // Assert
         verify(userService).deleteRoleFromUser(user, 1L);

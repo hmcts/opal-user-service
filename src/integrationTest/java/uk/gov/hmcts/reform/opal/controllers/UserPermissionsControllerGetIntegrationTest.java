@@ -591,7 +591,10 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
                 }, {
                   "permission_id" : 6,
                   "permission_name" : "Search and view accounts"
-                } ]
+                }, {
+                   "permission_id": 7,
+                   "permission_name": "Account Maintenance"
+                 } ]
               }, {
                 "business_unit_user_id" : "L066JG",
                 "business_unit_id" : 68,

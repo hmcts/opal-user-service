@@ -103,6 +103,10 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                         {
                           "permission_id": 6,
                           "permission_name": "Search and view accounts"
+                        },
+                        {
+                          "permission_id": 7,
+                          "permission_name": "Account Maintenance"
                         }
                       ]
                     },

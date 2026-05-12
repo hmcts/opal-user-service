@@ -32,13 +32,13 @@ public class SynchronisePermissionsService {
     private final UserService userService;
 
     @Transactional(propagation = REQUIRES_NEW, rollbackFor = Exception.class)
-    public void synchronise(UserEntity user) {
+    public void synchronise(UserEntity detachedUser) {
 
-        UserEntity managedUser = userService.getUser(user.getUserId());
+        UserEntity user = userService.getUser(detachedUser.getUserId());
 
         //1. Fetch Libra user id's  from the legacy system
         LegacyGetUserResponse legacyGetUserResponse = legacyUserService.getUserIds(
-            new LegacyGetUserRequest(managedUser.getUsername())
+            new LegacyGetUserRequest(user.getUsername())
         );
         List<String> libraUserIds = legacyGetUserResponse.getLibraUserIds();
         log.debug("legacyGetUserResponse: {}", legacyGetUserResponse);
@@ -52,14 +52,14 @@ public class SynchronisePermissionsService {
 
         //3. Update any business_unit_users in the database that do not match the data returned from the legacy API
         List<LegacyBusinessUnitUser> legacyBuuList = legacyBusinessUnitUsersResponse.getBusinessUnitUsers();
-        refreshBusinessUnitUsersService.refreshBusinessUnitUsers(managedUser, legacyBuuList);
+        refreshBusinessUnitUsersService.refreshBusinessUnitUsers(user, legacyBuuList);
 
         //4-6. Process role mapping cache
-        synchroniseRolesService.process(managedUser, legacyBuuList);
+        synchroniseRolesService.process(user, legacyBuuList);
 
         //7. Call activateUser method if the user does not have an activation date.
-        if (managedUser.getActivationDate() == null) {
-            userService.activateUser(managedUser);
+        if (user.getActivationDate() == null) {
+            userService.activateUser(user);
             log.debug("User activated");
         }
     }

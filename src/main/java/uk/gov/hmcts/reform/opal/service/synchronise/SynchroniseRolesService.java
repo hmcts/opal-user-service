@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.service.synchronise;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,8 @@ public class SynchroniseRolesService {
 
     @Transactional
     public void process(UserEntity user, List<LegacyBusinessUnitUser> legacyBuuList) throws SynchronisePermissionsException {
-        Map<Long, Set<Short>> typedRoleMap = roleMappingCacheLookupService.getRoleMappingByTokenSubject(
+
+        Map<Long, Set<Short>> roleMap = roleMappingCacheLookupService.getRoleMappingByTokenSubject(
             user.getTokenSubject()
         );
 
@@ -40,6 +42,27 @@ public class SynchroniseRolesService {
             legacyBuuIds.add(parseBusinessUnitId(legacyUser.getBusinessUnitId()));
         }
 
+        Map<Long, Set<Short>> prunedMap = pruneBusinessUnitsNotReturnedByLegacy(roleMap, legacyBuuIds);
+
+        // Add or replace the roles in the pruned role map
+        prunedMap.keySet().forEach(roleId -> userService.addOrReplaceRoleInformationOnUser(
+            user,
+            roleId,
+            prunedMap.get(roleId)
+        ));
+
+        // Remove any roles associated with user in db, but not present in pruned role map
+        Set<RoleEntity> usersCurrentRoles = businessUnitUserService.findAllRolesOfUser(user);
+        Set<Long> cachedRoles = prunedMap.keySet();
+        for (RoleEntity role : usersCurrentRoles) {
+            if (!cachedRoles.contains(role.getRoleId())) {
+                userService.deleteRoleFromUser(user, role.getRoleId());
+            }
+        }
+    }
+
+    private static @NonNull Map<Long, Set<Short>> pruneBusinessUnitsNotReturnedByLegacy(
+        Map<Long, Set<Short>> typedRoleMap, Set<Short> legacyBuuIds) {
         Map<Long, Set<Short>> prunedMap = new HashMap<>();
         for (Long roleId : typedRoleMap.keySet()) {
             Set<Short> verifiedBuus = new HashSet<>();
@@ -52,19 +75,7 @@ public class SynchroniseRolesService {
                 prunedMap.put(roleId, verifiedBuus);
             }
         }
-
-        for (Long roleId : prunedMap.keySet()) {
-            userService.addOrReplaceRoleInformationOnUser(user, roleId, prunedMap.get(roleId));
-        }
-
-        // Now remove any roles associated with user in db, but not present in role cache.
-        Set<RoleEntity> usersCurrentRoles = businessUnitUserService.findAllRolesOfUser(user);
-        Set<Long> cachedRoles = prunedMap.keySet();
-        for (RoleEntity role : usersCurrentRoles) {
-            if (!cachedRoles.contains(role.getRoleId())) {
-                userService.deleteRoleFromUser(user, role.getRoleId());
-            }
-        }
+        return prunedMap;
     }
 
     private Short parseBusinessUnitId(String businessUnitId) throws SynchronisePermissionsException {

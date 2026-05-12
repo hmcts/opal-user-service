@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUser;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersRequest;
@@ -12,10 +11,11 @@ import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersResponse;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserRequest;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserResponse;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
-import uk.gov.hmcts.reform.opal.service.opal.BusinessUnitUserService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
 import java.util.List;
+
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 // Implements https://tools.hmcts.net/jira/browse/PO-2831
 
@@ -31,12 +31,14 @@ public class SynchronisePermissionsService {
     @Lazy
     private final UserService userService;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    @Transactional(propagation = REQUIRES_NEW, rollbackFor = Exception.class)
     public void synchronise(UserEntity user) {
+
+        UserEntity managedUser = userService.getUser(user.getUserId());
 
         //1. Fetch Libra user id's  from the legacy system
         LegacyGetUserResponse legacyGetUserResponse = legacyUserService.getUserIds(
-            new LegacyGetUserRequest(user.getUsername())
+            new LegacyGetUserRequest(managedUser.getUsername())
         );
         List<String> libraUserIds = legacyGetUserResponse.getLibraUserIds();
         log.debug("legacyGetUserResponse: {}", legacyGetUserResponse);
@@ -50,14 +52,14 @@ public class SynchronisePermissionsService {
 
         //3. Update any business_unit_users in the database that do not match the data returned from the legacy API
         List<LegacyBusinessUnitUser> legacyBuuList = legacyBusinessUnitUsersResponse.getBusinessUnitUsers();
-        refreshBusinessUnitUsersService.refreshBusinessUnitUsers(user, legacyBuuList);
+        refreshBusinessUnitUsersService.refreshBusinessUnitUsers(managedUser, legacyBuuList);
 
         //4-6. Process role mapping cache
-        synchroniseRolesService.process(user, legacyBuuList);
+        synchroniseRolesService.process(managedUser, legacyBuuList);
 
         //7. Call activateUser method if the user does not have an activation date.
-        if (user.getActivationDate() == null) {
-            userService.activateUser(user);
+        if (managedUser.getActivationDate() == null) {
+            userService.activateUser(managedUser);
             log.debug("User activated");
         }
     }

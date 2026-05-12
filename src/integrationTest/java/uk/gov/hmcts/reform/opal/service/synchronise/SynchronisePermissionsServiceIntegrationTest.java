@@ -23,6 +23,7 @@ import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserResponse;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -101,6 +102,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         assertThat(businessUnitUserExists("L099JG")).isFalse();
         assertThat(userEntitlementCount("L092JG")).isEqualTo(1L);
         assertThat(userRoleMappingCount("L092JG")).isEqualTo(1L);
+        assertThat(getActivationDate(TARGET_USER_ID)).isNull();
 
         try {
             synchronisePermissionsService.synchronise(user);
@@ -125,6 +127,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
             .containsExactlyInAnyOrder((short) 68, (short) 73);
         assertThat(getAssignedBusinessUnitIds(TARGET_USER_ID, 3L))
             .containsExactlyInAnyOrder((short) 68, (short) 70);
+        assertThat(getActivationDate(TARGET_USER_ID)).isNotNull();
     }
 
     @Test
@@ -146,6 +149,8 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         Map<String, Object> l081Before = getBusinessUnitUserRow("L081JG");
         List<String> buuIdsBefore = getBusinessUnitUserIdsForUser(TARGET_USER_ID);
         Map<Long, Set<Short>> rolesBefore = getAssignedRolesByBusinessUnitIds(TARGET_USER_ID);
+        Timestamp activationBefore = getActivationDate(TARGET_USER_ID);
+        assertThat(activationBefore).isNull();
 
         try {
             assertThatThrownBy(() -> synchronisePermissionsService.synchronise(user))
@@ -159,6 +164,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         assertThat(businessUnitUserExists("L099JG")).isFalse();
         assertThat(getBusinessUnitUserIdsForUser(TARGET_USER_ID)).isEqualTo(buuIdsBefore);
         assertThat(getAssignedRolesByBusinessUnitIds(TARGET_USER_ID)).isEqualTo(rolesBefore);
+        assertThat(getActivationDate(TARGET_USER_ID)).isEqualTo(activationBefore);
     }
 
     private void setAuthenticatedUser(String tokenSubject) {
@@ -252,6 +258,14 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
             "SELECT count(*) FROM business_unit_user_roles WHERE business_unit_user_id = ?",
             Long.class,
             businessUnitUserId
+        );
+    }
+
+    private Timestamp getActivationDate(Long userId) {
+        return jdbcTemplate.queryForObject(
+            "SELECT activation_date FROM users WHERE user_id = ?",
+            Timestamp.class,
+            userId
         );
     }
 

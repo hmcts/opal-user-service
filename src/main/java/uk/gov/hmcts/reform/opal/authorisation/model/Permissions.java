@@ -12,7 +12,12 @@ public enum Permissions {
     COLLECTION_ORDER(4, "Collection Order"),
     CHECK_VALIDATE_DRAFT_ACCOUNTS(5, "Check and Validate Draft Accounts"),
     SEARCH_AND_VIEW_ACCOUNTS(6, "Search and view accounts"),
-    ACCOUNT_MAINTENANCE(7, "Account Maintenance");
+    ACCOUNT_MAINTENANCE(7, "Account Maintenance"),
+    AMEND_PAYMENT_TERMS(9, "Amend Payment Terms"),
+    ENTER_ENFORCEMENT(10, "Enter Enforcement"),
+    CONSOLIDATE(13, "Consolidate"),
+    ADD_AND_REMOVE_PAYMENT_HOLD(14, "Add and Remove payment hold");
+
     public static final Permissions[] DRAFT_ACCOUNT_PERMISSIONS = {
         CREATE_MANAGE_DRAFT_ACCOUNTS, CHECK_VALIDATE_DRAFT_ACCOUNTS
     };

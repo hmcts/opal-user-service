@@ -33,8 +33,7 @@ public class SynchroniseBusinessUnitUsersService {
     private final UserEntitlementRepository userEntitlementRepository;
 
     @Transactional
-    public void refreshBusinessUnitUsers(UserEntity user, List<LegacyBusinessUnitUser> legacyBusinessUnitUsers)
-        throws SynchronisePermissionsException {
+    public void refreshBusinessUnitUsers(UserEntity user, List<LegacyBusinessUnitUser> legacyBusinessUnitUsers) {
         Set<String> legacyBusinessUnitUserIds = new LinkedHashSet<>();
 
         for (LegacyBusinessUnitUser legacyBusinessUnitUser : legacyBusinessUnitUsers) {
@@ -50,7 +49,7 @@ public class SynchroniseBusinessUnitUsersService {
             } else {
                 log.error("legacyBusinessUnitUser not found for businessUnit {}",
                           legacyBusinessUnitUser.getBusinessUnitId());
-                throw new SynchronisePermissionsException("legacyBusinessUnitUser not found for businessUnit");
+                throw new SynchroniseBusinessUnitUsersException("legacyBusinessUnitUser not found for businessUnit");
             }
 
             Optional<BusinessUnitUserEntity> maybeBuu = businessUnitUserRepository.findById(businessUnitUserId);
@@ -76,22 +75,22 @@ public class SynchroniseBusinessUnitUsersService {
         removeStaleBusinessUnitUsers(user.getUserId(), legacyBusinessUnitUserIds);
     }
 
-    private String parseBusinessUnitUserId(String legacyBusinessUnitUserId) throws SynchronisePermissionsException {
+    private String parseBusinessUnitUserId(String legacyBusinessUnitUserId) {
         if (legacyBusinessUnitUserId == null
             || legacyBusinessUnitUserId.isBlank()
             || legacyBusinessUnitUserId.length() > BUSINESS_UNIT_USER_ID_MAX_LENGTH) {
             log.error("Invalid businessUnitUserId {}", legacyBusinessUnitUserId);
-            throw new SynchronisePermissionsException("Invalid business unit user id: " + legacyBusinessUnitUserId);
+            throw new SynchroniseBusinessUnitUsersException("Invalid business unit user id: " + legacyBusinessUnitUserId);
         }
         return legacyBusinessUnitUserId;
     }
 
-    private Short parseBusinessUnitId(String legacyBusinessUnitId) throws SynchronisePermissionsException {
+    private Short parseBusinessUnitId(String legacyBusinessUnitId) {
         try {
             return Short.valueOf(legacyBusinessUnitId);
         } catch (NumberFormatException e) {
             log.error("Invalid businessUnitId {}", legacyBusinessUnitId, e);
-            throw new SynchronisePermissionsException("Invalid business unit id: " + legacyBusinessUnitId);
+            throw new SynchroniseBusinessUnitUsersException("Invalid business unit id: " + legacyBusinessUnitId, e);
         }
     }
 

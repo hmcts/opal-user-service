@@ -38,7 +38,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
     @Test
     @DisplayName("Should update existing business unit user when business unit and user differ")
-    void refreshBusinessUnitUsers_updatesExistingBusinessUnitUser() throws SynchronisePermissionsException {
+    void refreshBusinessUnitUsers_updatesExistingBusinessUnitUser() {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
         Map<String, Object> rowBefore = getBusinessUnitUserRow("L081JG");
         assertThat(asInt(rowBefore.get("business_unit_id"))).isEqualTo(67);
@@ -56,7 +56,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
     @Test
     @DisplayName("Should insert a missing business unit user with mapped user and business unit")
-    void refreshBusinessUnitUsers_insertsMissingBusinessUnitUser() throws SynchronisePermissionsException {
+    void refreshBusinessUnitUsers_insertsMissingBusinessUnitUser() {
         UserEntity user = userRepository.findById(500000001L).orElseThrow();
         Long countBefore = businessUnitUserCount();
 
@@ -73,7 +73,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
     @Test
     @DisplayName("Should delete business unit users no longer returned by legacy")
-    void refreshBusinessUnitUsers_deletesBusinessUnitUsersMissingFromLegacy() throws SynchronisePermissionsException {
+    void refreshBusinessUnitUsers_deletesBusinessUnitUsersMissingFromLegacy() {
         UserEntity user = userRepository.findById(500000001L).orElseThrow();
 
         jdbcTemplate.update(
@@ -119,7 +119,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             user,
             List.of(legacyBusinessUnitUser("L082JG", "999"))
         ))
-            .isInstanceOf(SynchronisePermissionsException.class)
+            .isInstanceOf(SynchroniseBusinessUnitUsersException.class)
             .hasMessage("legacyBusinessUnitUser not found for businessUnit");
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
@@ -138,7 +138,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             user,
             List.of(legacyBusinessUnitUser("L082JG", malformedBusinessUnitId))
         ))
-            .isInstanceOf(SynchronisePermissionsException.class)
+            .isInstanceOf(SynchroniseBusinessUnitUsersException.class)
             .hasMessage("Invalid business unit id: " + malformedBusinessUnitId);
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
@@ -160,7 +160,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             user,
             List.of(legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
         ))
-            .isInstanceOf(SynchronisePermissionsException.class)
+            .isInstanceOf(SynchroniseBusinessUnitUsersException.class)
             .hasMessage("Invalid business unit user id: " + malformedBusinessUnitUserId);
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
@@ -179,7 +179,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             user,
             List.of(legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
         ))
-            .isInstanceOf(SynchronisePermissionsException.class)
+            .isInstanceOf(SynchroniseBusinessUnitUsersException.class)
             .hasMessage("Invalid business unit user id: " + malformedBusinessUnitUserId);
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);

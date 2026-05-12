@@ -33,8 +33,7 @@ public class SynchroniseRolesService {
     private final RoleMappingCacheLookupService roleMappingCacheLookupService;
 
     @Transactional
-    public void process(UserEntity user, List<LegacyBusinessUnitUser> legacyBuuList)
-        throws SynchronisePermissionsException {
+    public void process(UserEntity user, List<LegacyBusinessUnitUser> legacyBuuList) {
 
         Map<Long, Set<Short>> roleMap = roleMappingCacheLookupService.getRoleMappingByTokenSubject(
             user.getTokenSubject()
@@ -81,11 +80,11 @@ public class SynchroniseRolesService {
         return prunedMap;
     }
 
-    private Short parseBusinessUnitId(String businessUnitId) throws SynchronisePermissionsException {
+    private Short parseBusinessUnitId(String businessUnitId) {
         try {
             return Short.valueOf(businessUnitId);
         } catch (NumberFormatException exception) {
-            throw new SynchronisePermissionsException("Could not parse role mapping cache");
+            throw new SynchroniseRolesException("Could not parse role mapping cache", exception);
         }
     }
 }

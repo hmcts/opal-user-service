@@ -42,10 +42,10 @@ class SynchroniseRolesServiceTest {
         // Arrange
         UserEntity user = UserEntity.builder().tokenSubject(TOKEN_SUBJECT).build();
         when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT))
-            .thenThrow(new SynchronisePermissionsException("Could not parse role mapping cache"));
+            .thenThrow(new SynchroniseRolesException("Could not parse role mapping cache"));
 
         // Act / Assert
-        assertThrows(SynchronisePermissionsException.class, () -> synchroniseRolesService.process(user, List.of()));
+        assertThrows(SynchroniseRolesException.class, () -> synchroniseRolesService.process(user, List.of()));
         verify(roleMappingCacheLookupService).getRoleMappingByTokenSubject(TOKEN_SUBJECT);
     }
 

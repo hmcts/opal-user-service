@@ -22,8 +22,7 @@ public class RoleMappingCacheLookupService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
-    public Map<Long, Set<Short>> getRoleMappingByTokenSubject(String tokenSubject)
-        throws SynchronisePermissionsException {
+    public Map<Long, Set<Short>> getRoleMappingByTokenSubject(String tokenSubject) {
 
         String cacheKey = ROLE_MAPPING_USER_PREFIX + tokenSubject;
         String roleMappingCacheString = redisTemplate.opsForValue().get(cacheKey);
@@ -31,16 +30,15 @@ public class RoleMappingCacheLookupService {
         return convertCacheMap(cacheMap);
     }
 
-    private Map<String, Set<String>> readCacheMap(String cacheValue) throws SynchronisePermissionsException {
+    private Map<String, Set<String>> readCacheMap(String cacheValue) {
         try {
             return objectMapper.readValue(cacheValue, new TypeReference<>() {});
         } catch (JsonProcessingException | IllegalArgumentException exception) {
-            throw new SynchronisePermissionsException(PARSE_ERROR);
+            throw new RoleMappingCacheLookupException(PARSE_ERROR, exception);
         }
     }
 
-    private Map<Long, Set<Short>> convertCacheMap(Map<String, Set<String>> cacheMap)
-        throws SynchronisePermissionsException {
+    private Map<Long, Set<Short>> convertCacheMap(Map<String, Set<String>> cacheMap) {
 
         Map<Long, Set<Short>> converted = new HashMap<>();
         for (Map.Entry<String, Set<String>> entry : cacheMap.entrySet()) {
@@ -54,19 +52,19 @@ public class RoleMappingCacheLookupService {
         return converted;
     }
 
-    private Long parseRoleId(String roleId) throws SynchronisePermissionsException {
+    private Long parseRoleId(String roleId) {
         try {
             return Long.valueOf(roleId);
         } catch (NumberFormatException exception) {
-            throw new SynchronisePermissionsException(PARSE_ERROR);
+            throw new RoleMappingCacheLookupException(PARSE_ERROR, exception);
         }
     }
 
-    private Short parseBusinessUnitId(String businessUnitId) throws SynchronisePermissionsException {
+    private Short parseBusinessUnitId(String businessUnitId) {
         try {
             return Short.valueOf(businessUnitId);
         } catch (NumberFormatException exception) {
-            throw new SynchronisePermissionsException(PARSE_ERROR);
+            throw new RoleMappingCacheLookupException(PARSE_ERROR, exception);
         }
     }
 }

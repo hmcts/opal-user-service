@@ -64,7 +64,7 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
 
         try {
             assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT))
-                .isInstanceOf(SynchronisePermissionsException.class)
+                .isInstanceOf(RoleMappingCacheLookupException.class)
                 .hasMessage("Could not parse role mapping cache");
         } finally {
             redisTemplate.delete(cacheKey);

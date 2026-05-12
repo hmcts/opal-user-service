@@ -50,7 +50,7 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should apply cached role mappings and remove stale roles for legacy business units")
-    void process_appliesCachedRolesAndRemovesStaleRoles() throws SynchronisePermissionsException, JsonProcessingException {
+    void process_appliesCachedRolesAndRemovesStaleRoles() throws JsonProcessingException {
         // Arrange
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
         when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000000L);

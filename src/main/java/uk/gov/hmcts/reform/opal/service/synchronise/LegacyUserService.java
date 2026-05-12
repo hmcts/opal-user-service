@@ -12,15 +12,14 @@ import java.util.List;
 @Service
 public class LegacyUserService {
 
-    public LegacyGetUserResponse getUserIds(LegacyGetUserRequest requestDto) throws SynchronisePermissionsException {
+    public LegacyGetUserResponse getUserIds(LegacyGetUserRequest requestDto) {
         LegacyGetUserResponse responseDto = new LegacyGetUserResponse();
         responseDto.setLibraUserIds(List.of("123", "456"));
         responseDto.setCount(2);
         return responseDto;
     }
 
-    public LegacyBusinessUnitUsersResponse getBusinessUnitUsers(LegacyBusinessUnitUsersRequest requestDto)
-        throws SynchronisePermissionsException {
+    public LegacyBusinessUnitUsersResponse getBusinessUnitUsers(LegacyBusinessUnitUsersRequest requestDto) {
         LegacyBusinessUnitUsersResponse responseDto = new LegacyBusinessUnitUsersResponse();
         responseDto.setBusinessUnitUsers(List.of(
             LegacyBusinessUnitUser.builder().businessUnitId("111").businessUnitId("A").build(),

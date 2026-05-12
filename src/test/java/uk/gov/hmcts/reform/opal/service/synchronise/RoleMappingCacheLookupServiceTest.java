@@ -66,7 +66,7 @@ class RoleMappingCacheLookupServiceTest {
 
         // Act / Assert
         assertThrows(
-            SynchronisePermissionsException.class,
+            RoleMappingCacheLookupException.class,
             () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
         );
     }
@@ -80,7 +80,7 @@ class RoleMappingCacheLookupServiceTest {
 
         // Act / Assert
         assertThrows(
-            SynchronisePermissionsException.class,
+            RoleMappingCacheLookupException.class,
             () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
         );
     }
@@ -94,7 +94,7 @@ class RoleMappingCacheLookupServiceTest {
 
         // Act / Assert
         assertThrows(
-            SynchronisePermissionsException.class,
+            RoleMappingCacheLookupException.class,
             () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
         );
     }

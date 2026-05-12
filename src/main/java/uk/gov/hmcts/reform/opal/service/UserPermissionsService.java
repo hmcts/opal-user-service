@@ -1,5 +1,21 @@
 package uk.gov.hmcts.reform.opal.service;
 
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
+import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
+import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -151,8 +167,8 @@ public class UserPermissionsService {
             try {
                 synchronisePermissionsService.synchronise(user);
             } catch (SynchronisePermissionsException e) {
-                log.warn("legacyRefresh failed", e);
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Permissions synchronization failed", e);
+                log.warn("Synchronising permissions from Legacy failed", e);
+                throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Permissions synchronization failed", e);
             }
             // synchronise() was processed in a different transaction, so we need to refresh user entity
             userService.refreshUser(user);

@@ -71,6 +71,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             );
 
             assertEquals(-1L, result.getInitiatorUserId());
+            assertNotNull(result.getEventDate());
         }
     }
 
@@ -91,6 +92,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, result.getEventType());
             assertEquals(500000000L, result.getSubjectUserId());
             assertEquals(500000003L, result.getInitiatorUserId());
+            assertNotNull(result.getEventDate());
             assertJsonEquals(objectToPrettyJson(eventDetails), result.getEventDetails());
 
             BusinessEventEntity savedEntity =
@@ -99,6 +101,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, savedEntity.getEventType());
             assertEquals(500000000L, savedEntity.getSubjectUserId());
             assertEquals(500000003L, savedEntity.getInitiatorUserId());
+            assertEquals(result.getEventDate(), savedEntity.getEventDate());
             assertJsonEquals(objectToPrettyJson(eventDetails), savedEntity.getEventDetails());
         }
 
@@ -122,6 +125,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, result.getEventType());
             assertEquals(500000000L, result.getSubjectUserId());
             assertEquals(500000003L, result.getInitiatorUserId());
+            assertNotNull(result.getEventDate());
             assertJsonEquals(objectToPrettyJson(eventDetails), result.getEventDetails());
 
             BusinessEventEntity savedEntity =
@@ -130,6 +134,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, savedEntity.getEventType());
             assertEquals(500000000L, savedEntity.getSubjectUserId());
             assertEquals(500000003L, savedEntity.getInitiatorUserId());
+            assertEquals(result.getEventDate(), savedEntity.getEventDate());
             assertJsonEquals(objectToPrettyJson(eventDetails), savedEntity.getEventDetails());
 
             verify(userPermissionsService).getAuthenticatedUserId();
@@ -172,6 +177,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             );
 
             assertEquals(500000003L, result.getInitiatorUserId());
+            assertNotNull(result.getEventDate());
         }
     }
 

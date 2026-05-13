@@ -10,7 +10,8 @@ INSERT INTO business_events (
     event_type,
     subject_user_id,
     initiator_user_id,
-    event_details
+    event_details,
+    event_date
 )
 VALUES
     (
@@ -18,19 +19,22 @@ VALUES
         'ACCOUNT_ACTIVATION_INITIATED',
         500000000,
         500000001,
-        '{"reason":"Integration test seed","source":"sql-script","ticket":"PO-2826"}'
+        '{"reason":"Integration test seed","source":"sql-script","ticket":"PO-2826"}',
+        CURRENT_TIMESTAMP
     ),
     (
         900000002,
         'ROLE_ASSIGNED_TO_USER',
         500000002,
         500000000,
-        '{"role":"Account Enquiry","scope":"BU-70","source":"sql-script"}'
+        '{"role":"Account Enquiry","scope":"BU-70","source":"sql-script"}',
+        CURRENT_TIMESTAMP
     ),
     (
         900000003,
         'ROLE_UNASSIGNED_FROM_USER',
         500000003,
         500000000,
-        '{"role":"Collection Order","scope":"BU-61","source":"sql-script"}'
+        '{"role":"Collection Order","scope":"BU-61","source":"sql-script"}',
+        CURRENT_TIMESTAMP
     );

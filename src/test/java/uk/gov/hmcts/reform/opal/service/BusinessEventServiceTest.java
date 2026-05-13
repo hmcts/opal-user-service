@@ -1,10 +1,10 @@
 package uk.gov.hmcts.reform.opal.service;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +15,10 @@ import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,6 +32,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BusinessEventServiceTest {
 
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-05-13T09:30:00Z"), ZoneOffset.UTC);
+    private static final LocalDateTime EVENT_DATE = LocalDateTime.ofInstant(CLOCK.instant(), ZoneOffset.UTC);
+
     @Mock
     private BusinessEventRepository businessEventRepository;
 
@@ -37,8 +44,17 @@ class BusinessEventServiceTest {
     @Mock
     private FeatureToggleApi featureToggleApi;
 
-    @InjectMocks
     private BusinessEventService businessEventService;
+
+    @BeforeEach
+    void setUp() {
+        businessEventService = new BusinessEventService(
+            businessEventRepository,
+            userPermissionsService,
+            featureToggleApi,
+            CLOCK
+        );
+    }
 
     @AfterEach
     void tearDown() {
@@ -73,6 +89,7 @@ class BusinessEventServiceTest {
         assertEquals(99L, capturedEntity.getInitiatorUserId());
         assertEquals("{\"role_id\":201,\"role_version\":1,\"added_business_unit_ids\":[11]}",
             capturedEntity.getEventDetails());
+        assertEventDate(capturedEntity);
         assertSame(savedEntity, result);
     }
 
@@ -93,6 +110,7 @@ class BusinessEventServiceTest {
         assertEquals(42L, capturedEntity.getSubjectUserId());
         assertEquals(88L, capturedEntity.getInitiatorUserId());
         assertEquals("{}", capturedEntity.getEventDetails());
+        assertEventDate(capturedEntity);
         assertSame(savedEntity, result);
     }
 
@@ -125,6 +143,7 @@ class BusinessEventServiceTest {
 
         BusinessEventEntity capturedEntity = entityCaptor.getValue();
         assertEquals(-1L, capturedEntity.getInitiatorUserId());
+        assertEventDate(capturedEntity);
 
         verifyNoInteractions(userPermissionsService);
     }
@@ -146,6 +165,11 @@ class BusinessEventServiceTest {
 
         BusinessEventEntity capturedEntity = entityCaptor.getValue();
         assertEquals(99L, capturedEntity.getInitiatorUserId());
+        assertEventDate(capturedEntity);
         verify(userPermissionsService).getAuthenticatedUserId();
+    }
+
+    private void assertEventDate(BusinessEventEntity capturedEntity) {
+        assertEquals(EVENT_DATE, capturedEntity.getEventDate());
     }
 }

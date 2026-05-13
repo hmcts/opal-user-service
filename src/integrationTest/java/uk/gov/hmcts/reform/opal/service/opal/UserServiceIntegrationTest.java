@@ -71,6 +71,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(businessEvent.getEventType()).isEqualTo(BusinessEventLogType.ROLE_ASSIGNED_TO_USER);
         assertThat(businessEvent.getSubjectUserId()).isEqualTo(500000000L);
         assertThat(businessEvent.getInitiatorUserId()).isEqualTo(500000003L);
+        assertThat(businessEvent.getEventDate()).isNotNull();
         assertRoleAssignedEventDetails(businessEvent.getEventDetails(), 3L, Set.of((short) 68, (short) 69));
     }
 
@@ -95,6 +96,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
             .isEqualTo(BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED);
         assertThat(businessEvent.getSubjectUserId()).isEqualTo(500000000L);
         assertThat(businessEvent.getInitiatorUserId()).isEqualTo(500000003L);
+        assertThat(businessEvent.getEventDate()).isNotNull();
         assertRoleAmendedEventDetails(
             businessEvent.getEventDetails(), 2L, Set.of((short) 68, (short) 73), Set.of((short) 70)
         );
@@ -157,6 +159,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(businessEvent.getEventType()).isEqualTo(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER);
         assertThat(businessEvent.getSubjectUserId()).isEqualTo(500000000L);
         assertThat(businessEvent.getInitiatorUserId()).isEqualTo(500000003L);
+        assertThat(businessEvent.getEventDate()).isNotNull();
         assertRoleUnassignedEventDetails(businessEvent.getEventDetails(), 1L, Set.of((short) 70), 2L);
     }
 

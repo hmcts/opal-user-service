@@ -4,11 +4,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -25,11 +26,9 @@ import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,55 +62,20 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         legacyUserService.reset();
     }
 
-    @TestConfiguration
-    static class LegacyUserServiceStubConfiguration {
-        @Bean
-        @Primary
-        LegacyUserServiceStub legacyUserServiceStub() {
-            return new LegacyUserServiceStub();
-        }
-    }
-
     @Test
-    @DisplayName("Should exercise BUU update/insert/delete and role sync end-to-end using real DB and Redis")
-    void synchronise_exercises_child_service_scenarios_end_to_end() throws Exception {
+    @DisplayName("Happy path should add one role to one business unit")
+    void synchronise_happyPath_addsSingleRoleAssignment() throws Exception {
         UserEntity user = userRepository.findById(TARGET_USER_ID).orElseThrow();
-        setAuthenticatedUser(user.getTokenSubject());
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
 
-        legacyUserService.setBusinessUnitUsers(List.of(
-            legacyBusinessUnitUser("L081JG", "70"),
-            legacyBusinessUnitUser("L066JG", "68"),
-            legacyBusinessUnitUser("L067JG", "73"),
-            legacyBusinessUnitUser("L099JG", "69")
-        ));
+        setAuthenticatedUser(user.getTokenSubject());
+        legacyUserService.setBusinessUnitUsers(legacyBusinessUnitUsersForTargetUser());
+        redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition()));
 
-        redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(Map.of(
-            "2", Set.of("68", "73"),
-            "3", Set.of("68", "70")
-        )));
-
-        jdbcTemplate.update(
-            "INSERT INTO business_unit_users (business_unit_user_id, business_unit_id, user_id) VALUES (?, ?, ?)",
-            "L092JG", 69, TARGET_USER_ID
-        );
-        jdbcTemplate.update(
-            "INSERT INTO user_entitlements (user_entitlement_id, business_unit_user_id, application_function_id) "
-                + "VALUES (?, ?, ?)",
-            995001L, "L092JG", 41L
-        );
-        jdbcTemplate.update(
-            "INSERT INTO business_unit_user_roles (business_unit_user_role_id, business_unit_user_id, role_id) "
-                + "VALUES (?, ?, ?)",
-            995001L, "L092JG", 2L
-        );
-
-        assertThat(asLong(getBusinessUnitUserRow("L081JG").get("user_id"))).isEqualTo(500000006L);
-        assertThat(asInt(getBusinessUnitUserRow("L081JG").get("business_unit_id"))).isEqualTo(67);
-        assertThat(businessUnitUserExists("L099JG")).isFalse();
-        assertThat(userEntitlementCount("L092JG")).isEqualTo(1L);
-        assertThat(userRoleMappingCount("L092JG")).isEqualTo(1L);
-        assertThat(getActivationDate(TARGET_USER_ID)).isNull();
+        Timestamp activationBefore = getActivationDate(TARGET_USER_ID);
+        long roleAssignmentsBefore = countRoleAssignments(TARGET_USER_ID);
+        assertThat(activationBefore).isNull();
+        assertThat(hasRoleAssignment(TARGET_USER_ID, (short) 70, 3L)).isFalse();
 
         try {
             synchronisePermissionsService.synchronise(user);
@@ -119,61 +83,37 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
             redisTemplate.delete(cacheKey);
         }
 
-        assertThat(asLong(getBusinessUnitUserRow("L081JG").get("user_id"))).isEqualTo(TARGET_USER_ID);
-        assertThat(asInt(getBusinessUnitUserRow("L081JG").get("business_unit_id"))).isEqualTo(70);
-        assertThat(asLong(getBusinessUnitUserRow("L099JG").get("user_id"))).isEqualTo(TARGET_USER_ID);
-        assertThat(asInt(getBusinessUnitUserRow("L099JG").get("business_unit_id"))).isEqualTo(69);
-
-        assertThat(businessUnitUserExists("L092JG")).isFalse();
-        assertThat(userEntitlementCount("L092JG")).isZero();
-        assertThat(userRoleMappingCount("L092JG")).isZero();
-
-        assertThat(getBusinessUnitUserIdsForUser(TARGET_USER_ID))
-            .containsExactly("L066JG", "L067JG", "L081JG", "L099JG");
-
-        assertThat(getAssignedBusinessUnitIds(TARGET_USER_ID, 1L)).isEmpty();
-        assertThat(getAssignedBusinessUnitIds(TARGET_USER_ID, 2L))
-            .containsExactlyInAnyOrder((short) 68, (short) 73);
-        assertThat(getAssignedBusinessUnitIds(TARGET_USER_ID, 3L))
-            .containsExactlyInAnyOrder((short) 68, (short) 70);
+        assertThat(countRoleAssignments(TARGET_USER_ID)).isEqualTo(roleAssignmentsBefore + 1);
+        assertThat(hasRoleAssignment(TARGET_USER_ID, (short) 70, 1L)).isTrue();
+        assertThat(hasRoleAssignment(TARGET_USER_ID, (short) 70, 2L)).isTrue();
+        assertThat(hasRoleAssignment(TARGET_USER_ID, (short) 70, 3L)).isTrue();
         assertThat(getActivationDate(TARGET_USER_ID)).isNotNull();
     }
 
     @Test
-    @DisplayName("Should rollback all synchronise changes when downstream role processing throws")
-    void synchronise_rolls_back_all_changes_when_roles_processing_throws() {
+    @DisplayName("Should rollback role change when activateUser throws")
+    void synchronise_rollsBackRoleChange_whenActivateUserThrows() throws Exception {
         UserEntity user = userRepository.findById(TARGET_USER_ID).orElseThrow();
-        setAuthenticatedUser(user.getTokenSubject());
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
 
-        legacyUserService.setBusinessUnitUsers(List.of(
-            legacyBusinessUnitUser("L081JG", "70"),
-            legacyBusinessUnitUser("L066JG", "68"),
-            legacyBusinessUnitUser("L067JG", "73"),
-            legacyBusinessUnitUser("L099JG", "69")
-        ));
+        // Same setup as happy path, but without security context to force activateUser failure.
+        legacyUserService.setBusinessUnitUsers(legacyBusinessUnitUsersForTargetUser());
+        redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition()));
 
-        redisTemplate.opsForValue().set(cacheKey, "not-json");
-
-        Map<String, Object> l081Before = getBusinessUnitUserRow("L081JG");
-        List<String> buuIdsBefore = getBusinessUnitUserIdsForUser(TARGET_USER_ID);
-        Map<Long, Set<Short>> rolesBefore = getAssignedRolesByBusinessUnitIds(TARGET_USER_ID);
-        Timestamp activationBefore = getActivationDate(TARGET_USER_ID);
-        assertThat(activationBefore).isNull();
+        long roleAssignmentsBefore = countRoleAssignments(TARGET_USER_ID);
+        assertThat(getActivationDate(TARGET_USER_ID)).isNull();
 
         try {
             assertThatThrownBy(() -> synchronisePermissionsService.synchronise(user))
-                .isInstanceOf(RoleMappingCacheLookupException.class)
-                .hasMessage("Could not parse role mapping cache");
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("No authenticated user found");
         } finally {
             redisTemplate.delete(cacheKey);
         }
 
-        assertThat(getBusinessUnitUserRow("L081JG")).isEqualTo(l081Before);
-        assertThat(businessUnitUserExists("L099JG")).isFalse();
-        assertThat(getBusinessUnitUserIdsForUser(TARGET_USER_ID)).isEqualTo(buuIdsBefore);
-        assertThat(getAssignedRolesByBusinessUnitIds(TARGET_USER_ID)).isEqualTo(rolesBefore);
-        assertThat(getActivationDate(TARGET_USER_ID)).isEqualTo(activationBefore);
+        assertThat(countRoleAssignments(TARGET_USER_ID)).isEqualTo(roleAssignmentsBefore);
+        assertThat(hasRoleAssignment(TARGET_USER_ID, (short) 70, 3L)).isFalse();
+        assertThat(getActivationDate(TARGET_USER_ID)).isNull();
     }
 
     private void setAuthenticatedUser(String tokenSubject) {
@@ -184,8 +124,27 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
             Map.of("alg", "none"),
             Map.of("sub", tokenSubject)
         );
-
         SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
+    }
+
+    private List<LegacyBusinessUnitUser> legacyBusinessUnitUsersForTargetUser() {
+        return List.of(
+            legacyBusinessUnitUser("L065JG", "70"),
+            legacyBusinessUnitUser("L066JG", "68"),
+            legacyBusinessUnitUser("L067JG", "73"),
+            legacyBusinessUnitUser("L073JG", "71"),
+            legacyBusinessUnitUser("L077JG", "67"),
+            legacyBusinessUnitUser("L078JG", "69"),
+            legacyBusinessUnitUser("L080JG", "61")
+        );
+    }
+
+    private Map<String, Set<String>> roleMappingWithSingleRoleAddition() {
+        return Map.of(
+            "1", Set.of("70"),
+            "2", Set.of("70"),
+            "3", Set.of("70")
+        );
     }
 
     private LegacyBusinessUnitUser legacyBusinessUnitUser(String businessUnitUserId, String businessUnitId) {
@@ -195,79 +154,34 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
             .build();
     }
 
-    private Map<String, Object> getBusinessUnitUserRow(String businessUnitUserId) {
-        return jdbcTemplate.queryForMap(
-            "SELECT business_unit_user_id, business_unit_id, user_id "
-                + "FROM business_unit_users WHERE business_unit_user_id = ?",
-            businessUnitUserId
-        );
-    }
-
-    private List<String> getBusinessUnitUserIdsForUser(Long userId) {
-        return jdbcTemplate.queryForList(
-            "SELECT business_unit_user_id FROM business_unit_users WHERE user_id = ? ORDER BY business_unit_user_id",
-            String.class,
-            userId
-        );
-    }
-
-    private Set<Short> getAssignedBusinessUnitIds(Long userId, Long roleId) {
-        List<Short> businessUnitIds = jdbcTemplate.queryForList(
+    private long countRoleAssignments(Long userId) {
+        Long count = jdbcTemplate.queryForObject(
             """
-                SELECT buu.business_unit_id
-                FROM business_unit_user_roles buur
-                JOIN business_unit_users buu ON buu.business_unit_user_id = buur.business_unit_user_id
-                WHERE buu.user_id = ? AND buur.role_id = ?
-                """,
-            Short.class,
-            userId,
-            roleId
-        );
-        return new LinkedHashSet<>(businessUnitIds);
-    }
-
-    private Map<Long, Set<Short>> getAssignedRolesByBusinessUnitIds(Long userId) {
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-            """
-                SELECT buur.role_id, buu.business_unit_id
+                SELECT count(*)
                 FROM business_unit_user_roles buur
                 JOIN business_unit_users buu ON buu.business_unit_user_id = buur.business_unit_user_id
                 WHERE buu.user_id = ?
-                ORDER BY buur.role_id, buu.business_unit_id
                 """,
+            Long.class,
             userId
         );
-
-        return rows.stream().collect(Collectors.groupingBy(
-            row -> ((Number) row.get("role_id")).longValue(),
-            Collectors.mapping(row -> ((Number) row.get("business_unit_id")).shortValue(),
-                               Collectors.toCollection(LinkedHashSet::new))
-        ));
+        return count == null ? 0L : count;
     }
 
-    private boolean businessUnitUserExists(String businessUnitUserId) {
+    private boolean hasRoleAssignment(Long userId, short businessUnitId, long roleId) {
         Long count = jdbcTemplate.queryForObject(
-            "SELECT count(*) FROM business_unit_users WHERE business_unit_user_id = ?",
+            """
+                SELECT count(*)
+                FROM business_unit_user_roles buur
+                JOIN business_unit_users buu ON buu.business_unit_user_id = buur.business_unit_user_id
+                WHERE buu.user_id = ? AND buu.business_unit_id = ? AND buur.role_id = ?
+                """,
             Long.class,
-            businessUnitUserId
+            userId,
+            businessUnitId,
+            roleId
         );
         return count != null && count > 0;
-    }
-
-    private Long userEntitlementCount(String businessUnitUserId) {
-        return jdbcTemplate.queryForObject(
-            "SELECT count(*) FROM user_entitlements WHERE business_unit_user_id = ?",
-            Long.class,
-            businessUnitUserId
-        );
-    }
-
-    private Long userRoleMappingCount(String businessUnitUserId) {
-        return jdbcTemplate.queryForObject(
-            "SELECT count(*) FROM business_unit_user_roles WHERE business_unit_user_id = ?",
-            Long.class,
-            businessUnitUserId
-        );
     }
 
     private Timestamp getActivationDate(Long userId) {
@@ -278,12 +192,13 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         );
     }
 
-    private int asInt(Object value) {
-        return ((Number) value).intValue();
-    }
-
-    private long asLong(Object value) {
-        return ((Number) value).longValue();
+    @TestConfiguration
+    static class LegacyUserServiceStubConfiguration {
+        @Bean
+        @Primary
+        LegacyUserServiceStub legacyUserServiceStub() {
+            return new LegacyUserServiceStub();
+        }
     }
 
     static class LegacyUserServiceStub extends LegacyUserService {

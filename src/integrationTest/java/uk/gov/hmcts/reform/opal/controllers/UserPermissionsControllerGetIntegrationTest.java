@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.controllers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -416,12 +417,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         actions.andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        JsonNode expectedNode;
-        if (newLogin) {
-            expectedNode = objectMapper.readTree(EXPECTED_V2_USER_STATE_V1);
-        } else {
-            expectedNode = objectMapper.readTree(EXPECTED_V2_USER_STATE_V0);
-        }
+        JsonNode expectedNode = expectedV2UserState(newLogin);
 
         JsonNode actualNode = objectMapper.readTree(body);
         assertThat(actualNode).isEqualTo(expectedNode);
@@ -529,7 +525,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        JsonNode expectedNode = objectMapper.readTree(EXPECTED_V2_USER_STATE_V0);
+        JsonNode expectedNode = expectedV2UserState(false);
         JsonNode actualNode = objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey));
         assertThat(actualNode).isEqualTo(expectedNode);
 
@@ -568,7 +564,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         }
     }
 
-    public static final String EXPECTED_V2_USER_STATE_V0 =
+    public static final String EXPECTED_V2_USER_STATE =
         """
         {
           "user_id" : 500000000,
@@ -630,67 +626,11 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
           }
         }""";
 
-    public static final String EXPECTED_V2_USER_STATE_V1 =
-        """
-        {
-          "user_id" : 500000000,
-          "username" : "opal-test@HMCTS.NET",
-          "name" : "Pablo",
-          "status" : "PENDING",
-          "version" : 1,
-          "cache_name" : "USER_STATE_k9LpT2xVqR8m",
-          "domains" : {
-            "fines" : {
-              "business_unit_users" : [ {
-                "business_unit_user_id" : "L065JG",
-                "business_unit_id" : 70,
-                "permissions" : [ {
-                  "permission_id" : 1,
-                  "permission_name" : "Create and Manage Draft Accounts"
-                }, {
-                  "permission_id" : 3,
-                  "permission_name" : "Account Enquiry"
-                }, {
-                  "permission_id" : 4,
-                  "permission_name" : "Collection Order"
-                }, {
-                  "permission_id" : 5,
-                  "permission_name" : "Check and Validate Draft Accounts"
-                }, {
-                  "permission_id" : 6,
-                  "permission_name" : "Search and view accounts"
-                }, {
-                   "permission_id": 7,
-                   "permission_name": "Account Maintenance"
-                 } ]
-              }, {
-                "business_unit_user_id" : "L066JG",
-                "business_unit_id" : 68,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L067JG",
-                "business_unit_id" : 73,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L073JG",
-                "business_unit_id" : 71,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L077JG",
-                "business_unit_id" : 67,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L078JG",
-                "business_unit_id" : 69,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L080JG",
-                "business_unit_id" : 61,
-                "permissions" : [ ]
-              } ]
-            }
-          }
-        }""";
+    private JsonNode expectedV2UserState(boolean newLogin) throws Exception {
+        ObjectNode expectedNode = (ObjectNode) objectMapper.readTree(EXPECTED_V2_USER_STATE);
+        expectedNode.put("version", newLogin ? 1 : 0);
+        return expectedNode;
+    }
 
     private JwtAuthenticationToken createJwtPrincipal() {
         return createJwtPrincipal("jjqwGAERGW43","test-user@HMCTS.NET", "Pablo");

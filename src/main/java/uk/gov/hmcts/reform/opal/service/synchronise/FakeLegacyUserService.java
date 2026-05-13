@@ -4,20 +4,11 @@ import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUser;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersRequest;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersResponse;
-import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserRequest;
-import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserResponse;
 
 import java.util.List;
 
 @Service
 public class FakeLegacyUserService {
-
-    public LegacyGetUserResponse getUserIds(LegacyGetUserRequest requestDto) {
-        LegacyGetUserResponse responseDto = new LegacyGetUserResponse();
-        responseDto.setLibraUserIds(List.of("123", "456"));
-        responseDto.setCount(2);
-        return responseDto;
-    }
 
     public LegacyBusinessUnitUsersResponse getBusinessUnitUsers(LegacyBusinessUnitUsersRequest requestDto) {
         LegacyBusinessUnitUsersResponse responseDto = new LegacyBusinessUnitUsersResponse();

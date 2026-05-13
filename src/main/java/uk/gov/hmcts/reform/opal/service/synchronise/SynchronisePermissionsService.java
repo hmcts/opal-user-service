@@ -5,12 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uk.gov.hmcts.reform.opal.dto.legacy.LegacyGetUserRequest;
+import uk.gov.hmcts.reform.opal.dto.legacy.LegacyGetUserResponse;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUser;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersRequest;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersResponse;
-import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserRequest;
-import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserResponse;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.service.legacy.LegacyUserService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
 import java.util.List;
@@ -25,6 +26,8 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 public class SynchronisePermissionsService {
 
     private final FakeLegacyUserService fakeLegacyUserService;
+    private final LegacyUserService legacyUserService;
+
     private final SynchroniseBusinessUnitUsersService refreshBusinessUnitUsersService;
     private final SynchroniseRolesService synchroniseRolesService;
 
@@ -37,9 +40,8 @@ public class SynchronisePermissionsService {
         UserEntity user = userService.getUser(detachedUser.getUserId());
 
         //1. Fetch Libra user id's  from the legacy system
-        LegacyGetUserResponse legacyGetUserResponse = fakeLegacyUserService.getUserIds(
-            new LegacyGetUserRequest(user.getUsername())
-        );
+        LegacyGetUserResponse legacyGetUserResponse = legacyUserService.getUser(
+            new LegacyGetUserRequest(user.getUsername())).responseEntity;
         List<String> libraUserIds = legacyGetUserResponse.getLibraUserIds();
         log.debug("legacyGetUserResponse: {}", legacyGetUserResponse);
 

@@ -9,20 +9,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
+import uk.gov.hmcts.opal.common.legacy.service.GatewayService;
 import uk.gov.hmcts.common.exceptions.standard.InternalServerErrorException;
+import uk.gov.hmcts.reform.opal.dto.legacy.LegacyGetUserRequest;
+import uk.gov.hmcts.reform.opal.dto.legacy.LegacyGetUserResponse;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUser;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersRequest;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersResponse;
-import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserRequest;
-import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserResponse;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
+import uk.gov.hmcts.reform.opal.service.legacy.LegacyUserService;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -32,6 +36,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
 
 @ActiveProfiles({"integration"})
@@ -56,6 +62,9 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
     @Autowired
     private FakeLegacyUserServiceStub legacyUserService;
 
+    @MockitoBean
+    private LegacyUserService gatewayLegacyUserService;
+
     @AfterEach
     void clearSecurityContext() {
         SecurityContextHolder.clearContext();
@@ -68,6 +77,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         UserEntity user = userRepository.findById(TARGET_USER_ID).orElseThrow();
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
 
+        stubLegacyUserLookup();
         setAuthenticatedUser(user.getTokenSubject());
         legacyUserService.setBusinessUnitUsers(legacyBusinessUnitUsersForTargetUser());
         redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition()));
@@ -97,6 +107,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
 
         // Same setup as happy path, but without security context to force activateUser failure.
+        stubLegacyUserLookup();
         legacyUserService.setBusinessUnitUsers(legacyBusinessUnitUsersForTargetUser());
         redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition()));
 
@@ -192,6 +203,15 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         );
     }
 
+    private void stubLegacyUserLookup() {
+        LegacyGetUserResponse response = LegacyGetUserResponse.builder()
+            .count(1)
+            .libraUserIds(List.of("123"))
+            .build();
+        when(gatewayLegacyUserService.getUser(any(LegacyGetUserRequest.class)))
+            .thenReturn(new GatewayService.Response<>(HttpStatus.OK, response));
+    }
+
     @TestConfiguration
     static class LegacyUserServiceStubConfiguration {
         @Bean
@@ -203,20 +223,11 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
 
     static class FakeLegacyUserServiceStub extends FakeLegacyUserService {
 
-        private volatile LegacyGetUserResponse getUserResponse = LegacyGetUserResponse.builder()
-            .count(1)
-            .libraUserIds(List.of("123"))
-            .build();
         private volatile LegacyBusinessUnitUsersResponse businessUnitUsersResponse = LegacyBusinessUnitUsersResponse
             .builder()
             .count(0)
             .businessUnitUsers(List.of())
             .build();
-
-        @Override
-        public LegacyGetUserResponse getUserIds(LegacyGetUserRequest requestDto) {
-            return getUserResponse;
-        }
 
         @Override
         public LegacyBusinessUnitUsersResponse getBusinessUnitUsers(LegacyBusinessUnitUsersRequest requestDto) {
@@ -231,10 +242,6 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         }
 
         void reset() {
-            getUserResponse = LegacyGetUserResponse.builder()
-                .count(1)
-                .libraUserIds(List.of("123"))
-                .build();
             businessUnitUsersResponse = LegacyBusinessUnitUsersResponse.builder()
                 .count(0)
                 .businessUnitUsers(List.of())

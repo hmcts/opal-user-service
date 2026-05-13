@@ -9,12 +9,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import uk.gov.hmcts.common.exceptions.standard.InternalServerErrorException;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUser;
 import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyBusinessUnitUsersRequest;
@@ -105,7 +105,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
 
         try {
             assertThatThrownBy(() -> synchronisePermissionsService.synchronise(user))
-                .isInstanceOf(AccessDeniedException.class)
+                .isInstanceOf(InternalServerErrorException.class)
                 .hasMessageContaining("No authenticated user found");
         } finally {
             redisTemplate.delete(cacheKey);

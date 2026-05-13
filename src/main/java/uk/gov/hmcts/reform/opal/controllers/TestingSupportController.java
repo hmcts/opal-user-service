@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleService;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
@@ -34,19 +35,19 @@ public class TestingSupportController {
 
     private static final String X_USER_EMAIL = "X-User-Email";
 
-    private final FeatureToggleService featureToggleService;
+    private final FeatureToggleApi featureToggleApi;
     private final TestingSupportAccessTokenService testingSupportAccessTokenService;
     private final AccessTokenService userAccessTokenService;
     private final UserService userService;
 
     @GetMapping("/launchdarkly/bool/{featureKey}")
     public ResponseEntity<Boolean> isFeatureEnabled(@PathVariable String featureKey) {
-        return ResponseEntity.ok(this.featureToggleService.isFeatureEnabled(featureKey));
+        return ResponseEntity.ok(this.featureToggleApi.isFeatureEnabled(featureKey));
     }
 
     @GetMapping("/launchdarkly/string/{featureKey}")
     public ResponseEntity<String> getFeatureValue(@PathVariable String featureKey) {
-        return ResponseEntity.ok(this.featureToggleService.getFeatureValue(featureKey));
+        return ResponseEntity.ok(this.featureToggleApi.getFeatureValue(featureKey,""));
     }
 
     @GetMapping("/token/test-user")
@@ -78,6 +79,16 @@ public class TestingSupportController {
         log.debug(":addOrReplaceRoleInformationOnUser: userId: {}, roleId: {}", userId, roleId);
 
         userService.addOrReplaceRoleInformationOnUser(userId, roleId, businessUnitIds, userService);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/users/{userId}/roles/{roleId}")
+    @Operation(summary = "Testing-support-only endpoint to remove a role from a user")
+    public ResponseEntity<Void> deleteRoleFromUser(@PathVariable Long userId, @PathVariable Long roleId) {
+        log.debug(":deleteRoleFromUser: userId: {}, roleId: {}", userId, roleId);
+
+        userService.deleteRoleFromUser(userId, roleId, userService);
 
         return ResponseEntity.noContent().build();
     }

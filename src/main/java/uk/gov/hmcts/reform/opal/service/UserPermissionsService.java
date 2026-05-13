@@ -1,20 +1,5 @@
 package uk.gov.hmcts.reform.opal.service;
 
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
-import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
-import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
-
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -48,11 +33,26 @@ import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
+import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
+import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
+
 
 @Service
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.UserPermissionsService")
-public class UserPermissionsService implements UserPermissionsProxy {
+public class UserPermissionsService {
 
     //The name claim of the authorised user.
     private static final String NAME_CLAIM = "name";
@@ -73,10 +73,10 @@ public class UserPermissionsService implements UserPermissionsProxy {
 
     @Transactional(readOnly = true)
     @Deprecated //Use getUserStateV2 equivalent method
-    public UserStateDto getUserState(Authentication authentication, UserPermissionsProxy proxy, Boolean newLogin) {
+    public UserStateDto getUserState(Authentication authentication, Boolean newLogin) {
         Jwt jwt = getJwtToken(authentication);
         String subject = extractSubject(jwt);
-        UserEntity user = proxy.getUser(subject);
+        UserEntity user = getUser(subject);
 
         String username = extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
         compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
@@ -84,7 +84,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
 
         log.debug(":getUserState: found User: {}", username);
-        UserStateDto dto = proxy.buildUserState(user);
+        UserStateDto dto = buildUserState(user);
         if (Optional.ofNullable(newLogin).orElse(false)) {
             logUserAuthenticationEvent(dto.getUserId());
         }
@@ -93,35 +93,35 @@ public class UserPermissionsService implements UserPermissionsProxy {
 
     @Transactional(readOnly = true)
     @Deprecated //Use getUserStateV2 equivalent method
-    public UserStateDto getUserState(Long userId, Authentication authentication, UserPermissionsProxy proxy,
-                                     Boolean newLogin) {
+    public UserStateDto getUserState(Long userId, Authentication authentication, Boolean newLogin) {
         log.debug(":getUserState: userId: {}", userId);
         if (userId == 0) {
-            return proxy.getUserState(authentication, proxy, newLogin);
+            return getUserState(authentication, newLogin);
         } else {
-            UserStateDto dto = proxy.buildUserState(proxy.getUser(userId));
+            UserStateDto dto = buildUserState(getUser(userId));
             if (Optional.ofNullable(newLogin).orElse(false)) {
-                Long clientUserId = proxy.getUserId(authentication, proxy);
+                Long clientUserId = getUserId(authentication);
                 logUserAuthenticationEvent(clientUserId);
             }
             return dto;
         }
     }
 
-    public Long getAuthenticatedUserId(UserPermissionsProxy proxy) {
+    @Transactional(readOnly = true)
+    public Long getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             throw new AccessDeniedException("No authenticated user found in the security context.");
         }
-        return proxy.getUserId(authentication, proxy);
+        return getUserId(authentication);
     }
 
     @Transactional
-    public UserStateV2Dto getUserStateV2(UserPermissionsProxy proxy, Boolean newLogin) {
+    public UserStateV2Dto getUserStateV2(Boolean newLogin) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = getJwtToken(authentication);
         String subject = extractSubject(jwt);
-        UserEntity user = proxy.getUserV2(subject);
+        UserEntity user = getUserV2(subject);
 
         String username = extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
         compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
@@ -139,16 +139,16 @@ public class UserPermissionsService implements UserPermissionsProxy {
     }
 
     @Transactional
-    public UserStateV2Dto getUserStateV2(Long userId, UserPermissionsProxy proxy, Boolean newLogin) {
+    public UserStateV2Dto getUserStateV2(Long userId, Boolean newLogin) {
         log.debug(":getUserState: userId: {}", userId);
         if (userId == 0) {
-            return proxy.getUserStateV2(proxy, newLogin);
+            return getUserStateV2(newLogin);
         } else {
-            UserEntity user = proxy.getUserV2(userId);
+            UserEntity user = getUserV2(userId);
             UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
             if (Optional.ofNullable(newLogin).orElse(false)) {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                Long clientUserId = proxy.getUserId(authentication, proxy);
+                Long clientUserId = getUserId(authentication);
                 logUserAuthenticationEvent(clientUserId);
                 updateLastLogin(user);
             }
@@ -158,10 +158,10 @@ public class UserPermissionsService implements UserPermissionsProxy {
     }
 
     @Transactional(readOnly = true)
-    public Long getUserId(Authentication authentication, UserPermissionsProxy proxy) {
+    public Long getUserId(Authentication authentication) {
         Jwt jwt = getJwtToken(authentication);
         String subject = extractSubject(jwt);
-        UserEntity user = proxy.getUser(subject);
+        UserEntity user = getUser(subject);
         return user.getUserId();
     }
 
@@ -180,7 +180,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
     private void logUserAuthenticationEvent(Long userId) {
         Map<String, Object> data = Map.of("UserIdentifier", userId);
         securityEventLoggingService.logEvent("User Authentication", "Success",
-                                             null, "Authentication", getRequestTimestamp(), data);
+            null, "Authentication", getRequestTimestamp(), data);
     }
 
     private void updateLastLogin(UserEntity user) {
@@ -234,7 +234,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
     private void compare(String fromToken, String fromDb, Long userId, String reason, Versioned versioned) {
         if (!fromToken.equals(fromDb)) {
             throw new ResourceConflictException("User", userId,
-                                                reason + " token: " + fromToken + ", db: " + fromDb, versioned);
+                reason + " token: " + fromToken + ", db: " + fromDb, versioned);
         }
     }
 
@@ -270,28 +270,28 @@ public class UserPermissionsService implements UserPermissionsProxy {
 
         UserEntity userEntity = userRepository
             .saveAndFlush(UserEntity.builder()
-                              .username(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString())
-                              .createdDate(LocalDateTime.now(clock))
-                              .tokenSubject(claimSet.getSubject())
-                              .tokenName(claimSet.getClaim(NAME_CLAIM).toString())
-                              .versionNumber(0L)
-                              .build());
+                .username(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString())
+                .createdDate(LocalDateTime.now(clock))
+                .tokenSubject(claimSet.getSubject())
+                .tokenName(claimSet.getClaim(NAME_CLAIM).toString())
+                .versionNumber(0L)
+                .build());
 
         log.debug(":createUser: name: {}, new id: {}", userEntity.getTokenName(), userEntity.getUserId());
         return userMapper.toUserDto(userEntity, clock);
     }
 
     @Transactional
-    public UserDto updateUser(Long userId, String authHeaderValue, UserPermissionsProxy proxy, String ifMatch) {
+    public UserDto updateUser(Long userId, String authHeaderValue, String ifMatch) {
         log.debug(":updatedUser: userId: {}", userId);
 
         if (userId == 0) {
-            return proxy.updateUser(authHeaderValue, proxy, ifMatch);
+            return updateUser(authHeaderValue, ifMatch);
         } else {
 
             JWTClaimsSet claimSet = tokenService.extractClaims(authHeaderValue);
 
-            UserEntity existingUser = proxy.getUser(userId);
+            UserEntity existingUser = getUser(userId);
             verifyIfMatch(existingUser, ifMatch, userId, "updateUser");
 
             existingUser.setUsername(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString());
@@ -306,13 +306,13 @@ public class UserPermissionsService implements UserPermissionsProxy {
     }
 
     @Transactional
-    public UserDto updateUser(String authHeaderValue, UserPermissionsProxy proxy, String ifMatch) {
+    public UserDto updateUser(String authHeaderValue, String ifMatch) {
         log.debug(":updatedUser:");
 
         JWTClaimsSet claimSet = tokenService.extractClaims(authHeaderValue);
         String subject = claimSet.getSubject();
 
-        UserEntity existingUser = proxy.getUser(subject);
+        UserEntity existingUser = getUser(subject);
         verifyIfMatch(existingUser, ifMatch, existingUser.getUserId(), "updateUser");
 
         existingUser.setUsername(claimSet.getClaim(PREFERRED_USERNAME_CLAIM).toString());

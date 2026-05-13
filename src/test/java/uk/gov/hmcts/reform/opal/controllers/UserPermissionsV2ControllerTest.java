@@ -32,7 +32,7 @@ class UserPermissionsV2ControllerTest {
         Long userId = 123L;
         Boolean newLogin = true;
         UserStateV2Dto dto = new UserStateV2Dto();
-        when(userPermissionsService.getUserStateV2(userId, userPermissionsService, newLogin))
+        when(userPermissionsService.getUserStateV2(userId, newLogin))
             .thenReturn(dto);
 
         // Act

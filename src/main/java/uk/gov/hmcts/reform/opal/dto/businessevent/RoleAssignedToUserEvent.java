@@ -6,5 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import java.util.Set;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record RoleAssignedToUserEvent(Long roleId, Set<Short> addedBusinessUnitIds) implements BusinessEvent {
+public record RoleAssignedToUserEvent(Long roleId, Long roleVersion,
+                                      Set<Short> addedBusinessUnitIds) implements BusinessEvent {
 }

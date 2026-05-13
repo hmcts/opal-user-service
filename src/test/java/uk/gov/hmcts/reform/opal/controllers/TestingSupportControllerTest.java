@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleService;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
     classes =
         {
             TestingSupportController.class,
-            FeatureToggleService.class
+            FeatureToggleApi.class
         },
     properties = {
         "opal.testing-support-endpoints.enabled=true"
@@ -38,7 +38,7 @@ class TestingSupportControllerTest {
     private TestingSupportController controller;
 
     @MockitoBean
-    private FeatureToggleService featureToggleService;
+    private FeatureToggleApi featureToggleApi;
 
     @MockitoBean
     private TestingSupportAccessTokenService testingSupportAccessTokenService;
@@ -51,7 +51,7 @@ class TestingSupportControllerTest {
 
     @Test
     void isFeatureEnabled() {
-        when(featureToggleService.isFeatureEnabled("my-feature")).thenReturn(true);
+        when(featureToggleApi.isFeatureEnabled("my-feature")).thenReturn(true);
 
         ResponseEntity<Boolean> response = controller.isFeatureEnabled("my-feature");
 
@@ -61,7 +61,7 @@ class TestingSupportControllerTest {
 
     @Test
     void getFeatureFlagValue() {
-        when(featureToggleService.getFeatureValue("my-feature")).thenReturn("value");
+        when(featureToggleApi.getFeatureValue("my-feature","")).thenReturn("value");
 
         ResponseEntity<String> response = controller.getFeatureValue("my-feature");
 
@@ -83,8 +83,7 @@ class TestingSupportControllerTest {
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(
             new TestingSupportController.TestingSupportTokenResponse(TEST_TOKEN),
-            responseEntity.getBody()
-        );
+            responseEntity.getBody());
     }
 
     @Test
@@ -96,8 +95,7 @@ class TestingSupportControllerTest {
         // Act and Assert
         assertThrows(
             RuntimeException.class,
-            () -> controller.getToken()
-        );
+            () -> controller.getToken());
     }
 
     @Test
@@ -115,8 +113,7 @@ class TestingSupportControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(
             new TestingSupportController.TestingSupportTokenResponse(TEST_TOKEN),
-            response.getBody()
-        );
+            response.getBody());
     }
 
     @Test
@@ -128,8 +125,7 @@ class TestingSupportControllerTest {
         // Act and Assert
         assertThrows(
             RuntimeException.class,
-            () -> controller.getTokenForUser(TEST_USER_EMAIL)
-        );
+            () -> controller.getTokenForUser(TEST_USER_EMAIL));
     }
 
     @Test
@@ -161,4 +157,10 @@ class TestingSupportControllerTest {
         verify(userService).activateUser(userId, activationDate);
     }
 
+    @Test
+    void deleteRoleFromUser_returnsNoContent() {
+        ResponseEntity<Void> response = controller.deleteRoleFromUser(123L, 456L);
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+    }
 }

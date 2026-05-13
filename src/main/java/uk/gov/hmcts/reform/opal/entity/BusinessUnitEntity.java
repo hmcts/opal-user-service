@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnTransformer;
 
 @Entity
 @Table(name = "business_units")
@@ -36,6 +37,7 @@ public class BusinessUnitEntity {
     private String businessUnitCode;
 
     @Convert(converter = BusinessUnitTypeConverter.class)
+    @ColumnTransformer(write = "?::t_business_unit_type_enum")
     @Column(name = "business_unit_type", length = 20, nullable = false)
     private BusinessUnitType businessUnitType;
 

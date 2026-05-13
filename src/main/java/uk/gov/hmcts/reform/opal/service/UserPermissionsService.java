@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.opal.service;
 
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
 import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;

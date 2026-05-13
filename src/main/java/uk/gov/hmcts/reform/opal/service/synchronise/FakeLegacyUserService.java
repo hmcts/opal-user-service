@@ -10,7 +10,7 @@ import uk.gov.hmcts.reform.opal.dto.synchronise.LegacyGetUserResponse;
 import java.util.List;
 
 @Service
-public class LegacyUserService {
+public class FakeLegacyUserService {
 
     public LegacyGetUserResponse getUserIds(LegacyGetUserRequest requestDto) {
         LegacyGetUserResponse responseDto = new LegacyGetUserResponse();

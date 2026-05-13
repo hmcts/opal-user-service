@@ -37,7 +37,7 @@ class SynchroniseRolesServiceTest {
     private SynchroniseRolesService synchroniseRolesService;
 
     @Test
-    void process_throwsLegacyRefreshException_whenLookupCannotReadCache() throws Exception {
+    void process_throwsLegacyRefreshException_whenLookupCannotReadCache() {
 
         // Arrange
         UserEntity user = UserEntity.builder().tokenSubject(TOKEN_SUBJECT).build();
@@ -50,7 +50,7 @@ class SynchroniseRolesServiceTest {
     }
 
     @Test
-    void process_deletesOnlyRolesMissingFromCachedRoleIds() throws Exception {
+    void process_deletesOnlyRolesMissingFromCachedRoleIds() {
 
         // Arrange
         UserEntity user = UserEntity.builder().tokenSubject(TOKEN_SUBJECT).build();
@@ -59,7 +59,8 @@ class SynchroniseRolesServiceTest {
 
         RoleEntity roleStillInCache = RoleEntity.builder().roleId(101L).name("name-not-id").build();
         RoleEntity roleMissingFromCache = RoleEntity.builder().roleId(202L).name("101").build();
-        when(businessUnitUserService.findAllRolesOfUser(user)).thenReturn(Set.of(roleStillInCache, roleMissingFromCache));
+        when(businessUnitUserService.findAllRolesOfUser(user)).thenReturn(Set.of(roleStillInCache,
+                                                                                 roleMissingFromCache));
 
         LegacyBusinessUnitUser legacyBusinessUnitUser = LegacyBusinessUnitUser.builder()
             .businessUnitId("7")

@@ -53,7 +53,7 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
     void process_appliesCachedRolesAndRemovesStaleRoles() throws JsonProcessingException {
         // Arrange
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
-        when(userPermissionsService.getAuthenticatedUserId(userPermissionsService)).thenReturn(500000000L);
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000000L);
 
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
         redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(Map.of(

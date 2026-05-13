@@ -24,7 +24,7 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 @Slf4j(topic = "opal.SynchronisePermissionsService")
 public class SynchronisePermissionsService {
 
-    private final LegacyUserService legacyUserService;
+    private final FakeLegacyUserService fakeLegacyUserService;
     private final SynchroniseBusinessUnitUsersService refreshBusinessUnitUsersService;
     private final SynchroniseRolesService synchroniseRolesService;
 
@@ -37,7 +37,7 @@ public class SynchronisePermissionsService {
         UserEntity user = userService.getUser(detachedUser.getUserId());
 
         //1. Fetch Libra user id's  from the legacy system
-        LegacyGetUserResponse legacyGetUserResponse = legacyUserService.getUserIds(
+        LegacyGetUserResponse legacyGetUserResponse = fakeLegacyUserService.getUserIds(
             new LegacyGetUserRequest(user.getUsername())
         );
         List<String> libraUserIds = legacyGetUserResponse.getLibraUserIds();
@@ -45,7 +45,7 @@ public class SynchronisePermissionsService {
 
         //2. Fetch Business unit user id's and business unit id's from the legacy system (PO-3442)
         //   using the Libra User id's returned previously
-        LegacyBusinessUnitUsersResponse legacyBusinessUnitUsersResponse = legacyUserService.getBusinessUnitUsers(
+        LegacyBusinessUnitUsersResponse legacyBusinessUnitUsersResponse = fakeLegacyUserService.getBusinessUnitUsers(
             new LegacyBusinessUnitUsersRequest(libraUserIds)
         );
         log.debug("legacyBusinessUnitUsersResponse: {}", legacyBusinessUnitUsersResponse);

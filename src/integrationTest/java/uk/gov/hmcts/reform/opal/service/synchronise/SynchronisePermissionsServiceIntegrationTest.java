@@ -54,7 +54,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
     private StringRedisTemplate redisTemplate;
 
     @Autowired
-    private LegacyUserServiceStub legacyUserService;
+    private FakeLegacyUserServiceStub legacyUserService;
 
     @AfterEach
     void clearSecurityContext() {
@@ -196,12 +196,12 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
     static class LegacyUserServiceStubConfiguration {
         @Bean
         @Primary
-        LegacyUserServiceStub legacyUserServiceStub() {
-            return new LegacyUserServiceStub();
+        FakeLegacyUserServiceStub legacyUserServiceStub() {
+            return new FakeLegacyUserServiceStub();
         }
     }
 
-    static class LegacyUserServiceStub extends LegacyUserService {
+    static class FakeLegacyUserServiceStub extends FakeLegacyUserService {
 
         private volatile LegacyGetUserResponse getUserResponse = LegacyGetUserResponse.builder()
             .count(1)

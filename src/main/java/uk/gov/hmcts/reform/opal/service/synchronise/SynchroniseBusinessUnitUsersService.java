@@ -80,7 +80,8 @@ public class SynchroniseBusinessUnitUsersService {
             || legacyBusinessUnitUserId.isBlank()
             || legacyBusinessUnitUserId.length() > BUSINESS_UNIT_USER_ID_MAX_LENGTH) {
             log.error("Invalid businessUnitUserId {}", legacyBusinessUnitUserId);
-            throw new SynchroniseBusinessUnitUsersException("Invalid business unit user id: " + legacyBusinessUnitUserId);
+            throw new SynchroniseBusinessUnitUsersException("Invalid business unit user id: "
+                                                                + legacyBusinessUnitUserId);
         }
         return legacyBusinessUnitUserId;
     }

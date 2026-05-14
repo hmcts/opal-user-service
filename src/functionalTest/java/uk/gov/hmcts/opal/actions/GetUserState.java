@@ -8,10 +8,18 @@ import java.util.Map;
 
 import static uk.gov.hmcts.opal.steps.BearerTokenStepDef.getToken;
 
+/**
+ * Provides reusable API calls for the current-user state endpoint.
+ */
 public class GetUserState {
     public static final String USER_STATE_URI = "/users/state";
 
-    public static TestHttpResponse getUserState(String baseUri) {
+    /**
+     * Retrieves the current user's state using the bearer token stored for the scenario.
+     *
+     * @param baseUri base URL of the service under test.
+     */
+    public static void getUserState(String baseUri) {
         TestHttpResponse response = TestHttpClient.get(
             baseUri + USER_STATE_URI,
             Map.of(
@@ -21,6 +29,5 @@ public class GetUserState {
         );
 
         Serenity.setSessionVariable("LAST_RESPONSE").to(response);
-        return response;
     }
 }

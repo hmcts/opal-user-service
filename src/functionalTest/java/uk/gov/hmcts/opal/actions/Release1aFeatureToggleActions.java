@@ -25,13 +25,8 @@ public final class Release1aFeatureToggleActions {
      * @param baseUri base URL of the service under test.
      */
     public static void requestTestUserToken(String baseUri) {
-        record(TestHttpClient.get(
-            baseUri + "/testing-support/token/test-user",
-            Map.of(
-                "Accept", "*/*",
-                "Content-Type", JSON_CONTENT_TYPE
-            )
-        ));
+        record(TestHttpClient.get(baseUri + "/testing-support/token/test-user",
+            Map.of("Accept", "*/*", "Content-Type", JSON_CONTENT_TYPE)));
     }
 
     /**
@@ -42,14 +37,8 @@ public final class Release1aFeatureToggleActions {
      * @return response returned by the user-token endpoint.
      */
     public static TestHttpResponse requestTokenForUser(String baseUri, String userEmail) {
-        return record(TestHttpClient.get(
-            baseUri + "/testing-support/token/user",
-            Map.of(
-                "Accept", "*/*",
-                "Content-Type", JSON_CONTENT_TYPE,
-                "X-User-Email", userEmail
-            )
-        ));
+        return record(TestHttpClient.get(baseUri + "/testing-support/token/user",
+            Map.of("Accept", "*/*", "Content-Type", JSON_CONTENT_TYPE, "X-User-Email", userEmail)));
     }
 
     /**
@@ -59,14 +48,8 @@ public final class Release1aFeatureToggleActions {
      * @param authorization authorization header value to parse.
      */
     public static void parseToken(String baseUri, String authorization) {
-        record(TestHttpClient.get(
-            baseUri + "/testing-support/token/parse",
-            Map.of(
-                "Accept", "*/*",
-                "Content-Type", JSON_CONTENT_TYPE,
-                "Authorization", authorization
-            )
-        ));
+        record(TestHttpClient.get(baseUri + "/testing-support/token/parse",
+            Map.of("Accept", "*/*", "Content-Type", JSON_CONTENT_TYPE, "Authorization", authorization)));
     }
 
     /**
@@ -76,14 +59,8 @@ public final class Release1aFeatureToggleActions {
      * @param authorization authorization header value to send.
      */
     public static void addUser(String baseUri, String authorization) {
-        record(TestHttpClient.post(
-            baseUri + "/users",
-            "",
-            Map.of(
-                "Content-Type", JSON_CONTENT_TYPE,
-                "Authorization", authorization
-            )
-        ));
+        record(TestHttpClient.post(baseUri + "/users", "",
+            Map.of("Content-Type", JSON_CONTENT_TYPE, "Authorization", authorization)));
     }
 
     /**
@@ -94,15 +71,8 @@ public final class Release1aFeatureToggleActions {
      * @param ifMatch ETag value to send in the `If-Match` header.
      */
     public static void updateCurrentUser(String baseUri, String authorization, String ifMatch) {
-        record(TestHttpClient.put(
-            baseUri + "/users",
-            "",
-            Map.of(
-                "Content-Type", JSON_CONTENT_TYPE,
-                "Authorization", authorization,
-                "If-Match", ifMatch
-            )
-        ));
+        record(TestHttpClient.put(baseUri + "/users", "",
+            Map.of("Content-Type", JSON_CONTENT_TYPE, "Authorization", authorization, "If-Match", ifMatch)));
     }
 
     /**
@@ -114,15 +84,8 @@ public final class Release1aFeatureToggleActions {
      * @param ifMatch ETag value to send in the `If-Match` header.
      */
     public static void updateUserById(String baseUri, long userId, String authorization, String ifMatch) {
-        record(TestHttpClient.put(
-            baseUri + "/users/" + userId,
-            "",
-            Map.of(
-                "Content-Type", JSON_CONTENT_TYPE,
-                "Authorization", authorization,
-                "If-Match", ifMatch
-            )
-        ));
+        record(TestHttpClient.put(baseUri + "/users/" + userId, "",
+            Map.of("Content-Type", JSON_CONTENT_TYPE, "Authorization", authorization, "If-Match", ifMatch)));
     }
 
     /**
@@ -131,10 +94,7 @@ public final class Release1aFeatureToggleActions {
      * @param baseUri base URL of the service under test.
      */
     public static void getCurrentUserState(String baseUri) {
-        record(TestHttpClient.get(
-            baseUri + "/users/state",
-            Map.of("Content-Type", JSON_CONTENT_TYPE)
-        ));
+        record(TestHttpClient.get(baseUri + "/users/state", Map.of("Content-Type", JSON_CONTENT_TYPE)));
     }
 
     /**
@@ -145,9 +105,7 @@ public final class Release1aFeatureToggleActions {
      */
     public static void getUserStateById(String baseUri, long userId) {
         record(TestHttpClient.get(
-            baseUri + "/users/" + userId + "/state",
-            Map.of("Content-Type", JSON_CONTENT_TYPE)
-        ));
+            baseUri + "/users/" + userId + "/state", Map.of("Content-Type", JSON_CONTENT_TYPE)));
     }
 
     /**
@@ -159,10 +117,8 @@ public final class Release1aFeatureToggleActions {
      */
     public static void addOrReplaceRoleInformationOnUser(String baseUri, long userId, long roleId) {
         record(TestHttpClient.put(
-            baseUri + "/testing-support/users/" + userId + "/roles/" + roleId,
-            "[1,4,5]",
-            Map.of("Content-Type", JSON_CONTENT_TYPE)
-        ));
+            baseUri + "/testing-support/users/" + userId + "/roles/" + roleId, "[1,4,5]",
+            Map.of("Content-Type", JSON_CONTENT_TYPE)));
     }
 
     /**
@@ -173,15 +129,13 @@ public final class Release1aFeatureToggleActions {
      * @param activationDate activation date to send in the patch request body.
      */
     public static void activateUser(String baseUri, long userId, String activationDate) {
-        record(TestHttpClient.patch(
-            baseUri + "/testing-support/users/" + userId,
+        record(TestHttpClient.patch(baseUri + "/testing-support/users/" + userId,
             """
                 {
                   "activationDate": "%s"
                 }
                 """.formatted(activationDate),
-            Map.of("Content-Type", JSON_CONTENT_TYPE)
-        ));
+            Map.of("Content-Type", JSON_CONTENT_TYPE)));
     }
 
     /**

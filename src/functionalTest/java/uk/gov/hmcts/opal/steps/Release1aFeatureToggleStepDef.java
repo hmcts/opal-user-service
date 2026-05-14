@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class Release1aFeatureToggleStepDef extends BaseStepDef {
 
     private static final String LAST_RELEASE_1A_ACCESS_TOKEN = "LAST_RELEASE_1A_ACCESS_TOKEN";
-    private static final String REPRESENTATIVE_BEARER_TOKEN = "Bearer release-1a-representative-token";
+    private static final String REPRESENTATIVE_AUTHORIZATION = "release-1a-representative-token";
     private static final String ACTIVATION_DATE = "2026-01-01T00:00:00Z";
 
     /**
@@ -29,13 +29,13 @@ public class Release1aFeatureToggleStepDef extends BaseStepDef {
             case "get user token" -> Release1aFeatureToggleActions.requestTokenForUser(
                 getTestUrl(), "opal-test@dev.platform.hmcts.net"
             );
-            case "parse token" -> Release1aFeatureToggleActions.parseToken(getTestUrl(), REPRESENTATIVE_BEARER_TOKEN);
-            case "add user" -> Release1aFeatureToggleActions.addUser(getTestUrl(), REPRESENTATIVE_BEARER_TOKEN);
+            case "parse token" -> Release1aFeatureToggleActions.parseToken(getTestUrl(), REPRESENTATIVE_AUTHORIZATION);
+            case "add user" -> Release1aFeatureToggleActions.addUser(getTestUrl(), REPRESENTATIVE_AUTHORIZATION);
             case "update current user" -> Release1aFeatureToggleActions.updateCurrentUser(
-                getTestUrl(), REPRESENTATIVE_BEARER_TOKEN, "0"
+                getTestUrl(), REPRESENTATIVE_AUTHORIZATION, "0"
             );
             case "update user by id" -> Release1aFeatureToggleActions.updateUserById(
-                getTestUrl(), 500000002L, REPRESENTATIVE_BEARER_TOKEN, "0"
+                getTestUrl(), 500000002L, REPRESENTATIVE_AUTHORIZATION, "0"
             );
             case "get current user state" -> Release1aFeatureToggleActions.getCurrentUserState(getTestUrl());
             case "get user state by id" -> Release1aFeatureToggleActions.getUserStateById(getTestUrl(), 500000003L);

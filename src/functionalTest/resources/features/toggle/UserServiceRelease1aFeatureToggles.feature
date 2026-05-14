@@ -19,5 +19,3 @@ Feature: User Service release-1a feature toggles
       | update user by id                   |
       | get current user state              |
       | get user state by id                |
-      | add or replace role information on user |
-      | activate user                       |

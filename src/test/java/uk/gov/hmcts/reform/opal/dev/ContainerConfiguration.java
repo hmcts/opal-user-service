@@ -19,7 +19,7 @@ public class ContainerConfiguration {
     @ServiceConnection
     @RestartScope
     PostgreSQLContainer databaseContainer() {
-        return new PostgreSQLContainer("postgres:17.5")
+        return new PostgreSQLContainer("postgres:17")
             .withCreateContainerCmdModifier(cmd -> {
                 cmd.withName("testcontainers-postgres");
                 cmd.withHostConfig(

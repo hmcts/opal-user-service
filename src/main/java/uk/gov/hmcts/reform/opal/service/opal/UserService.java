@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.opal.service.opal;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +55,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     private final UserSpecs specs = new UserSpecs();
 
     private final Clock clock;
+
+    private final EntityManager entityManager;
 
     @Override
     public UserEntity getUser(String userId) {
@@ -234,5 +237,10 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
             user.getUserId(),
             new AccountActivationInitiatedEvent(activationDate),
             businessEventService);
+    }
+
+    @Transactional
+    public void refreshUser(UserEntity user) {
+        entityManager.refresh(user);
     }
 }

@@ -27,7 +27,7 @@ import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-class UserRoleMappingCacheServiceTest {
+class UserSynchroniseRolesServiceTest {
 
     private static final String PREFIX = "ROLE_MAPPING_USER_";
 

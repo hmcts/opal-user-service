@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.controllers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -416,7 +417,8 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         actions.andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        JsonNode expectedNode = objectMapper.readTree(EXPECTED_V2_USER_STATE);
+        JsonNode expectedNode = expectedV2UserState(newLogin);
+
         JsonNode actualNode = objectMapper.readTree(body);
         assertThat(actualNode).isEqualTo(expectedNode);
 
@@ -523,7 +525,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        JsonNode expectedNode = objectMapper.readTree(EXPECTED_V2_USER_STATE);
+        JsonNode expectedNode = expectedV2UserState(false);
         JsonNode actualNode = objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey));
         assertThat(actualNode).isEqualTo(expectedNode);
 
@@ -623,6 +625,12 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             }
           }
         }""";
+
+    private JsonNode expectedV2UserState(boolean newLogin) throws Exception {
+        ObjectNode expectedNode = (ObjectNode) objectMapper.readTree(EXPECTED_V2_USER_STATE);
+        expectedNode.put("version", newLogin ? 1 : 0);
+        return expectedNode;
+    }
 
     private JwtAuthenticationToken createJwtPrincipal() {
         return createJwtPrincipal("jjqwGAERGW43","test-user@HMCTS.NET", "Pablo");

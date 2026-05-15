@@ -29,3 +29,5 @@ spring:
       - org.springframework.boot.security.autoconfigure.actuate.web.servlet.ManagementWebSecurityAutoConfiguration
       - org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration
       - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
+
+app-mode: opal

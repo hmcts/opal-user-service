@@ -176,7 +176,12 @@ public class UserPermissionsService {
             .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
         if (Optional.ofNullable(newLogin).orElse(false)) {
-            logUserAuthenticationEvent(user.getUserId());
+            Long authenticationEventUserId = user.getUserId();
+            if (userId != 0) {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                authenticationEventUserId = getUserId(authentication);
+            }
+            logUserAuthenticationEvent(authenticationEventUserId);
             updateLastLogin(user);
         }
 

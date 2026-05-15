@@ -37,6 +37,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -45,8 +46,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -58,10 +61,12 @@ import static org.mockito.Mockito.when;
 class UserPermissionsServiceV2Test {
 
     private static final long USER_ID = 42L;
+    private static final long AUTHENTICATED_USER_ID = 84L;
     private static final long CACHE_TIMEOUT_MINUTES = 30L;
     private static final String TOKEN_PREFERRED_USERNAME = "opal-user@hmcts.net";
     private static final String TOKEN_NAME = "John Smith";
     private static final String TOKEN_SUBJECT = "hcv732JFVWhf3Fd";
+    private static final String AUTHENTICATED_TOKEN_SUBJECT = "auth-subject-84";
 
     @Mock
     SecurityContext securityContext;
@@ -365,6 +370,7 @@ class UserPermissionsServiceV2Test {
         ZoneId fixedZone = ZoneId.of("UTC");
         when(clock.instant()).thenReturn(fixedInstant);
         when(clock.getZone()).thenReturn(fixedZone);
+        setAuthenticatedCaller(AUTHENTICATED_USER_ID, AUTHENTICATED_TOKEN_SUBJECT);
 
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
@@ -378,6 +384,17 @@ class UserPermissionsServiceV2Test {
         assertThat(userEntity.getLastLoginDate())
             .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
         verify(userRepository).saveAndFlush(userEntity);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> eventDataCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(securityEventLoggingService).logEvent(
+            eq("User Authentication"),
+            eq("Success"),
+            isNull(),
+            eq("Authentication"),
+            any(),
+            eventDataCaptor.capture()
+        );
+        assertThat(eventDataCaptor.getValue()).containsEntry("UserIdentifier", AUTHENTICATED_USER_ID);
         assertDtoWasCachedForSubject(TOKEN_SUBJECT);
     }
 
@@ -466,6 +483,7 @@ class UserPermissionsServiceV2Test {
         ZoneId fixedZone = ZoneId.of("UTC");
         when(clock.instant()).thenReturn(fixedInstant);
         when(clock.getZone()).thenReturn(fixedZone);
+        setAuthenticatedCaller(AUTHENTICATED_USER_ID, AUTHENTICATED_TOKEN_SUBJECT);
 
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
@@ -494,5 +512,19 @@ class UserPermissionsServiceV2Test {
         );
         assertThat(dto.getCacheName()).isEqualTo(cacheKey);
         assertThat(payloadCaptor.getValue()).isEqualTo(objectToPrettyJson(dto));
+    }
+
+    private void setAuthenticatedCaller(long callerUserId, String callerSubject) {
+        JwtAuthenticationToken authentication = mock(JwtAuthenticationToken.class);
+        when(authentication.getToken()).thenReturn(jwt);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        UserEntity callerUser = UserEntity.builder()
+            .userId(callerUserId)
+            .tokenSubject(callerSubject)
+            .build();
+        when(jwt.getSubject()).thenReturn(callerSubject);
+        when(userRepository.findByTokenSubject(callerSubject)).thenReturn(Optional.of(callerUser));
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static uk.gov.hmcts.reform.opal.LegacyStubContainerConfig.legacyGatewayUrl;
 import static uk.gov.hmcts.reform.opal.TestContainerConfig.POSTGRES_CONTAINER;
 import static uk.gov.hmcts.reform.opal.TestContainerConfig.REDIS_CONTAINER;
 
@@ -37,5 +38,6 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.username", POSTGRES_CONTAINER::getUsername);
         registry.add("spring.datasource.password", POSTGRES_CONTAINER::getPassword);
         registry.add("spring.data.redis.url", REDIS_CONTAINER::getRedisURI);
+        registry.add("legacy-gateway.url", () -> legacyGatewayUrl());
     }
 }

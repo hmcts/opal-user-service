@@ -67,7 +67,8 @@ class SynchroniseRolesServiceTest {
     }
 
     @Test
-    void synchroniseRoles_returnsEmptyValidatedRoleIdsAndDeletesExistingRoles_whenUserMissingFromCache() throws Exception {
+    void synchroniseRoles_returnsEmptyValidatedRoleIdsAndDeletesExistingRoles_whenUserMissingFromCache()
+        throws Exception {
 
         // Arrange
         UserEntity user = UserEntity.builder().tokenSubject(TOKEN_SUBJECT).build();
@@ -76,7 +77,8 @@ class SynchroniseRolesServiceTest {
 
         RoleEntity firstExistingRole = RoleEntity.builder().roleId(101L).name("role-101").build();
         RoleEntity secondExistingRole = RoleEntity.builder().roleId(202L).name("role-202").build();
-        when(businessUnitUserService.findAllRolesOfUser(user)).thenReturn(Set.of(firstExistingRole, secondExistingRole));
+        when(businessUnitUserService.findAllRolesOfUser(user)).thenReturn(Set.of(firstExistingRole,
+                                                                                 secondExistingRole));
 
         // Act
         Set<Long> validatedRoleIds = synchroniseRolesService.synchroniseRoles(user, List.of());

@@ -68,22 +68,6 @@ public final class LegacyWireMockXmlStubHelper {
         registerBusinessUnitUserLookupStub(businessUnitUsers, DEFAULT_STUB_PRIORITY);
     }
 
-    public void registerSystemUserLookupStub(List<String> libraUserIds) throws Exception {
-        registerSystemUserLookupStub(libraUserIds, DEFAULT_STUB_PRIORITY);
-    }
-
-    public void registerSystemUserLookupStub(List<String> libraUserIds, int priority) throws Exception {
-        Objects.requireNonNull(libraUserIds, "libraUserIds must not be null");
-        StringBuilder responseXml = new StringBuilder()
-            .append("<LibraUserIds>")
-            .append("<count>").append(libraUserIds.size()).append("</count>");
-        for (String libraUserId : libraUserIds) {
-            responseXml.append("<libra_user_ids>").append(libraUserId).append("</libra_user_ids>");
-        }
-        responseXml.append("</LibraUserIds>");
-        registerXmlStub(GET_SYSTEM_USER_IDS_BY_EMAIL, responseXml.toString(), priority);
-    }
-
     public void registerBusinessUnitUserLookupStub(List<LegacyBusinessUnitUserId> businessUnitUsers, int priority)
         throws Exception {
         Objects.requireNonNull(businessUnitUsers, "businessUnitUsers must not be null");
@@ -100,6 +84,22 @@ public final class LegacyWireMockXmlStubHelper {
         }
         responseXml.append("</BusinessUnitUserIds>");
         registerXmlStub(GET_BUU_BY_LIBRA_IDS, responseXml.toString(), priority);
+    }
+
+    public void registerSystemUserLookupStub(List<String> libraUserIds) throws Exception {
+        registerSystemUserLookupStub(libraUserIds, DEFAULT_STUB_PRIORITY);
+    }
+
+    public void registerSystemUserLookupStub(List<String> libraUserIds, int priority) throws Exception {
+        Objects.requireNonNull(libraUserIds, "libraUserIds must not be null");
+        StringBuilder responseXml = new StringBuilder()
+            .append("<LibraUserIds>")
+            .append("<count>").append(libraUserIds.size()).append("</count>");
+        for (String libraUserId : libraUserIds) {
+            responseXml.append("<libra_user_ids>").append(libraUserId).append("</libra_user_ids>");
+        }
+        responseXml.append("</LibraUserIds>");
+        registerXmlStub(GET_SYSTEM_USER_IDS_BY_EMAIL, responseXml.toString(), priority);
     }
 
     public void clearRegisteredStubs() throws Exception {

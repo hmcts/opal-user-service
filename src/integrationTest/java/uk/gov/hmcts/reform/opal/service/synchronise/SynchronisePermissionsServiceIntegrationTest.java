@@ -65,17 +65,17 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
     @DisplayName("Happy path should add one role to one business unit")
     void synchronise_happyPath_addsSingleRoleAssignment() throws Exception {
         UserEntity user = userRepository.findById(TARGET_USER_ID).orElseThrow();
-        String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
 
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of("123"));
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(legacyBusinessUnitUsersForTargetUser());
         setAuthenticatedUser(user.getTokenSubject());
+        String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
         redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition()));
 
         Timestamp activationBefore = getActivationDate(TARGET_USER_ID);
-        long roleAssignmentsBefore = countRoleAssignments(TARGET_USER_ID);
         assertThat(activationBefore).isNull();
         assertThat(hasRoleAssignment(TARGET_USER_ID, (short) 70, 3L)).isFalse();
+        long roleAssignmentsBefore = countRoleAssignments(TARGET_USER_ID);
 
         try {
             synchronisePermissionsService.synchronise(user);

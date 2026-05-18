@@ -126,7 +126,7 @@ class RoleMappingCacheLookupServiceTest {
     }
 
     @Test
-    void getRoleMappingByTokenSubject_throwsSynchronisePermissionsException_whenObjectMapperThrowsJsonProcessingException()
+    void getRoleMappingByTokenSubject_throwsSynchronisePermissionsException_whenOMThrowsJsonProcessingException()
         throws Exception {
 
         // Arrange

@@ -1,4 +1,5 @@
 package uk.gov.hmcts.reform.opal.controllers;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -158,7 +159,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
     }
 
     @Test
-    @DisplayName("AC5/AC12: should return valid state, remove roles, and keep activation date unset when cache entry is missing")
+    @DisplayName("AC5/AC12: should return valid state, remove roles, and keep activation date unset when cache miss")
     void getUserStateV2_whenRoleMappingCacheEntryMissing_removesAllRoles() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
         setAuthenticatedUser(user.getTokenSubject());
@@ -213,7 +214,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
 
     //AC7/AC9/AC14 is the happy path
     @Test
-    @DisplayName("AC7/AC9/AC14: should assign cached role to BU returned by legacy and keep role mapping cache unchanged")
+    @DisplayName("AC7/AC9/AC14: should assign cached role to BU returned by legacy and keep role cache unchanged")
     void getUserStateV2_assignsRoleToAdditionalLegacyBusinessUnitAndDoesNotUpdateRoleMappingCache() throws Exception {
         final String buuId1 = "L094JG";
         final String buuId2 = "L095JG";
@@ -401,10 +402,9 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
             List.of(legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
         );
         setRoleMappingCache(user, Map.of(ROLE_ID, Set.of(BUSINESS_UNIT_ID)));
-        long roleCountBefore = countRoleAssignments(user.getUserId());
-
         insertBusinessEvent(1L, ROLE_ASSIGNED_TO_USER, USER_ID, USER_ID, "{}");
         assertThat(businessUnitUserExists(BUSINESS_UNIT_USER_ID)).isFalse();
+        long roleCountBefore = countRoleAssignments(user.getUserId());
 
         mockMvc.perform(get(userStateUri(user.getUserId())))
             .andExpect(status().isInternalServerError());
@@ -472,10 +472,12 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         );
     }
 
-    private void assertBusinessUnitUserRow(String businessUnitUserId, short expectedBusinessUnitId, long expectedUserId) {
+    private void assertBusinessUnitUserRow(String businessUnitUserId, short expectedBusinessUnitId,
+                                           long expectedUserId) {
         Map<String, Object> businessUnitUserRow = getBusinessUnitUserRow(expectedUserId, businessUnitUserId);
         assertThat(((Number) businessUnitUserRow.get("user_id")).longValue()).isEqualTo(expectedUserId);
-        assertThat(((Number) businessUnitUserRow.get("business_unit_id")).shortValue()).isEqualTo(expectedBusinessUnitId);
+        assertThat(((Number) businessUnitUserRow.get("business_unit_id")).shortValue())
+            .isEqualTo(expectedBusinessUnitId);
         assertThat(businessUnitUserRow.get("business_unit_user_id")).isEqualTo(businessUnitUserId);
     }
 
@@ -615,7 +617,8 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         long roleId,
         long expectedRoleCount
     ) {
-        assertThat(countRoleAssignmentsForUserBusinessUnit(userId, businessUnitId, roleId)).isEqualTo(expectedRoleCount);
+        assertThat(countRoleAssignmentsForUserBusinessUnit(userId, businessUnitId, roleId))
+            .isEqualTo(expectedRoleCount);
     }
 
     private void assertUserRoleAssignmentCount(long userId, long roleId, long expectedRoleCount) {

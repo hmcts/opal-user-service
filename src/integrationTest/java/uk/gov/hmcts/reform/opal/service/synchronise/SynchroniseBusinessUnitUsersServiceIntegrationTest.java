@@ -187,7 +187,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     }
 
     @Test
-    @DisplayName("Should reject null legacy business unit user payload and leave existing business unit users unchanged")
+    @DisplayName("Should reject null legacy BU user payload and leave existing BU users unchanged")
     void synchroniseBusinessUnitUsers_rejectsNullLegacyBusinessUnitUsersPayload() {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
         Map<String, Object> rowBefore = getBusinessUnitUserRow("L082JG");
@@ -202,7 +202,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     }
 
     @Test
-    @DisplayName("Should reject null entry in legacy business unit user payload and leave existing business unit users unchanged")
+    @DisplayName("Should reject null entry in legacy BU user payload and leave existing BU users unchanged")
     void synchroniseBusinessUnitUsers_rejectsNullEntryInLegacyBusinessUnitUsersPayload() {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
         Map<String, Object> rowBefore = getBusinessUnitUserRow("L082JG");

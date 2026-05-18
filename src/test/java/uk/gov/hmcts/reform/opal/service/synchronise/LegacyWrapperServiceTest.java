@@ -162,7 +162,7 @@ class LegacyWrapperServiceTest {
     }
 
     @Test
-    void getBusinessUnitUserIds_throwsSynchronisePermissionsException_whenUserLookupReturnsSuccessfulResponseWithNullEntity() {
+    void getBusinessUnitUserIds_throwsSynchronisePermissionsException_whenUserLookupReturnsSuccessWithNullEntity() {
 
         // Arrange
         UserEntity user = user(USERNAME);
@@ -237,7 +237,7 @@ class LegacyWrapperServiceTest {
     }
 
     @Test
-    void getBusinessUnitUserIds_throwsSynchronisePermissionsException_whenBusinessUnitLookupReturnsSuccessfulResponseWithNullEntity() {
+    void getBusinessUnitUserIds_throwsSynchronisePermissionsException_whenBuLookupReturnsSuccessWithNullEntity() {
 
         // Arrange
         UserEntity user = user(USERNAME);

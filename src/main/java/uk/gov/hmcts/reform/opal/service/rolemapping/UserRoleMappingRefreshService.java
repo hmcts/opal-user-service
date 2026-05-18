@@ -71,7 +71,7 @@ public class UserRoleMappingRefreshService {
                 }
 
                 try {
-                    cacheService.putUserMapping(tokenSubject, userMapping.businessUnitToRoles());
+                    cacheService.putUserMapping(tokenSubject, userMapping.roleToBusinessUnits());
                     refreshedSubjects.add(tokenSubject);
 
                 } catch (Exception e) {

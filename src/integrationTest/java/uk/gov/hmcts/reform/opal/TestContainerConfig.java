@@ -28,7 +28,7 @@ public class TestContainerConfig {
     }
 
     static {
-        POSTGRES_CONTAINER = new PostgreSQLContainer(DockerImageName.parse("postgres:17.5"))
+        POSTGRES_CONTAINER = new PostgreSQLContainer(DockerImageName.parse("postgres:17"))
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("test");

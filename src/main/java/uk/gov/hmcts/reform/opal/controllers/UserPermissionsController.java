@@ -42,7 +42,6 @@ public class UserPermissionsController {
     public ResponseEntity<UserStateDto> getUserState(
         @PathVariable Long userId, Authentication authentication,
         @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
-
         log.debug(":GET:getUserState: userId: {}, new login: {}", userId, newLogin);
         return buildResponse(userPermissionsService
                                  .getUserState(userId, authentication, newLogin));

@@ -8,10 +8,18 @@ import java.util.Map;
 
 import static uk.gov.hmcts.opal.steps.BearerTokenStepDef.getToken;
 
+/**
+ * Provides reusable API calls for creating users in functional tests.
+ */
 public class CreateUser {
     public static final String USERS_URI = "/users";
 
-    public static TestHttpResponse postUser(String baseURI) {
+    /**
+     * Creates a user using the bearer token currently stored for the scenario.
+     *
+     * @param baseURI base URL of the service under test.
+     */
+    public static void postUser(String baseURI) {
         TestHttpResponse response = TestHttpClient.post(
             baseURI + USERS_URI,
             "",
@@ -22,6 +30,5 @@ public class CreateUser {
         );
 
         Serenity.setSessionVariable("LAST_RESPONSE").to(response);
-        return response;
     }
 }

@@ -11,6 +11,9 @@ import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+
 import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToJson;
 
 @Service
@@ -23,6 +26,7 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
     private final BusinessEventRepository businessEventRepository;
     private final UserPermissionsService userPermissionsService;
     private final FeatureToggleApi featureToggleApi;
+    private final Clock clock;
 
     @Transactional
     @Override
@@ -48,6 +52,7 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
             .subjectUserId(subjectUserId)
             .initiatorUserId(initiatorUserId)
             .eventDetails(objectToJson(eventDetails))
+            .eventDate(LocalDateTime.now(clock))
             .build();
 
         BusinessEventEntity savedBusinessEvent = businessEventRepository.saveAndFlush(businessEventEntity);

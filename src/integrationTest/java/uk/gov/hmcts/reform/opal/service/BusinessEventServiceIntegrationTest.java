@@ -21,10 +21,12 @@ import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,6 +73,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             );
 
             assertEquals(-1L, result.getInitiatorUserId());
+            assertNotNull(result.getEventDate());
         }
     }
 
@@ -91,6 +94,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, result.getEventType());
             assertEquals(500000000L, result.getSubjectUserId());
             assertEquals(500000003L, result.getInitiatorUserId());
+            assertNotNull(result.getEventDate());
             assertJsonEquals(objectToPrettyJson(eventDetails), result.getEventDetails());
 
             BusinessEventEntity savedEntity =
@@ -99,6 +103,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, savedEntity.getEventType());
             assertEquals(500000000L, savedEntity.getSubjectUserId());
             assertEquals(500000003L, savedEntity.getInitiatorUserId());
+            assertPersistedEventDate(result, savedEntity);
             assertJsonEquals(objectToPrettyJson(eventDetails), savedEntity.getEventDetails());
         }
 
@@ -122,6 +127,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, result.getEventType());
             assertEquals(500000000L, result.getSubjectUserId());
             assertEquals(500000003L, result.getInitiatorUserId());
+            assertNotNull(result.getEventDate());
             assertJsonEquals(objectToPrettyJson(eventDetails), result.getEventDetails());
 
             BusinessEventEntity savedEntity =
@@ -130,6 +136,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             assertEquals(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, savedEntity.getEventType());
             assertEquals(500000000L, savedEntity.getSubjectUserId());
             assertEquals(500000003L, savedEntity.getInitiatorUserId());
+            assertPersistedEventDate(result, savedEntity);
             assertJsonEquals(objectToPrettyJson(eventDetails), savedEntity.getEventDetails());
 
             verify(userPermissionsService).getAuthenticatedUserId();
@@ -172,6 +179,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             );
 
             assertEquals(500000003L, result.getInitiatorUserId());
+            assertNotNull(result.getEventDate());
         }
     }
 
@@ -180,5 +188,15 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
         JsonNode expected = objectMapper.readTree(expectedJson);
         JsonNode actual = objectMapper.readTree(actualJson);
         assertEquals(expected, actual);
+    }
+
+    private void assertPersistedEventDate(BusinessEventEntity result, BusinessEventEntity savedEntity) {
+        assertNotNull(savedEntity.getEventDate());
+        Duration difference = Duration.between(result.getEventDate(), savedEntity.getEventDate()).abs();
+        assertTrue(
+            difference.compareTo(Duration.ofNanos(1_000)) <= 0,
+            () -> "Expected persisted event date %s to match returned event date %s within database precision"
+                .formatted(savedEntity.getEventDate(), result.getEventDate())
+        );
     }
 }

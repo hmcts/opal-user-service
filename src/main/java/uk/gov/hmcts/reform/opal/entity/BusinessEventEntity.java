@@ -19,6 +19,8 @@ import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "business_events")
 @Data
@@ -50,4 +52,7 @@ public class BusinessEventEntity {
     @ColumnTransformer(write = "?::json")
     @JsonRawValue
     private String eventDetails;
+
+    @Column(name = "event_date", nullable = false)
+    private LocalDateTime eventDate;
 }

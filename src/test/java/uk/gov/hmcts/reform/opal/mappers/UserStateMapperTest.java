@@ -85,12 +85,13 @@ class UserStateMapperTest {
     @Test
     void toUserStateV2Dto() throws JsonProcessingException {
 
-        //Arrange
+        // Arrange
         RoleEntity role1 = buildRole("role1", List.of(permAE, permBadName, permAEN));
         RoleEntity role2 = buildRole("role2", List.of(permAE, permCVDA, permCO));
         RoleEntity role3 = buildRole("role3", List.of(permSAVA, permCO));
         RoleEntity role4 = buildRole("role4", List.of(permCO, permAEN));
         RoleEntity role5 = buildRole("role5", List.of(permSAVA, permAE));
+
         Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role1, role2)),
             buildBusinessUnitUserEntity("DEF456", fines, (short) 42, Set.of(role3, role4)),
@@ -102,82 +103,85 @@ class UserStateMapperTest {
         // Act
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        //Assert
+        // Assert
         String expected = """
-            {
-              "user_id": 123,
-              "username": "username",
-              "name": "token",
-              "status": "ACTIVE",
-              "version": 321,
-              "cache_name": null,
-              "domains": {
-                "confiscation": {
-                  "business_unit_users": [
+        {
+          "user_id": 123,
+          "username": "username",
+          "name": "token",
+          "status": "ACTIVE",
+          "version": 321,
+          "cache_name": null,
+          "domains": {
+            "confiscation": {
+              "business_unit_users": [
+                {
+                  "business_unit_user_id": "GHI789",
+                  "business_unit_id": 51,
+                  "permissions": [
                     {
-                      "business_unit_user_id": "GHI789",
-                      "business_unit_id": 51,
-                      "permissions": [
-                        {
-                          "permission_id": 3,
-                          "permission_name": "Account Enquiry"
-                        },
-                        {
-                          "permission_id": 6,
-                          "permission_name": "Search and view accounts"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                "fines": {
-                  "business_unit_users": [
-                    {
-                      "business_unit_user_id": "ABC123",
-                      "business_unit_id": 41,
-                      "permissions": [
-                        {
-                          "permission_id": 2,
-                          "permission_name": "Account Enquiry - Account Notes"
-                        },
-                        {
-                          "permission_id": 3,
-                          "permission_name": "Account Enquiry"
-                        },
-                        {
-                          "permission_id": 4,
-                          "permission_name": "Collection Order"
-                        },
-                        {
-                          "permission_id": 5,
-                          "permission_name": "Check and Validate Draft Accounts"
-                        }
-                      ]
+                      "permission_id": 3,
+                      "permission_name": "Account Enquiry"
                     },
                     {
-                      "business_unit_user_id": "DEF456",
-                      "business_unit_id": 42,
-                      "permissions": [
-                        {
-                          "permission_id": 2,
-                          "permission_name": "Account Enquiry - Account Notes"
-                        },
-                        {
-                          "permission_id": 4,
-                          "permission_name": "Collection Order"
-                        }
-                      ]
+                      "permission_id": 6,
+                      "permission_name": "Search and view accounts"
                     }
                   ]
                 }
-              }
+              ]
+            },
+            "fines": {
+              "business_unit_users": [
+                {
+                  "business_unit_user_id": "ABC123",
+                  "business_unit_id": 41,
+                  "permissions": [
+                    {
+                      "permission_id": 2,
+                      "permission_name": "Account Enquiry - Account Notes"
+                    },
+                    {
+                      "permission_id": 3,
+                      "permission_name": "Account Enquiry"
+                    },
+                    {
+                      "permission_id": 4,
+                      "permission_name": "Collection Order"
+                    },
+                    {
+                      "permission_id": 5,
+                      "permission_name": "Check and Validate Draft Accounts"
+                    }
+                  ]
+                },
+                {
+                  "business_unit_user_id": "DEF456",
+                  "business_unit_id": 42,
+                  "permissions": [
+                    {
+                      "permission_id": 2,
+                      "permission_name": "Account Enquiry - Account Notes"
+                    },
+                    {
+                      "permission_id": 4,
+                      "permission_name": "Collection Order"
+                    },
+                    {
+                      "permission_id": 6,
+                      "permission_name": "Search and view accounts"
+                    }
+                  ]
+                }
+              ]
             }
+          }
+        }
             """;
 
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expected));
         assertThat(expected).doesNotContain(permBadName);
-
     }
 
     @Test

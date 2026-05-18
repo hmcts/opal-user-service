@@ -47,8 +47,8 @@ class UserRoleMappingCacheServiceTest {
         when(properties.getUserTtl()).thenReturn(Duration.ofMinutes(30));
 
         var payload = new LinkedHashMap<String, Set<String>>();
-        payload.put("BU1", new LinkedHashSet<>(java.util.List.of("R1", "R2")));
-        payload.put("BU2", new LinkedHashSet<>(java.util.List.of("R3")));
+        payload.put("R1", new LinkedHashSet<>(java.util.List.of("BU1", "BU2")));
+        payload.put("R2", new LinkedHashSet<>(java.util.List.of("BU1")));
 
         // ACT
         cacheService.putUserMapping("AS1", payload);
@@ -56,7 +56,7 @@ class UserRoleMappingCacheServiceTest {
         // ASSERT
         verify(redisTemplate.opsForValue()).set(
             PREFIX + "AS1",
-            "{\"BU1\":[\"R1\",\"R2\"],\"BU2\":[\"R3\"]}",
+            "{\"R1\":[\"BU1\",\"BU2\"],\"R2\":[\"BU1\"]}",
             Duration.ofMinutes(30)
         );
     }

@@ -30,8 +30,6 @@ java:
           alias: ROLE_MAPPING_STORAGE_CONTAINER_NAME
         - name: storage-connection-string
           alias: AZURE_STORAGE_CONNECTION_STRING
-        - name: storage-account-name
-          alias: AZURE_STORAGE_ACCOUNT_NAME
         - name: redis-connection-string
           alias: REDIS_CONNECTION_STRING
   environment:

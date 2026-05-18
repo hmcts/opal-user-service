@@ -289,7 +289,9 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
                             .header("If-Match", "0")
                             .accept(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(status().isRequestTimeout())
-            .andExpect(content().string(""));
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.operation_id").exists())
+            .andExpect(jsonPath("$.retriable").value(true));
     }
 
     @Test
@@ -303,7 +305,9 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
                             .header("If-Match", "0")
                             .accept(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(status().isServiceUnavailable())
-            .andExpect(content().string(""));
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.operation_id").exists())
+            .andExpect(jsonPath("$.retriable").value(true));
     }
 
     private String createSignedToken(String subject) throws NoSuchAlgorithmException {

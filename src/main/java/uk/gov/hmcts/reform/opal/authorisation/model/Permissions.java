@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.hmcts.opal.common.user.authorisation.model.PermissionDescriptor;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 
-public enum Permissions {
+public enum Permissions implements PermissionDescriptor {
     CREATE_MANAGE_DRAFT_ACCOUNTS(1, "Create and Manage Draft Accounts"),
     ACCOUNT_ENQUIRY_NOTES(2, "Account Enquiry - Account Notes"),
     ACCOUNT_ENQUIRY(3, "Account Enquiry"),
@@ -34,17 +34,17 @@ public enum Permissions {
     }
 
     public PermissionDescriptor getDescriptor() {
-        return new PermissionDescriptor() {
-            @Override
-            public long getId() {
-                return id;
-            }
+        return this;
+    }
 
-            @Override
-            public String getDescription() {
-                return description;
-            }
-        };
+    @Override
+    public long getId() {
+        return id;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
     }
 
     public static Permissions toPermissionOrNull(String functionDescription) {

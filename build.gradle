@@ -355,7 +355,7 @@ dependencies {
     }
   }
 
-  implementation 'uk.gov.hmcts:opal-common-lib:0.3.10'
+  implementation 'uk.gov.hmcts:opal-common-lib:0.3.11'
   implementation 'uk.gov.hmcts:spring-exception-handler:1.0.1'
 
   implementation 'org.springframework.boot:spring-boot-starter-web'

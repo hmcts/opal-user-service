@@ -23,9 +23,9 @@ class UserRoleMappingParserTest {
                 email_address,business_unit_id,role_id
                 user1@test.com,BU1,R1
                 user1@test.com,BU1,R2
-                user1@test.com,BU2,R3
+                user1@test.com,BU2,R1
                 user2@test.com,BU1,R4
-                user2@test.com,BU2,R5
+                user2@test.com,BU2,R4
                 """;
 
         // ACT
@@ -41,9 +41,9 @@ class UserRoleMappingParserTest {
             .orElseThrow();
 
         assertEquals(Map.of(
-            "BU1", Set.of("R1", "R2"),
-            "BU2", Set.of("R3")
-        ), user1.businessUnitToRoles());
+            "R1", Set.of("BU1", "BU2"),
+            "R2", Set.of("BU1")
+        ), user1.roleToBusinessUnits());
 
         ParsedUserMapping user2 = result.validUsers().stream()
             .filter(u -> u.emailAddress().equals("user2@test.com"))
@@ -51,9 +51,8 @@ class UserRoleMappingParserTest {
             .orElseThrow();
 
         assertEquals(Map.of(
-            "BU1", Set.of("R4"),
-            "BU2", Set.of("R5")
-        ), user2.businessUnitToRoles());
+            "R4", Set.of("BU1", "BU2")
+        ), user2.roleToBusinessUnits());
     }
 
     @Test
@@ -82,8 +81,8 @@ class UserRoleMappingParserTest {
             .orElseThrow();
 
         assertEquals(Map.of(
-            "BU2", Set.of("R3")
-        ), user2.businessUnitToRoles());
+            "R3", Set.of("BU2")
+        ), user2.roleToBusinessUnits());
 
         assertTrue(result.validUsers().stream()
                        .noneMatch(u -> u.emailAddress().equals("user1@test.com")));
@@ -112,8 +111,9 @@ class UserRoleMappingParserTest {
 
         assertEquals("user1@test.com", user.emailAddress());
         assertEquals(Map.of(
-            "BU1", Set.of("R1", "R2")
-        ), user.businessUnitToRoles());
+            "R1", Set.of("BU1"),
+            "R2", Set.of("BU1")
+        ), user.roleToBusinessUnits());
     }
 
     @Test
@@ -137,8 +137,8 @@ class UserRoleMappingParserTest {
 
         assertEquals("user2@test.com", user2.emailAddress());
         assertEquals(Map.of(
-            "BU2", Set.of("R2")
-        ), user2.businessUnitToRoles());
+            "R2", Set.of("BU2")
+        ), user2.roleToBusinessUnits());
     }
 
     @Test
@@ -172,8 +172,8 @@ class UserRoleMappingParserTest {
             .orElseThrow();
 
         assertEquals(
-            Map.of("BU2", Set.of("R3")),
-            user2.businessUnitToRoles()
+            Map.of("R3", Set.of("BU2")),
+            user2.roleToBusinessUnits()
         );
     }
 }

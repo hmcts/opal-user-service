@@ -9,7 +9,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleService;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
@@ -29,8 +29,8 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,7 +44,7 @@ class TestingSupportIntegrationTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private FeatureToggleService featureToggleService;
+    private FeatureToggleApi featureToggleApi;
 
     @MockitoBean
     private TestingSupportAccessTokenService testingSupportAccessTokenService;
@@ -57,7 +57,7 @@ class TestingSupportIntegrationTest {
 
     @Test
     void testIsFeatureEnabled() throws Exception {
-        when(featureToggleService.isFeatureEnabled(anyString())).thenReturn(true);
+        when(featureToggleApi.isFeatureEnabled(anyString())).thenReturn(true);
 
         mockMvc.perform(get("/testing-support/launchdarkly/bool/testFeature"))
             .andExpect(status().isOk())
@@ -68,7 +68,7 @@ class TestingSupportIntegrationTest {
     @Test
     void testGetFeatureValue() throws Exception {
         String featureValue = "testValue";
-        when(featureToggleService.getFeatureValue(anyString())).thenReturn(featureValue);
+        when(featureToggleApi.getFeatureValue(anyString(), anyString())).thenReturn(featureValue);
 
         mockMvc.perform(get("/testing-support/launchdarkly/string/testFeature"))
             .andExpect(status().isOk())

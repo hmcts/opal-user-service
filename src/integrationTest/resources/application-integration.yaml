@@ -1,3 +1,6 @@
+opal:
+  feature-flags:
+    is-legacy-mode: false
 spring:
   jpa:
     hibernate:

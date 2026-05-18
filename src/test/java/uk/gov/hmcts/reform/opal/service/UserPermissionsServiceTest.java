@@ -131,7 +131,7 @@ class UserPermissionsServiceTest {
 
         EntityNotFoundException ex = assertThrows(
             EntityNotFoundException.class,
-            () -> service.getUserState(USER_ID, null, service, null)
+            () -> service.getUserState(USER_ID, null, null)
         );
         assertEquals("User not found with id: " + USER_ID, ex.getMessage());
 
@@ -155,7 +155,7 @@ class UserPermissionsServiceTest {
             }).when(securityEventLoggingService).logEvent(any(), any(), any(), any(), any(), any());
         }
 
-        UserStateDto result = service.getUserState(jwtAuthToken, service, newLogin);
+        UserStateDto result = service.getUserState(jwtAuthToken, newLogin);
 
         assertEquals(userDto, result);
         verify(userRepository).findByTokenSubject(any());
@@ -172,7 +172,7 @@ class UserPermissionsServiceTest {
         when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.of(userEntity));
 
         // Act
-        long result = service.getUserId(jwtAuthToken, service);
+        long result = service.getUserId(jwtAuthToken);
 
         // Assert
         assertEquals(USER_ID, result);
@@ -186,7 +186,7 @@ class UserPermissionsServiceTest {
         SecurityContextHolder.getContext().setAuthentication(jwtAuthToken);
         when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.of(userEntity));
 
-        long result = service.getAuthenticatedUserId(service);
+        long result = service.getAuthenticatedUserId();
 
         assertEquals(USER_ID, result);
         verify(userRepository).findByTokenSubject(any());
@@ -199,7 +199,7 @@ class UserPermissionsServiceTest {
 
         AccessDeniedException ex = assertThrows(
             AccessDeniedException.class,
-            () -> service.getAuthenticatedUserId(service)
+            () -> service.getAuthenticatedUserId()
         );
 
         assertEquals("No authenticated user found in the security context.", ex.getMessage());
@@ -216,7 +216,7 @@ class UserPermissionsServiceTest {
 
         EntityNotFoundException ex = assertThrows(
             EntityNotFoundException.class,
-            () -> service.getUserState(jwtAuthToken, service, newLogin)
+            () -> service.getUserState(jwtAuthToken, newLogin)
         );
         assertEquals("User not found with subject: lkkljnwb7D1DFs", ex.getMessage());
 
@@ -283,7 +283,7 @@ class UserPermissionsServiceTest {
         when(userRepository.saveAndFlush(any())).thenReturn(userEntity);
 
         // Act
-        UserDto response = service.updateUser(1L, bearerToken, service, "\"4\"");
+        UserDto response = service.updateUser(1L, bearerToken, "\"4\"");
 
         // Assert
         assertNotNull(response);
@@ -307,7 +307,7 @@ class UserPermissionsServiceTest {
         when(userRepository.saveAndFlush(any())).thenReturn(userEntity);
 
         // Act
-        UserDto response = service.updateUser(bearerToken, service, "\"4\"");
+        UserDto response = service.updateUser(bearerToken, "\"4\"");
 
         // Assert
         assertNotNull(response);

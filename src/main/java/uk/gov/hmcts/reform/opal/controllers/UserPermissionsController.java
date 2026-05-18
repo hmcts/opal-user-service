@@ -34,7 +34,7 @@ public class UserPermissionsController {
         @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
 
         log.debug(":GET:getUserState: new login: {}", newLogin);
-        return buildResponse(userPermissionsService.getUserState(authentication, userPermissionsService, newLogin));
+        return buildResponse(userPermissionsService.getUserState(authentication, newLogin));
     }
 
     @GetMapping("/{userId}/state")
@@ -42,10 +42,9 @@ public class UserPermissionsController {
     public ResponseEntity<UserStateDto> getUserState(
         @PathVariable Long userId, Authentication authentication,
         @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
-
         log.debug(":GET:getUserState: userId: {}, new login: {}", userId, newLogin);
         return buildResponse(userPermissionsService
-                                 .getUserState(userId, authentication, userPermissionsService, newLogin));
+                                 .getUserState(userId, authentication, newLogin));
     }
 
     @PostMapping()
@@ -60,14 +59,14 @@ public class UserPermissionsController {
                                               @RequestHeader(value = "If-Match") String ifMatch) {
         log.debug(":PUT:updateUser:");
         return buildResponse(userPermissionsService
-                                 .updateUser(userId, authHeaderValue, userPermissionsService, ifMatch));
+                                 .updateUser(userId, authHeaderValue, ifMatch));
     }
 
     @PutMapping()
     public ResponseEntity<UserDto> updateUser(@RequestHeader(value = "Authorization") String authHeaderValue,
                                               @RequestHeader(value = "If-Match") String ifMatch) {
         log.debug(":PUT:updateUser:");
-        return buildResponse(userPermissionsService.updateUser(authHeaderValue, userPermissionsService, ifMatch));
+        return buildResponse(userPermissionsService.updateUser(authHeaderValue, ifMatch));
     }
 
 }

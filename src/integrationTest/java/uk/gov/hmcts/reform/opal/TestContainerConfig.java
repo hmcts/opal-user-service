@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.opal;
 
 import com.redis.testcontainers.RedisContainer;
 import lombok.extern.slf4j.Slf4j;
-import com.redis.testcontainers.RedisContainer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -29,7 +28,7 @@ public class TestContainerConfig {
     }
 
     static {
-        POSTGRES_CONTAINER = new PostgreSQLContainer(DockerImageName.parse("postgres:17.5"))
+        POSTGRES_CONTAINER = new PostgreSQLContainer(DockerImageName.parse("postgres:17"))
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("test");
@@ -44,7 +43,6 @@ public class TestContainerConfig {
             .withCommand("azurite-blob --blobHost 0.0.0.0 --blobPort 10000")
             .withExposedPorts(10000);
         AZURITE_CONTAINER.start();
-
     }
 
     private static String connectionString() {

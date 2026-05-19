@@ -60,7 +60,7 @@ public class SynchroniseRolesService {
                 validatedRoleIds = validatedRoleMap.keySet();
 
             } catch (UserMissingFromCacheException e) {
-                log.info("Nothing in cache for : " + user.getTokenSubject());
+                log.warn("Nothing in cache for : " + user.getTokenSubject());
                 validatedRoleIds = emptySet();
             }
 

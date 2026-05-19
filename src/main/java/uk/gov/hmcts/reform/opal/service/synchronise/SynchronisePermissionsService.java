@@ -21,6 +21,9 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 @Slf4j(topic = "opal.SynchronisePermissionsService")
 public class SynchronisePermissionsService {
 
+    private static final String SYNC_STAGE = "synchronise user permissions";
+    private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
+
     private final LegacyWrapperService legacyWrapperService;
     private final SynchroniseBusinessUnitUsersService synchroniseBusinessUnitUsersService;
     private final SynchroniseRolesService synchroniseRolesService;
@@ -30,22 +33,31 @@ public class SynchronisePermissionsService {
 
     @Transactional(propagation = REQUIRES_NEW, rollbackFor = Exception.class)
     public void synchronise(UserEntity detachedUser) {
+        UserEntity user = detachedUser;
+        try {
+            user = userService.getUser(detachedUser.getUserId());
 
-        UserEntity user = userService.getUser(detachedUser.getUserId());
+            //1-2. Get the legacy business unit ids
+            List<LegacyBusinessUnitUserId> legacyBuuList = legacyWrapperService.getBusinessUnitUserIds(user);
 
-        //1-2. Get the legacy business unit ids
-        List<LegacyBusinessUnitUserId> legacyBuuList = legacyWrapperService.getBusinessUnitUserIds(user);
+            //3. Update any business_unit_users in the database that do not match the data returned from the legacy API
+            synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, legacyBuuList);
 
-        //3. Update any business_unit_users in the database that do not match the data returned from the legacy API
-        synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, legacyBuuList);
+            //4-6. Update the users roles
+            Set<Long> validatedRoleIds = synchroniseRolesService.synchroniseRoles(user, legacyBuuList);
 
-        //4-6. Update the users roles
-        Set<Long> validatedRoleIds = synchroniseRolesService.synchroniseRoles(user, legacyBuuList);
-
-        //7. Call activateUser method if the user does not have an activation date
-        if (!validatedRoleIds.isEmpty() && user.getActivationDate() == null) {
-            userService.activateUser(user);
-            log.debug("User activated");
+            //7. Call activateUser method if the user does not have an activation date
+            if (!validatedRoleIds.isEmpty() && user.getActivationDate() == null) {
+                userService.activateUser(user);
+                log.debug("User activated");
+            }
+        } catch (RuntimeException exception) {
+            if (exception instanceof SynchronisePermissionsException synchronisePermissionsException) {
+                throw synchronisePermissionsException;
+            }
+            throw new SynchronisePermissionsException(user, SYNC_STAGE,
+                                                      UNEXPECTED_RUNTIME_EXCEPTION_REASON,
+                                                      exception);
         }
     }
 }

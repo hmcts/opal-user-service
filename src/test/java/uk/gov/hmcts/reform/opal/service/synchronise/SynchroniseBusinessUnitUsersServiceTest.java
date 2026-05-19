@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -35,6 +36,10 @@ class SynchroniseBusinessUnitUsersServiceTest {
     private static final String STALE_BUSINESS_UNIT_USER_ID = "L082JG";
     private static final short BUSINESS_UNIT_ID = 70;
     private static final short DIFFERENT_BUSINESS_UNIT_ID = 67;
+    private static final String LEGACY_BUU_PAYLOAD_MISSING_REASON = "legacy business unit user payload is missing";
+    private static final String LEGACY_BUU_ENTRY_MISSING_REASON = "legacy business unit user entry is missing";
+    private static final String SYNC_STAGE = "synchronise business unit users";
+    private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
     @Mock
     private BusinessUnitUserRepository businessUnitUserRepository;
@@ -64,7 +69,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         );
 
         // Assert
-        assertEquals("Legacy business unit user payload is missing", exception.getMessage());
+        assertEquals(errorMessage(USER_ID, LEGACY_BUU_PAYLOAD_MISSING_REASON), exception.getMessage());
         verifyNoInteractions(
             businessUnitUserRepository,
             businessUnitRepository,
@@ -89,7 +94,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         );
 
         // Assert
-        assertEquals("Legacy business unit user entry is missing", exception.getMessage());
+        assertEquals(errorMessage(USER_ID, LEGACY_BUU_ENTRY_MISSING_REASON), exception.getMessage());
         verifyNoInteractions(
             businessUnitUserRepository,
             businessUnitRepository,
@@ -168,7 +173,8 @@ class SynchroniseBusinessUnitUsersServiceTest {
         );
 
         // Assert
-        assertEquals("legacyBusinessUnitUser not found for businessUnit", exception.getMessage());
+        assertEquals(errorMessage(USER_ID, "legacy business unit not found: " + BUSINESS_UNIT_ID),
+                     exception.getMessage());
         verify(businessUnitUserRepository, never()).save(any(BusinessUnitUserEntity.class));
         verify(userEntitlementRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
         verify(businessUnitUserRoleRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
@@ -189,7 +195,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         );
 
         // Assert
-        assertEquals("Invalid business unit user id: ", exception.getMessage());
+        assertEquals(errorMessage(USER_ID, "invalid business unit user id: "), exception.getMessage());
         verifyNoInteractions(
             businessUnitRepository,
             businessUnitUserRepository,
@@ -216,7 +222,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         );
 
         // Assert
-        assertEquals("Invalid business unit id: ABC", exception.getMessage());
+        assertEquals(errorMessage(USER_ID, "invalid business unit id: ABC"), exception.getMessage());
         verifyNoInteractions(
             businessUnitRepository,
             businessUnitUserRepository,
@@ -252,6 +258,36 @@ class SynchroniseBusinessUnitUsersServiceTest {
         verify(businessUnitUserRoleRepository)
             .deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
         verify(businessUnitUserRepository).deleteAllById(staleBusinessUnitUserIds);
+    }
+
+    @Test
+    void synchroniseBusinessUnitUsers_throwsSynchronisePermissionsException_whenUnexpectedRuntimeExceptionOccurs() {
+
+        // Arrange
+        UserEntity user = user(USER_ID);
+        RuntimeException runtimeException = new RuntimeException("db boom");
+        LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
+                                                                                 BUSINESS_UNIT_ID);
+        when(businessUnitRepository.findById(BUSINESS_UNIT_ID)).thenThrow(runtimeException);
+
+        // Act
+        SynchronisePermissionsException exception = assertThrows(
+            SynchronisePermissionsException.class,
+            () -> synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
+                user,
+                List.of(legacyBusinessUnitUser)
+            )
+        );
+
+        // Assert
+        assertEquals(errorMessage(USER_ID, UNEXPECTED_RUNTIME_EXCEPTION_REASON), exception.getMessage());
+        assertSame(runtimeException, exception.getCause());
+    }
+
+    private String errorMessage(long userId, String reason) {
+        return "Could not synchronise permissions for user " + userId
+            + " at stage: " + SYNC_STAGE
+            + ". Reason: " + reason;
     }
 
     private UserEntity user(long userId) {

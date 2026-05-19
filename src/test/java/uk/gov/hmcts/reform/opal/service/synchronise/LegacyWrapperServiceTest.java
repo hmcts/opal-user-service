@@ -30,7 +30,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class LegacyWrapperServiceTest {
 
+    private static final long USER_ID = 123L;
     private static final String USERNAME = "legacy.user@hmcts.net";
+    private static final String SYNC_STAGE = "retrieve business unit users from Legacy API";
+    private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
     @Mock
     private LegacyBusinessUnitUserService legacyBusinessUnitUserService;
@@ -136,7 +139,7 @@ class LegacyWrapperServiceTest {
             SynchronisePermissionsException.class,
             () -> legacyWrapperService.getBusinessUnitUserIds(user)
         );
-        assertTrue(exception.getMessage().contains("Legacy call failed: GetSystemUserIdsByEmail"));
+        assertTrue(exception.getMessage().contains("legacy call failed: GetSystemUserIdsByEmail"));
         assertTrue(exception.getMessage().contains("httpCode="));
         verifyNoInteractions(legacyBusinessUnitUserService);
     }
@@ -156,7 +159,7 @@ class LegacyWrapperServiceTest {
             SynchronisePermissionsException.class,
             () -> legacyWrapperService.getBusinessUnitUserIds(user)
         );
-        assertEquals("Legacy call failed: GetSystemUserIdsByEmail", exception.getMessage());
+        assertEquals(errorMessage(user, "legacy call failed: GetSystemUserIdsByEmail"), exception.getMessage());
         assertSame(legacyException, exception.getCause());
         verifyNoInteractions(legacyBusinessUnitUserService);
     }
@@ -175,7 +178,7 @@ class LegacyWrapperServiceTest {
             SynchronisePermissionsException.class,
             () -> legacyWrapperService.getBusinessUnitUserIds(user)
         );
-        assertTrue(exception.getMessage().contains("Legacy call failed: GetSystemUserIdsByEmail"));
+        assertTrue(exception.getMessage().contains("legacy call failed: GetSystemUserIdsByEmail"));
         assertTrue(exception.getMessage().contains("httpCode="));
         verifyNoInteractions(legacyBusinessUnitUserService);
     }
@@ -192,7 +195,8 @@ class LegacyWrapperServiceTest {
             SynchronisePermissionsException.class,
             () -> legacyWrapperService.getBusinessUnitUserIds(user)
         );
-        assertEquals("Legacy call returned null response: GetSystemUserIdsByEmail", exception.getMessage());
+        assertEquals(errorMessage(user, "legacy call returned null response: GetSystemUserIdsByEmail"),
+                     exception.getMessage());
         verifyNoInteractions(legacyBusinessUnitUserService);
     }
 
@@ -212,7 +216,7 @@ class LegacyWrapperServiceTest {
             SynchronisePermissionsException.class,
             () -> legacyWrapperService.getBusinessUnitUserIds(user)
         );
-        assertTrue(exception.getMessage().contains("Legacy call failed: GetBUUserIdsBySystemUserIds"));
+        assertTrue(exception.getMessage().contains("legacy call failed: GetBUUserIdsBySystemUserIds"));
         assertTrue(exception.getMessage().contains("httpCode="));
     }
 
@@ -232,7 +236,7 @@ class LegacyWrapperServiceTest {
             SynchronisePermissionsException.class,
             () -> legacyWrapperService.getBusinessUnitUserIds(user)
         );
-        assertEquals("Legacy call failed: GetBUUserIdsBySystemUserIds", exception.getMessage());
+        assertEquals(errorMessage(user, "legacy call failed: GetBUUserIdsBySystemUserIds"), exception.getMessage());
         assertSame(legacyException, exception.getCause());
     }
 
@@ -251,7 +255,7 @@ class LegacyWrapperServiceTest {
             SynchronisePermissionsException.class,
             () -> legacyWrapperService.getBusinessUnitUserIds(user)
         );
-        assertTrue(exception.getMessage().contains("Legacy call failed: GetBUUserIdsBySystemUserIds"));
+        assertTrue(exception.getMessage().contains("legacy call failed: GetBUUserIdsBySystemUserIds"));
         assertTrue(exception.getMessage().contains("httpCode="));
     }
 
@@ -268,11 +272,30 @@ class LegacyWrapperServiceTest {
             SynchronisePermissionsException.class,
             () -> legacyWrapperService.getBusinessUnitUserIds(user)
         );
-        assertEquals("Legacy call returned null response: GetBUUserIdsBySystemUserIds", exception.getMessage());
+        assertEquals(errorMessage(user, "legacy call returned null response: GetBUUserIdsBySystemUserIds"),
+                     exception.getMessage());
+    }
+
+    @Test
+    void getBusinessUnitUserIds_throwsSynchronisePermissionsException_whenUnexpectedRuntimeExceptionOccurs() {
+
+        // Arrange
+        UserEntity user = user(USERNAME);
+        RuntimeException runtimeException = new RuntimeException("legacy client boom");
+        when(legacyUserService.getUser(any(LegacyGetUserRequest.class))).thenThrow(runtimeException);
+
+        // Act / Assert
+        SynchronisePermissionsException exception = assertThrows(
+            SynchronisePermissionsException.class,
+            () -> legacyWrapperService.getBusinessUnitUserIds(user)
+        );
+        assertEquals(errorMessage(user, UNEXPECTED_RUNTIME_EXCEPTION_REASON), exception.getMessage());
+        assertSame(runtimeException, exception.getCause());
+        verifyNoInteractions(legacyBusinessUnitUserService);
     }
 
     private UserEntity user(String username) {
-        return UserEntity.builder().username(username).build();
+        return UserEntity.builder().userId(USER_ID).username(username).build();
     }
 
     private List<String> stubSuccessfulUserLookup(String... ids) {
@@ -284,5 +307,11 @@ class LegacyWrapperServiceTest {
             )
         );
         return libraUserIds;
+    }
+
+    private String errorMessage(UserEntity user, String reason) {
+        return "Could not synchronise permissions for user " + user.getUserId()
+            + " at stage: " + SYNC_STAGE
+            + ". Reason: " + reason;
     }
 }

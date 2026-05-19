@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,6 +25,8 @@ class SynchronisePermissionsServiceTest {
 
     private static final long USER_ID = 123L;
     private static final long ROLE_ID = 101L;
+    private static final String SYNC_STAGE = "synchronise user permissions";
+    private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
     private static final UserEntity DETACHED_USER = user(USER_ID, null);
     private static final UserEntity MANAGED_USER_WITH_NO_ACTIVATION = user(USER_ID, null);
     private static final UserEntity MANAGED_USER_WITH_EXISTING_ACTIVATION_DATE =
@@ -110,6 +115,36 @@ class SynchronisePermissionsServiceTest {
 
         // Assert
         verify(userService, never()).activateUser(MANAGED_USER_WITH_EXISTING_ACTIVATION_DATE);
+    }
+
+    @Test
+    void synchronise_throwsSynchronisePermissionsException_whenUnexpectedRuntimeExceptionOccurs() {
+
+        // Arrange
+        List<LegacyBusinessUnitUserId> legacyBusinessUnitUsers = List.of(
+            legacyBusinessUnitUserId("66", "L066JG")
+        );
+        RuntimeException runtimeException = new RuntimeException("db boom");
+        when(userService.getUser(USER_ID)).thenReturn(MANAGED_USER_WITH_NO_ACTIVATION);
+        when(legacyWrapperService.getBusinessUnitUserIds(MANAGED_USER_WITH_NO_ACTIVATION))
+            .thenReturn(legacyBusinessUnitUsers);
+        doThrow(runtimeException).when(synchroniseBusinessUnitUsersService)
+            .synchroniseBusinessUnitsUsers(MANAGED_USER_WITH_NO_ACTIVATION, legacyBusinessUnitUsers);
+
+        // Act
+        SynchronisePermissionsException exception = assertThrows(
+            SynchronisePermissionsException.class,
+            () -> synchronisePermissionsService.synchronise(DETACHED_USER)
+        );
+
+        // Assert
+        assertEquals(
+            "Could not synchronise permissions for user " + USER_ID
+                + " at stage: " + SYNC_STAGE
+                + ". Reason: " + UNEXPECTED_RUNTIME_EXCEPTION_REASON,
+            exception.getMessage()
+        );
+        verify(userService, never()).activateUser(MANAGED_USER_WITH_NO_ACTIVATION);
     }
 
     private static UserEntity user(long userId, LocalDateTime activationDate) {

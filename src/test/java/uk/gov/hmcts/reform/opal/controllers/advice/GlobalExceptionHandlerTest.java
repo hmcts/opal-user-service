@@ -34,8 +34,9 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import uk.gov.hmcts.opal.common.exception.OpalApiException;
 import uk.gov.hmcts.opal.common.user.authentication.exception.AuthenticationError;
 import uk.gov.hmcts.opal.common.user.authentication.exception.MissingRequestHeaderException;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
-import uk.gov.hmcts.reform.opal.service.synchronise.LegacySyncException;
+import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsException;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
@@ -426,17 +427,21 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void testHandleLegacySyncException() {
-        LegacySyncException exception = new LegacySyncException("sync failed");
+    void testHandleSynchronisePermissionsException() {
+        SynchronisePermissionsException exception = new SynchronisePermissionsException(
+            UserEntity.builder().userId(42L).build(),
+            "synchronise roles",
+            "sync failed"
+        );
         ResponseEntity<ProblemDetail> response = globalExceptionHandler
-            .handleLegacySyncException(exception);
+            .handleSynchronisePermissionsException(exception);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         ProblemDetail problemDetail = response.getBody();
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), problemDetail.getStatus());
         assertEquals("Internal Server Error", problemDetail.getTitle());
-        assertEquals("Permissions synchronization failed", problemDetail.getDetail());
+        assertEquals(exception.getMessage(), problemDetail.getDetail());
         assertEquals(URI.create("https://hmcts.gov.uk/problems/permissions-synchronization"),
                      problemDetail.getType());
         assertNotNull(problemDetail.getInstance());

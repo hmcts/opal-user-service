@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -26,10 +27,16 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RoleMappingCacheLookupServiceTest {
 
+    private static final long USER_ID = 123L;
     private static final String TOKEN_SUBJECT = "subject-123";
     private static final String CACHE_KEY = "ROLE_MAPPING_USER_" + TOKEN_SUBJECT;
     private static final Type ROLE_MAPPING_CACHE_TYPE =
         new TypeReference<Map<String, Set<String>>>() { }.getType();
+    private static final String SYNC_STAGE = "parse role mapping cache";
+    private static final String PAYLOAD_NULL_REASON = "payload resolved to null";
+    private static final String PARSE_JSON_REASON = "could not parse JSON";
+    private static final String NULL_BUSINESS_UNIT_IDS_REASON = "null business unit ids for role 101";
+    private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
     @Mock
     private StringRedisTemplate redisTemplate;
@@ -53,7 +60,7 @@ class RoleMappingCacheLookupServiceTest {
         // Act / Assert
         UserMissingFromCacheException exception = assertThrows(
             UserMissingFromCacheException.class,
-            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
         assertEquals("Nothing in cache for : " + TOKEN_SUBJECT, exception.getMessage());
     }
@@ -73,7 +80,7 @@ class RoleMappingCacheLookupServiceTest {
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
 
         // Act
-        Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT);
+        Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(user());
 
         // Assert
         assertEquals(
@@ -98,9 +105,9 @@ class RoleMappingCacheLookupServiceTest {
         // Act / Assert
         SynchronisePermissionsException exception = assertThrows(
             SynchronisePermissionsException.class,
-            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
-        assertEquals("Could not parse role mapping cache : payload resolved to null", exception.getMessage());
+        assertEquals(errorMessage(PAYLOAD_NULL_REASON), exception.getMessage());
     }
 
     @Test
@@ -119,9 +126,9 @@ class RoleMappingCacheLookupServiceTest {
         // Act / Assert
         SynchronisePermissionsException exception = assertThrows(
             SynchronisePermissionsException.class,
-            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
-        assertEquals("Could not parse role mapping cache : could not parse JSON", exception.getMessage());
+        assertEquals(errorMessage(PARSE_JSON_REASON), exception.getMessage());
         assertSame(jsonProcessingException, exception.getCause());
     }
 
@@ -141,11 +148,11 @@ class RoleMappingCacheLookupServiceTest {
         // Act
         SynchronisePermissionsException exception = assertThrows(
             SynchronisePermissionsException.class,
-            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
 
         // Assert
-        assertEquals("Could not parse role mapping cache : could not parse JSON", exception.getMessage());
+        assertEquals(errorMessage(PARSE_JSON_REASON), exception.getMessage());
         assertSame(jsonProcessingException, exception.getCause());
     }
 
@@ -159,7 +166,7 @@ class RoleMappingCacheLookupServiceTest {
         // Act / Assert
         UserMissingFromCacheException exception = assertThrows(
             UserMissingFromCacheException.class,
-            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
         assertEquals("Nothing in cache for : " + TOKEN_SUBJECT, exception.getMessage());
     }
@@ -178,10 +185,9 @@ class RoleMappingCacheLookupServiceTest {
         // Act / Assert
         SynchronisePermissionsException exception = assertThrows(
             SynchronisePermissionsException.class,
-            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
-        assertEquals("Could not parse role mapping cache : null business unit ids for role 101",
-                     exception.getMessage());
+        assertEquals(errorMessage(NULL_BUSINESS_UNIT_IDS_REASON), exception.getMessage());
     }
 
     @Test
@@ -197,7 +203,7 @@ class RoleMappingCacheLookupServiceTest {
         // Act / Assert
         assertThrows(
             SynchronisePermissionsException.class,
-            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
     }
 
@@ -215,13 +221,45 @@ class RoleMappingCacheLookupServiceTest {
         // Act / Assert
         assertThrows(
             SynchronisePermissionsException.class,
-            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT)
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
+    }
+
+    @Test
+    void getRoleMappingByTokenSubject_throwsSynchronisePermissionsException_whenUnexpectedRuntimeExceptionOccurs() {
+
+        // Arrange
+        RuntimeException runtimeException = new RuntimeException("redis boom");
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(CACHE_KEY)).thenThrow(runtimeException);
+
+        // Act
+        SynchronisePermissionsException exception = assertThrows(
+            SynchronisePermissionsException.class,
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
+        );
+
+        // Assert
+        assertEquals(errorMessage(UNEXPECTED_RUNTIME_EXCEPTION_REASON), exception.getMessage());
+        assertSame(runtimeException, exception.getCause());
     }
 
     private TypeReference<Map<String, Set<String>>> roleMappingCacheTypeReference() {
         return ArgumentMatchers.argThat(typeReference ->
             typeReference != null && ROLE_MAPPING_CACHE_TYPE.equals(typeReference.getType())
         );
+    }
+
+    private UserEntity user() {
+        return UserEntity.builder()
+            .userId(USER_ID)
+            .tokenSubject(TOKEN_SUBJECT)
+            .build();
+    }
+
+    private String errorMessage(String reason) {
+        return "Could not synchronise permissions for user " + USER_ID
+            + " at stage: " + SYNC_STAGE
+            + ". Reason: " + reason;
     }
 }

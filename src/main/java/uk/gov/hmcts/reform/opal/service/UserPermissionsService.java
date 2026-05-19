@@ -50,7 +50,6 @@ import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
-import uk.gov.hmcts.reform.opal.service.synchronise.LegacySyncException;
 import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsService;
 
 import java.time.Clock;
@@ -79,7 +78,6 @@ public class UserPermissionsService {
 
     //The claim used to map the authorised user to the user entity.
     private static final String PREFERRED_USERNAME_CLAIM = "preferred_username";
-
     private final BusinessUnitUserRepository businessUnitUserRepository;
     private final UserEntitlementRepository userEntitlementRepository;
     private final UserRepository userRepository;
@@ -163,13 +161,9 @@ public class UserPermissionsService {
         }
 
         if (appModeConfiguration.getAppMode().equalsIgnoreCase("legacy")) {
-            try {
-                synchronisePermissionsService.synchronise(user);
-                // synchronise() was processed in a different transaction, so we need to refresh user entity
-                userService.refreshUser(user);
-            } catch (RuntimeException ex) {
-                throw new LegacySyncException("Permissions synchronisation failed for userId: " + user.getUserId(), ex);
-            }
+            synchronisePermissionsService.synchronise(user);
+            // synchronise() was processed in a different transaction, so we need to refresh user entity
+            userService.refreshUser(user);
         }
 
         user = userRepository.findIdWithPermissions(user.getUserId())

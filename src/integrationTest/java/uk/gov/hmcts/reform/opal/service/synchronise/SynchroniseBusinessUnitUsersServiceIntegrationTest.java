@@ -30,6 +30,8 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @Slf4j(topic = "opal.SynchroniseBusinessUnitUsersServiceIntegrationTest")
 class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegrationTest {
 
+    private static final String SYNC_STAGE = "synchronise business unit users";
+
     @Autowired
     private SynchroniseBusinessUnitUsersService refreshBusinessUnitUsersService;
 
@@ -120,7 +122,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             List.of(legacyBusinessUnitUser("L082JG", "999"))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage("legacyBusinessUnitUser not found for businessUnit");
+            .hasMessage(errorMessage(user.getUserId(), "legacy business unit not found: 999"));
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
         assertThat(getBusinessUnitUserRow("L082JG")).isEqualTo(rowBefore);
@@ -139,7 +141,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             List.of(legacyBusinessUnitUser("L082JG", malformedBusinessUnitId))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage("Invalid business unit id: " + malformedBusinessUnitId);
+            .hasMessage(errorMessage(user.getUserId(), "invalid business unit id: " + malformedBusinessUnitId));
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
         assertThat(getBusinessUnitUserRow("L082JG")).isEqualTo(rowBefore);
@@ -161,7 +163,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             List.of(legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage("Invalid business unit user id: " + malformedBusinessUnitUserId);
+            .hasMessage(errorMessage(user.getUserId(), "invalid business unit user id: " + malformedBusinessUnitUserId));
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
         assertThat(getBusinessUnitUserRow("L082JG")).isEqualTo(rowBefore);
@@ -180,7 +182,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             List.of(legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage("Invalid business unit user id: " + malformedBusinessUnitUserId);
+            .hasMessage(errorMessage(user.getUserId(), "invalid business unit user id: " + malformedBusinessUnitUserId));
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
         assertThat(getBusinessUnitUserRow("L082JG")).isEqualTo(rowBefore);
@@ -195,7 +197,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, null))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage("Legacy business unit user payload is missing");
+            .hasMessage(errorMessage(user.getUserId(), "legacy business unit user payload is missing"));
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
         assertThat(getBusinessUnitUserRow("L082JG")).isEqualTo(rowBefore);
@@ -213,7 +215,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             java.util.Collections.singletonList(null)
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage("Legacy business unit user entry is missing");
+            .hasMessage(errorMessage(user.getUserId(), "legacy business unit user entry is missing"));
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
         assertThat(getBusinessUnitUserRow("L082JG")).isEqualTo(rowBefore);
@@ -269,5 +271,11 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
     private long asLong(Object value) {
         return ((Number) value).longValue();
+    }
+
+    private String errorMessage(long userId, String reason) {
+        return "Could not synchronise permissions for user " + userId
+            + " at stage: " + SYNC_STAGE
+            + ". Reason: " + reason;
     }
 }

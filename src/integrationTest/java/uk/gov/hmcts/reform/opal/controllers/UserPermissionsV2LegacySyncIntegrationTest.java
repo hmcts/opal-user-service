@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -32,6 +33,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static uk.gov.hmcts.reform.opal.entity.BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED;
@@ -407,7 +409,14 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         long roleCountBefore = countRoleAssignments(user.getUserId());
 
         mockMvc.perform(get(userStateUri(user.getUserId())))
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isInternalServerError())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.title").value("Internal Server Error"))
+            .andExpect(jsonPath("$.type").value("https://hmcts.gov.uk/problems/permissions-synchronization"))
+            .andExpect(jsonPath("$.detail").value(
+                "Could not synchronise permissions for user " + user.getUserId()
+                    + " at stage: synchronise roles. Reason: unexpected runtime exception"
+            ));
 
         assertThat(businessUnitUserExists(BUSINESS_UNIT_USER_ID)).isFalse();
         assertUserRoleCount(user.getUserId(), roleCountBefore);

@@ -27,6 +27,10 @@ import static org.mockito.Mockito.when;
 class SynchroniseRolesServiceTest {
 
     private static final String TOKEN_SUBJECT = "subject-123";
+    private static final long USER_ID = 123L;
+    private static final String SYNC_STAGE = "synchronise roles";
+    private static final String PARSE_LEGACY_BUSINESS_UNIT_ID_REASON = "parse failed for legacy business unit id";
+    private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
     @Mock
     private UserService userService;
@@ -45,8 +49,8 @@ class SynchroniseRolesServiceTest {
     void synchroniseRoles_deletesOnlyRolesMissingFromCachedRoleIds() throws Exception {
 
         // Arrange
-        UserEntity user = UserEntity.builder().tokenSubject(TOKEN_SUBJECT).build();
-        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT))
+        UserEntity user = UserEntity.builder().userId(USER_ID).tokenSubject(TOKEN_SUBJECT).build();
+        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(user))
             .thenReturn(java.util.Map.of(101L, Set.of((short) 7)));
 
         RoleEntity roleStillInCache = RoleEntity.builder().roleId(101L).name("name-not-id").build();
@@ -71,8 +75,8 @@ class SynchroniseRolesServiceTest {
         throws Exception {
 
         // Arrange
-        UserEntity user = UserEntity.builder().tokenSubject(TOKEN_SUBJECT).build();
-        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT))
+        UserEntity user = UserEntity.builder().userId(USER_ID).tokenSubject(TOKEN_SUBJECT).build();
+        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(user))
             .thenThrow(new UserMissingFromCacheException("Nothing in cache for : " + TOKEN_SUBJECT));
 
         RoleEntity firstExistingRole = RoleEntity.builder().roleId(101L).name("role-101").build();
@@ -95,8 +99,8 @@ class SynchroniseRolesServiceTest {
         throws Exception {
 
         // Arrange
-        UserEntity user = UserEntity.builder().tokenSubject(TOKEN_SUBJECT).build();
-        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT))
+        UserEntity user = UserEntity.builder().userId(USER_ID).tokenSubject(TOKEN_SUBJECT).build();
+        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(user))
             .thenReturn(java.util.Map.of(101L, Set.of((short) 7)));
 
         LegacyBusinessUnitUserId invalidLegacyBusinessUnitUser = LegacyBusinessUnitUserId.builder()
@@ -108,10 +112,47 @@ class SynchroniseRolesServiceTest {
             SynchronisePermissionsException.class,
             () -> synchroniseRolesService.synchroniseRoles(user, List.of(invalidLegacyBusinessUnitUser))
         );
-        assertEquals("Could not parse legacy business unit id", exception.getMessage());
+        assertEquals(
+            errorMessage(SYNC_STAGE, PARSE_LEGACY_BUSINESS_UNIT_ID_REASON),
+            exception.getMessage()
+        );
         verify(userService, never()).addOrReplaceRoleInformationOnUser(any(), anyLong(), anySet());
         verify(businessUnitUserService, never()).findAllRolesOfUser(any());
         verify(userService, never()).deleteRoleFromUser(any(), anyLong());
+    }
+
+    @Test
+    void synchroniseRoles_throwsSynchronisePermissionsException_whenUnexpectedRuntimeExceptionOccurs()
+        throws Exception {
+
+        // Arrange
+        UserEntity user = UserEntity.builder().userId(USER_ID).tokenSubject(TOKEN_SUBJECT).build();
+        RuntimeException runtimeException = new RuntimeException("db boom");
+        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(user))
+            .thenReturn(java.util.Map.of(101L, Set.of((short) 7)));
+        when(businessUnitUserService.findAllRolesOfUser(user)).thenThrow(runtimeException);
+
+        LegacyBusinessUnitUserId legacyBusinessUnitUser = LegacyBusinessUnitUserId.builder()
+            .businessUnitId("7")
+            .build();
+
+        // Act
+        SynchronisePermissionsException exception = assertThrows(
+            SynchronisePermissionsException.class,
+            () -> synchroniseRolesService.synchroniseRoles(user, List.of(legacyBusinessUnitUser))
+        );
+
+        // Assert
+        assertEquals(
+            errorMessage(SYNC_STAGE, UNEXPECTED_RUNTIME_EXCEPTION_REASON),
+            exception.getMessage()
+        );
+        assertEquals(runtimeException, exception.getCause());
+    }
+
+    private String errorMessage(String stage, String reason) {
+        return "Could not synchronise permissions for user " + USER_ID
+            + " at stage: " + stage + ". Reason: " + reason;
     }
 
 }

@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
-import uk.gov.hmcts.common.exceptions.standard.InternalServerErrorException;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.LegacyWireMockXmlStubHelper;
@@ -36,6 +35,8 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
 
     private static final long TARGET_USER_ID = 500000000L;
     private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
+    private static final String SYNC_STAGE = "synchronise roles";
+    private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
     @Autowired
     private SynchronisePermissionsService synchronisePermissionsService;
@@ -106,8 +107,9 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
 
         try {
             assertThatThrownBy(() -> synchronisePermissionsService.synchronise(user))
-                .isInstanceOf(InternalServerErrorException.class)
-                .hasMessageContaining("No authenticated user found");
+                .isInstanceOf(SynchronisePermissionsException.class)
+                .hasMessage(errorMessage(TARGET_USER_ID, SYNC_STAGE,
+                                         UNEXPECTED_RUNTIME_EXCEPTION_REASON));
         } finally {
             redisTemplate.delete(cacheKey);
         }
@@ -191,6 +193,12 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
             Timestamp.class,
             userId
         );
+    }
+
+    private String errorMessage(long userId, String stage, String reason) {
+        return "Could not synchronise permissions for user " + userId
+            + " at stage: " + stage
+            + ". Reason: " + reason;
     }
 
 }

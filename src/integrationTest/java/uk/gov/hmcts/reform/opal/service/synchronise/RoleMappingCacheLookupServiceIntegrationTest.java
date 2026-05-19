@@ -8,6 +8,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
 import java.util.Map;
 import java.util.Set;
@@ -23,8 +24,11 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @DisplayName("RoleMappingCacheLookupService integration tests")
 class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTest {
 
+    private static final long USER_ID = 500000000L;
     private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
     private static final String TOKEN_SUBJECT = "subject-lookup-123";
+    private static final String SYNC_STAGE = "parse role mapping cache";
+    private static final String COULD_NOT_PARSE_JSON_REASON = "could not parse JSON";
 
     @Autowired
     private RoleMappingCacheLookupService roleMappingCacheLookupService;
@@ -45,7 +49,7 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
         );
 
         try {
-            Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT);
+            Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(user());
 
             assertThat(result).isEqualTo(Map.of(
                 101L, Set.of((short) 7, (short) 8),
@@ -63,9 +67,9 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
         redisTemplate.opsForValue().set(cacheKey, "not-json");
 
         try {
-            assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT))
+            assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user()))
                 .isInstanceOf(SynchronisePermissionsException.class)
-                .hasMessage("Could not parse role mapping cache : could not parse JSON");
+                .hasMessage(errorMessage(COULD_NOT_PARSE_JSON_REASON));
         } finally {
             redisTemplate.delete(cacheKey);
         }
@@ -77,8 +81,21 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
         String cacheKey = ROLE_MAPPING_USER_PREFIX + TOKEN_SUBJECT;
         redisTemplate.delete(cacheKey);
 
-        assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(TOKEN_SUBJECT))
+        assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user()))
             .isInstanceOf(UserMissingFromCacheException.class)
             .hasMessage("Nothing in cache for : " + TOKEN_SUBJECT);
+    }
+
+    private UserEntity user() {
+        return UserEntity.builder()
+            .userId(USER_ID)
+            .tokenSubject(TOKEN_SUBJECT)
+            .build();
+    }
+
+    private String errorMessage(String reason) {
+        return "Could not synchronise permissions for user " + USER_ID
+            + " at stage: " + SYNC_STAGE
+            + ". Reason: " + reason;
     }
 }

@@ -21,51 +21,65 @@ import static java.util.Collections.emptyList;
 @Slf4j(topic = "opal.LegacyUserWrapperService")
 public class LegacyWrapperService {
 
+    private static final String SYNC_STAGE = "retrieve business unit users from Legacy API";
+
     private final LegacyBusinessUnitUserService legacyBusinessUnitUserService;
     private final LegacyUserService legacyUserService;
 
     public List<LegacyBusinessUnitUserId> getBusinessUnitUserIds(UserEntity user) {
-        //1. Fetch Libra user id's  from the legacy system
-        GatewayService.Response<LegacyGetUserResponse> legacyGetUserGatewayResponse = legacyUserService.getUser(
-            new LegacyGetUserRequest(user.getUsername()));
-        LegacyGetUserResponse legacyGetUserResponse = requireSuccessfulResponse(
-            legacyGetUserGatewayResponse,
-            "GetSystemUserIdsByEmail"
-        );
-        List<String> libraUserIds = legacyGetUserResponse.getLibraUserIds() == null
-            ? emptyList()
-            : legacyGetUserResponse.getLibraUserIds();
-        log.debug("legacyGetUserResponse: {}", legacyGetUserResponse);
-
-        List<LegacyBusinessUnitUserId> legacyBuuList = emptyList();
-        if (!libraUserIds.isEmpty()) {
-
-            //2. Fetch Business unit user id's and business unit id's from the legacy system (PO-3442)
-            //   using the Libra User id's returned previously
-            GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> legacyBusinessUnitUsersGatewayResponse =
-                legacyBusinessUnitUserService.getBusinessUnitUserIds(libraUserIds);
-            LegacyGetBusinessUnitUserIdsResponse legacyBusinessUnitUsersResponse = requireSuccessfulResponse(
-                legacyBusinessUnitUsersGatewayResponse,
-                "GetBUUserIdsBySystemUserIds"
+        try {
+            //1. Fetch Libra user id's  from the legacy system
+            GatewayService.Response<LegacyGetUserResponse> legacyGetUserGatewayResponse = legacyUserService.getUser(
+                new LegacyGetUserRequest(user.getUsername()));
+            LegacyGetUserResponse legacyGetUserResponse = requireSuccessfulResponse(
+                user,
+                legacyGetUserGatewayResponse,
+                "GetSystemUserIdsByEmail"
             );
-            legacyBuuList = legacyBusinessUnitUsersResponse.getBusinessUnitUserIds() == null
+            List<String> libraUserIds = legacyGetUserResponse.getLibraUserIds() == null
                 ? emptyList()
-                : legacyBusinessUnitUsersResponse.getBusinessUnitUserIds();
-            log.debug("legacyBusinessUnitUsersResponse: {}", legacyBusinessUnitUsersResponse);
+                : legacyGetUserResponse.getLibraUserIds();
+            log.debug("legacyGetUserResponse: {}", legacyGetUserResponse);
+
+            List<LegacyBusinessUnitUserId> legacyBuuList = emptyList();
+            if (!libraUserIds.isEmpty()) {
+
+                //2. Fetch Business unit user id's and business unit id's from the legacy system (PO-3442)
+                //   using the Libra User id's returned previously
+                GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> legacyBusinessUnitUsersGatewayResponse =
+                    legacyBusinessUnitUserService.getBusinessUnitUserIds(libraUserIds);
+                LegacyGetBusinessUnitUserIdsResponse legacyBusinessUnitUsersResponse = requireSuccessfulResponse(
+                    user,
+                    legacyBusinessUnitUsersGatewayResponse,
+                    "GetBUUserIdsBySystemUserIds"
+                );
+                legacyBuuList = legacyBusinessUnitUsersResponse.getBusinessUnitUserIds() == null
+                    ? emptyList()
+                    : legacyBusinessUnitUsersResponse.getBusinessUnitUserIds();
+                log.debug("legacyBusinessUnitUsersResponse: {}", legacyBusinessUnitUsersResponse);
+            }
+            return legacyBuuList;
+        } catch (RuntimeException exception) {
+            if (exception instanceof SynchronisePermissionsException synchronisePermissionsException) {
+                throw synchronisePermissionsException;
+            }
+            throw new SynchronisePermissionsException(user, SYNC_STAGE, "unexpected runtime exception", exception);
         }
-        return legacyBuuList;
     }
 
-    private <T> T requireSuccessfulResponse(GatewayService.Response<T> response, String operation) {
+    private <T> T requireSuccessfulResponse(UserEntity user, GatewayService.Response<T> response, String operation) {
         if (response == null) {
-            throw new SynchronisePermissionsException("Legacy call returned null response: " + operation);
+            throw new SynchronisePermissionsException(user, SYNC_STAGE,
+                                                      "legacy call returned null response: " + operation);
         }
         if (!response.isSuccessful() || response.responseEntity == null) {
             if (response.isException() && response.exception != null) {
-                throw new SynchronisePermissionsException("Legacy call failed: " + operation, response.exception);
+                throw new SynchronisePermissionsException(user, SYNC_STAGE,
+                                                          "legacy call failed: " + operation, response.exception);
             }
             throw new SynchronisePermissionsException(
-                "Legacy call failed: " + operation + " (httpCode=" + response.code + ")"
+                user, SYNC_STAGE,
+                "legacy call failed: " + operation + " (httpCode=" + response.code + ")"
             );
         }
         return response.responseEntity;

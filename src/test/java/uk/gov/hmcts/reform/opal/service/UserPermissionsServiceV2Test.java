@@ -30,7 +30,6 @@ import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
-import uk.gov.hmcts.reform.opal.service.synchronise.LegacySyncException;
 import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsService;
 
 import java.time.Clock;
@@ -266,7 +265,7 @@ class UserPermissionsServiceV2Test {
     }
 
     @Test
-    void getUserStateV2_whenLegacySynchronisationThrowsRuntime_wrapsAsLegacySyncException() {
+    void getUserStateV2_whenLegacySynchronisationThrowsRuntime_propagatesRuntimeException() {
 
         // Arrange
         RuntimeException runtimeException = new RuntimeException("sync failed");
@@ -275,14 +274,13 @@ class UserPermissionsServiceV2Test {
         doThrow(runtimeException).when(synchronisePermissionsService).synchronise(userEntity);
 
         // Act
-        LegacySyncException thrown = assertThrows(
-            LegacySyncException.class,
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
             () -> service.getUserStateV2(USER_ID, false)
         );
 
         // Assert
-        assertThat(thrown.getMessage()).isEqualTo("Permissions synchronisation failed for userId: " + USER_ID);
-        assertThat(thrown.getCause()).isEqualTo(runtimeException);
+        assertThat(thrown).isSameAs(runtimeException);
         verifyNoInteractions(userService);
     }
 

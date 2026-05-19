@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -13,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnTransformer;
 
 @Entity
 @Table(name = "business_units")
@@ -34,8 +36,10 @@ public class BusinessUnitEntity {
     @Column(name = "business_unit_code", length = 4)
     private String businessUnitCode;
 
+    @Convert(converter = BusinessUnitTypeConverter.class)
+    @ColumnTransformer(write = "?::t_business_unit_type_enum")
     @Column(name = "business_unit_type", length = 20, nullable = false)
-    private String businessUnitType;
+    private BusinessUnitType businessUnitType;
 
     @Column(name = "account_number_prefix", length = 2)
     private String accountNumberPrefix;

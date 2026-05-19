@@ -657,7 +657,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
     ) {
         jdbcTemplate.update(
             "INSERT INTO business_events (business_event_id, event_type, subject_user_id, initiator_user_id,"
-                + " event_details) VALUES (?, CAST(? AS t_event_type_enum), ?, ?, CAST(? AS json))",
+                + " event_details, event_date) VALUES (?, CAST(? AS t_event_type_enum), ?, ?, CAST(? AS json), NOW())",
             businessEventId,
             eventType.name(),
             subjectUserId,

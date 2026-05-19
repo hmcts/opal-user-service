@@ -24,6 +24,16 @@ public class RoleMappingCacheLookupService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Looks up the raw cache payload map for the user and converts it into typed identifiers used by
+     * synchronisation.
+     *
+     * @param user user whose token subject forms the Redis key ({@code ROLE_MAPPING_USER_<tokenSubject>}) for a
+     *             payload map keyed by role id as {@link String}, with values containing business unit ids as
+     *             {@link String}
+     * @return map keyed by role id as {@link Long}, with values containing business unit ids as {@link Short}
+     * @throws UserMissingFromCacheException when there is no cache entry for the user token subject
+     */
     public Map<Long, Set<Short>> getRoleMappingByTokenSubject(UserEntity user)
         throws UserMissingFromCacheException {
         try {
@@ -55,6 +65,13 @@ public class RoleMappingCacheLookupService {
         }
     }
 
+    /**
+     * Converts the raw cache payload map into typed identifiers used by synchronisation.
+     *
+     * @param cacheMap map keyed by role id as {@link String}, with values containing business unit ids as
+     *                 {@link String}
+     * @return map keyed by role id as {@link Long}, with values containing business unit ids as {@link Short}
+     */
     private Map<Long, Set<Short>> convertCacheMap(UserEntity user, Map<String, Set<String>> cacheMap) {
 
         Map<Long, Set<Short>> converted = new HashMap<>();

@@ -10,9 +10,17 @@ import uk.gov.hmcts.opal.utils.TokenUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.gov.hmcts.opal.steps.BearerTokenStepDef.getToken;
 
+/**
+ * Defines assertions over the bearer token captured for the current scenario.
+ */
 public class AssertTokenStepDef {
     private static final Logger log = LoggerFactory.getLogger(AssertTokenStepDef.class);
 
+    /**
+     * Asserts that the token's `unique_name` claim matches the expected test user.
+     *
+     * @param testUser expected value of the `unique_name` claim.
+     */
     @Then("I validate the unique name claim matches {string}")
     public void validateTheUniqueNameClaimMatches(String testUser) {
         DecodedJWT decodedToken = TokenUtils.parseToken(getToken());

@@ -15,7 +15,6 @@ public final class LegacyStubContainerConfig {
 
     private static final int LEGACY_STUB_PORT = 4553;
     private static final String LOCAL_LEGACY_GATEWAY_URL = "http://localhost:%d/opal".formatted(LEGACY_STUB_PORT);
-    private static final String LOCAL_LEGACY_ADMIN_URL = "http://localhost:%d/__admin".formatted(LEGACY_STUB_PORT);
     private static final String DEFAULT_LEGACY_STUB_IMAGE = "hmctsprod.azurecr.io/opal/legacy-db-stub:latest";
     private static final String LEGACY_STUB_IMAGE = resolveLegacyStubImage();
 
@@ -49,10 +48,6 @@ public final class LegacyStubContainerConfig {
 
     public static String legacyGatewayUrl() {
         return LOCAL_LEGACY_GATEWAY_URL;
-    }
-
-    public static String legacyAdminUrl() {
-        return LOCAL_LEGACY_ADMIN_URL;
     }
 
     public static boolean isPortAvailable(int port) {

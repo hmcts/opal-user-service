@@ -1,5 +1,8 @@
 -- Insert users from Flyway script V20240729_003
 INSERT INTO users (user_id, token_preferred_username, token_subject, token_name, password, description, created_date, version_number)
+VALUES (-1, 'opal-system-user', 'opal-system-user', 'opal-system-user', NULL, 'System user for business event initiator auditing', CURRENT_TIMESTAMP, 0);
+
+INSERT INTO users (user_id, token_preferred_username, token_subject, token_name, password, description, created_date, version_number)
 VALUES (500000000, 'opal-test@HMCTS.NET', 'k9LpT2xVqR8m','Pablo', 'password', 'User with 7 business units', CURRENT_TIMESTAMP, 0);
 
 INSERT INTO users (user_id, token_preferred_username, token_subject, description, token_name, version_number,
@@ -21,13 +24,13 @@ VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', 'User with no busin
 -- Insert business units that are referenced in the business_unit_users script
 INSERT INTO business_units (business_unit_id, business_unit_name, business_unit_code, business_unit_type,
                             opal_domain_id)
-VALUES (61, 'Test BU 61', 'T61', 'TEST', 1),
-       (67, 'Test BU 67', 'T67', 'TEST', 1),
-       (68, 'Test BU 68', 'T68', 'TEST', 1),
-       (69, 'Test BU 69', 'T69', 'TEST', 1),
-       (70, 'Test BU 70', 'T70', 'TEST', 1),
-       (71, 'Test BU 71', 'T71', 'TEST', 1),
-       (73, 'Test BU 73', 'T73', 'TEST', 1);
+VALUES (61, 'Test BU 61', 'T61', 'Accounting Division', 1),
+       (67, 'Test BU 67', 'T67', 'Accounting Division', 1),
+       (68, 'Test BU 68', 'T68', 'Accounting Division', 1),
+       (69, 'Test BU 69', 'T69', 'Accounting Division', 1),
+       (70, 'Test BU 70', 'T70', 'Accounting Division', 1),
+       (71, 'Test BU 71', 'T71', 'Accounting Division', 1),
+       (73, 'Test BU 73', 'T73', 'Accounting Division', 1);
 
 
 -- Insert application functions (permissions) from Flyway script V20240730_006
@@ -57,14 +60,14 @@ VALUES (112687, 'L065JG', 41), -- BU 70 gets 'Account Enquiry - Account Notes'
        (112921, 'L066JG', 41), -- BU 68 gets 'Account Enquiry - Account Notes'
        (500001, 'L080JG', 500); -- BU 61 gets 'Collection Order'
 
-INSERT INTO roles (role_id, version_number, opal_domain_id, role_name, is_active, application_function_list)
-VALUES (1,1, 1, 'Fines_Role_1', true, ARRAY['Create and Manage Draft Accounts', 'Account Enquiry - Account Notes']),
-       (1,2, 1, 'Fines_Role_1', true, ARRAY['Create and Manage Draft Accounts', 'Account Enquiry']),
-       (2,1, 1, 'Fines_Role_2', true, ARRAY['Collection Order']),
-       (2,2, 1, 'Fines_Role_2', true, ARRAY['Check and Validate Draft Accounts', 'Search and View Accounts']),
-       (2,3, 1, 'Fines_Role_2', true, ARRAY['Collection Order', 'Check and Validate Draft Accounts', 'Search and View Accounts']),
-       (3,1, 2, 'Confiscation_Role_3', true, ARRAY['Create and Manage Draft Accounts']),
-       (3,2, 2, 'Confiscation_Role_3', true, ARRAY['Create and Manage Draft Accounts', 'Collection Order']);
+INSERT INTO roles (role_id, version_number, opal_domain_id, role_name, application_function_list)
+VALUES (1,1, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry - Account Notes','Account Maintenance']),
+       (1,2, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry','Account Maintenance']),
+       (2,1, 1, 'Fines_Role_2',  ARRAY['Collection Order','Account Maintenance']),
+       (2,2, 1, 'Fines_Role_2',  ARRAY['Check and Validate Draft Accounts', 'Search and view accounts']),
+       (2,3, 1, 'Fines_Role_2',  ARRAY['Collection Order', 'Check and Validate Draft Accounts', 'Search and view accounts']),
+       (3,1, 2, 'Confiscation_Role_3',  ARRAY['Create and Manage Draft Accounts']),
+       (3,2, 2, 'Confiscation_Role_3',  ARRAY['Create and Manage Draft Accounts', 'Collection Order']);
 
 INSERT INTO business_unit_user_roles(business_unit_user_role_id, business_unit_user_id, role_id)
 VALUES (1,'L065JG', 1),

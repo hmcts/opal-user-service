@@ -10,6 +10,9 @@ import org.junit.platform.suite.api.Suite;
 @Suite
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features/functional")
-@ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "@Opal and not @Smoke and not @Ignore")
+@ConfigurationParameter(
+    key = FILTER_TAGS_PROPERTY_NAME,
+    value = "@Opal and not @Smoke and not @Ignore"
+)
 public class OpalTestRunner {
 }

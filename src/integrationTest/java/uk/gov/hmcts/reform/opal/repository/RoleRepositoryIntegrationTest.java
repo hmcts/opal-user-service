@@ -34,35 +34,32 @@ class RoleRepositoryIntegrationTest extends BaseIntegrationTest {
 
         assertThat(finesRole1.getVersionNumber()).isEqualTo(2);
         assertThat(finesRole1.getApplicationFunctionList()).containsExactly(
-            "Create and Manage Draft Accounts", "Account Enquiry");
+            "Create and Manage Draft Accounts", "Account Enquiry", "Account Maintenance");
         assertThat(finesRole2.getVersionNumber()).isEqualTo(3);
         assertThat(finesRole2.getApplicationFunctionList()).containsExactly(
-            "Collection Order", "Check and Validate Draft Accounts", "Search and View Accounts");
+            "Collection Order", "Check and Validate Draft Accounts", "Search and view accounts");
         assertThat(confiscationRole3.getVersionNumber()).isEqualTo(2);
         assertThat(confiscationRole3.getApplicationFunctionList()).containsExactly(
             "Create and Manage Draft Accounts", "Collection Order");
     }
 
     @Test
-    @DisplayName("Test role repository finds current active roles")
-    void testRoleRepositoryFindsCurrentActiveRoles() {
+    @DisplayName("Test role repository finds current role")
+    void testRoleRepositoryFindsCurrentRole() {
         assertThat(roleRepository.existsByRoleId(1L)).isTrue();
-        assertThat(roleRepository.existsByRoleIdAndIsActiveTrue(1L)).isTrue();
-        assertThat(roleRepository.countByRoleIdAndIsActiveTrue(1L)).isEqualTo(1);
+        assertThat(roleRepository.countByRoleId(1L)).isEqualTo(1);
 
-        RoleEntity role = roleRepository.findByRoleIdAndIsActiveTrue(1L).orElseThrow();
+        RoleEntity role = roleRepository.findByRoleId(1L).orElseThrow();
         assertThat(role.getRoleId()).isEqualTo(1L);
         assertThat(role.getVersionNumber()).isEqualTo(2L);
-        assertThat(role.isActive()).isTrue();
     }
 
     @Test
     @DisplayName("Test role repository returns empty for missing roles")
     void testRoleRepositoryReturnsEmptyForMissingRoles() {
         assertThat(roleRepository.existsByRoleId(999L)).isFalse();
-        assertThat(roleRepository.existsByRoleIdAndIsActiveTrue(999L)).isFalse();
-        assertThat(roleRepository.countByRoleIdAndIsActiveTrue(999L)).isZero();
-        assertThat(roleRepository.findByRoleIdAndIsActiveTrue(999L)).isEmpty();
+        assertThat(roleRepository.countByRoleId(999L)).isZero();
+        assertThat(roleRepository.findByRoleId(999L)).isEmpty();
     }
 
     private RoleEntity findRoleByName(Integer domainId, String roleName) {

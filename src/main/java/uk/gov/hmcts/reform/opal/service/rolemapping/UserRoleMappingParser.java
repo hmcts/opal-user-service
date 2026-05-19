@@ -87,20 +87,20 @@ public class UserRoleMappingParser {
     private static class ParsedUserMappingBuilder {
 
         private final String email;
-        private final Map<String, Set<String>> businessUnitToRoles = new LinkedHashMap<>();
+        private final Map<String, Set<String>> roleToBusinessUnits = new LinkedHashMap<>();
 
         ParsedUserMappingBuilder(String email) {
             this.email = email;
         }
 
         void add(String businessUnit, String role) {
-            businessUnitToRoles
-                .computeIfAbsent(businessUnit, k -> new LinkedHashSet<>())
-                .add(role);
+            roleToBusinessUnits
+                .computeIfAbsent(role, k -> new LinkedHashSet<>())
+                .add(businessUnit);
         }
 
         ParsedUserMapping build() {
-            return new ParsedUserMapping(email, businessUnitToRoles);
+            return new ParsedUserMapping(email, roleToBusinessUnits);
         }
     }
 }

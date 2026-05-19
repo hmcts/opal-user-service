@@ -144,17 +144,7 @@ public class UserPermissionsService {
 
         UserEntity user;
         if (userId == 0) {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            Jwt jwt = getJwtToken(authentication);
-            String subject = extractSubject(jwt);
-
-            user = userRepository.findByTokenSubject(subject)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
-
-            String username = extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
-            compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
-            String name = extractClaim(jwt, NAME_CLAIM);
-            compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
+            user = getAndValidateAuthenticatedUser();
         } else {
             user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
@@ -182,6 +172,21 @@ public class UserPermissionsService {
         UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
         cacheUserState(dto, user);
         return dto;
+    }
+
+    private UserEntity getAndValidateAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = getJwtToken(authentication);
+        String subject = extractSubject(jwt);
+
+        UserEntity user = userRepository.findByTokenSubject(subject)
+            .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
+
+        String username = extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
+        compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
+        String name = extractClaim(jwt, NAME_CLAIM);
+        compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
+        return user;
     }
 
     @Transactional(readOnly = true)

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j(topic = "opal.RoleMappingCacheLookupService")
 public class RoleMappingCacheLookupService {
 
     private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
@@ -78,10 +80,10 @@ public class RoleMappingCacheLookupService {
         for (Map.Entry<String, Set<String>> entry : cacheMap.entrySet()) {
             Long roleId = parseRoleId(user, entry.getKey());
             if (entry.getValue() == null) {
-                throw new SynchronisePermissionsException(
-                    user,
-                    SYNC_STAGE, "null business unit ids for role " + entry.getKey()
-                );
+                log.warn("Role {} has null business unit ids in cache for user {}. Treating as empty set.",
+                         entry.getKey(), user.getUserId());
+                converted.put(roleId, new HashSet<>());
+                continue;
             }
             Set<Short> businessUnitIds = new HashSet<>();
             for (String businessUnitId : entry.getValue()) {

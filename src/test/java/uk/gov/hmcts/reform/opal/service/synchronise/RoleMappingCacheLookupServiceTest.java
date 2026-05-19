@@ -35,7 +35,6 @@ class RoleMappingCacheLookupServiceTest {
     private static final String SYNC_STAGE = "parse role mapping cache";
     private static final String PAYLOAD_NULL_REASON = "payload resolved to null";
     private static final String PARSE_JSON_REASON = "could not parse JSON";
-    private static final String NULL_BUSINESS_UNIT_IDS_REASON = "null business unit ids for role 101";
     private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
     @Mock
@@ -172,7 +171,7 @@ class RoleMappingCacheLookupServiceTest {
     }
 
     @Test
-    void getRoleMappingByTokenSubject_throwsLegacyRefreshException_whenRoleBusinessUnitSetIsNull() throws Exception {
+    void getRoleMappingByTokenSubject_returnsEmptyBusinessUnitSet_whenRoleBusinessUnitSetIsNull() throws Exception {
 
         // Arrange
         String cachePayload = "{\"101\":null}";
@@ -182,12 +181,11 @@ class RoleMappingCacheLookupServiceTest {
         when(valueOperations.get(CACHE_KEY)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
 
-        // Act / Assert
-        SynchronisePermissionsException exception = assertThrows(
-            SynchronisePermissionsException.class,
-            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
-        );
-        assertEquals(errorMessage(NULL_BUSINESS_UNIT_IDS_REASON), exception.getMessage());
+        // Act
+        Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(user());
+
+        // Assert
+        assertEquals(Map.of(101L, Set.of()), result);
     }
 
     @Test

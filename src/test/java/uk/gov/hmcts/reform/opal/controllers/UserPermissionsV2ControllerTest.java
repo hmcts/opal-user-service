@@ -19,6 +19,7 @@ import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @Slf4j(topic = "opal.UserPermissionsV2ControllerTest")
@@ -64,12 +65,20 @@ class UserPermissionsV2ControllerTest {
         " ",
         V1_CONTENT_TYPE,
         "application/xml",
-        "text/plain",
-        "not-a-media-type"
+        "text/plain"
     })
     @DisplayName("controller.getUserStateV2 should reject unsupported content types")
     void testGetUserStateV2_rejectsUnsupportedContentTypes(String contentType) {
         assertThatThrownBy(() -> controller.getUserStateV2(123L, true, contentType))
             .isInstanceOf(HttpMediaTypeNotSupportedException.class);
+    }
+
+    @Test
+    @DisplayName("controller.getUserStateV2 should reject malformed content type values")
+    void testGetUserStateV2_rejectsMalformedContentType() {
+        assertThatThrownBy(() -> controller.getUserStateV2(123L, true, "not-a-media-type"))
+            .isInstanceOf(HttpMediaTypeNotSupportedException.class)
+            .hasMessageContaining("not-a-media-type");
+        verifyNoInteractions(userPermissionsService);
     }
 }

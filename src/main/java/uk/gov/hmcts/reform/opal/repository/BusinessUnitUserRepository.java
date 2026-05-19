@@ -20,6 +20,10 @@ public interface BusinessUnitUserRepository extends JpaRepository<BusinessUnitUs
     List<BusinessUnitUserEntity> findAllByUser_UserIdAndBusinessUnit_BusinessUnitIdIn(
         Long userId, Set<Short> businessUnitIds);
 
+    List<BusinessUnitUserEntity> findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
+        Long userId, Set<String> excludedBusinessUnitUserIds
+    );
+
     @Query("""
         select distinct bur.role
         from BusinessUnitUserEntity buu

@@ -124,9 +124,15 @@ public class SynchroniseBusinessUnitUsersService {
     }
 
     private void removeStaleBusinessUnitUsers(Long userId, Set<String> legacyBusinessUnitUserIds) {
-        List<String> staleBusinessUnitUserIds = businessUnitUserRepository.findAllByUser_UserId(userId).stream()
+        List<BusinessUnitUserEntity> staleBusinessUnitUsers = legacyBusinessUnitUserIds.isEmpty()
+            ? businessUnitUserRepository.findAllByUser_UserId(userId)
+            : businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
+                userId,
+                legacyBusinessUnitUserIds
+            );
+
+        List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
             .map(BusinessUnitUserEntity::getBusinessUnitUserId)
-            .filter(existingBusinessUnitUserId -> !legacyBusinessUnitUserIds.contains(existingBusinessUnitUserId))
             .toList();
 
         if (staleBusinessUnitUserIds.isEmpty()) {

@@ -110,7 +110,9 @@ class SynchroniseBusinessUnitUsersServiceTest {
         BusinessUnitEntity businessUnit = businessUnit(BUSINESS_UNIT_ID);
         when(businessUnitRepository.findById(BUSINESS_UNIT_ID)).thenReturn(Optional.of(businessUnit));
         when(businessUnitUserRepository.findById(BUSINESS_UNIT_USER_ID)).thenReturn(Optional.empty());
-        when(businessUnitUserRepository.findAllByUser_UserId(USER_ID)).thenReturn(List.of());
+        when(businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
+            USER_ID, java.util.Set.of(BUSINESS_UNIT_USER_ID)
+        )).thenReturn(List.of());
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
                                                                                  BUSINESS_UNIT_ID);
@@ -140,7 +142,9 @@ class SynchroniseBusinessUnitUsersServiceTest {
         when(businessUnitRepository.findById(BUSINESS_UNIT_ID)).thenReturn(Optional.of(businessUnit));
         when(businessUnitUserRepository.findById(BUSINESS_UNIT_USER_ID))
             .thenReturn(Optional.of(existingBusinessUnitUser));
-        when(businessUnitUserRepository.findAllByUser_UserId(USER_ID)).thenReturn(List.of(existingBusinessUnitUser));
+        when(businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
+            USER_ID, java.util.Set.of(BUSINESS_UNIT_USER_ID)
+        )).thenReturn(List.of());
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
                                                                                  BUSINESS_UNIT_ID);
@@ -238,13 +242,15 @@ class SynchroniseBusinessUnitUsersServiceTest {
         BusinessUnitEntity businessUnit = businessUnit(BUSINESS_UNIT_ID);
         BusinessUnitUserEntity currentBusinessUnitUser = businessUnitUser(BUSINESS_UNIT_USER_ID,
                                                                           BUSINESS_UNIT_ID, USER_ID);
-        BusinessUnitUserEntity staleBusinessUnitUser =
-            businessUnitUser(STALE_BUSINESS_UNIT_USER_ID, DIFFERENT_BUSINESS_UNIT_ID, USER_ID);
+        BusinessUnitUserEntity staleBusinessUnitUser = businessUnitUser(STALE_BUSINESS_UNIT_USER_ID,
+                                                                        DIFFERENT_BUSINESS_UNIT_ID,
+                                                                        USER_ID);
         when(businessUnitRepository.findById(BUSINESS_UNIT_ID)).thenReturn(Optional.of(businessUnit));
         when(businessUnitUserRepository.findById(BUSINESS_UNIT_USER_ID))
             .thenReturn(Optional.of(currentBusinessUnitUser));
-        when(businessUnitUserRepository.findAllByUser_UserId(USER_ID))
-            .thenReturn(List.of(currentBusinessUnitUser, staleBusinessUnitUser));
+        when(businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
+            USER_ID, java.util.Set.of(BUSINESS_UNIT_USER_ID)
+        )).thenReturn(List.of(staleBusinessUnitUser));
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
                                                                                  BUSINESS_UNIT_ID);
@@ -312,4 +318,5 @@ class SynchroniseBusinessUnitUsersServiceTest {
             .businessUnitId(Short.toString(businessUnitId))
             .build();
     }
+
 }

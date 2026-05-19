@@ -389,7 +389,7 @@ dependencies {
   implementation "org.apache.logging.log4j:log4j-to-slf4j:${log4JVersion}"
   implementation 'com.google.guava:guava:33.6.0-jre'
 
-  implementation 'com.azure:azure-storage-blob:12.33.4'
+  implementation 'com.azure:azure-storage-blob:12.34.0'
   implementation 'org.apache.commons:commons-csv:1.14.1'
 
   implementation 'io.rest-assured:rest-assured:6.0.0'

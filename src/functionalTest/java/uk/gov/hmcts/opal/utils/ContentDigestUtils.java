@@ -24,7 +24,7 @@ public final class ContentDigestUtils {
         return "not-a-digest";
     }
 
-    private static String contentDigestHeaderFor(byte[] content) {
+    public static String contentDigestHeaderFor(byte[] content) {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-512");
             String digest = Base64.getEncoder().encodeToString(messageDigest.digest(content));

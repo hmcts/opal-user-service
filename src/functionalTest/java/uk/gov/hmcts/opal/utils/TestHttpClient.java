@@ -6,9 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 
 public final class TestHttpClient {
 
@@ -26,6 +29,17 @@ public final class TestHttpClient {
         headers.forEach(requestBuilder::header);
 
         return send(requestBuilder.build());
+    }
+
+    public static TestHttpResponseDetails getWithResponseDetails(String url, Map<String, String> headers) {
+        // Use this opt-in path when a test needs response headers and exact body bytes for header validation.
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .GET();
+
+        headers.forEach(requestBuilder::header);
+
+        return sendWithResponseDetails(requestBuilder.build());
     }
 
     public static TestHttpResponse post(String url, String body, Map<String, String> headers) {
@@ -70,6 +84,18 @@ public final class TestHttpClient {
         }
     }
 
+    private static TestHttpResponseDetails sendWithResponseDetails(HttpRequest request) {
+        try {
+            HttpResponse<byte[]> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            return new TestHttpResponseDetails(response.statusCode(), response.body(), response.headers());
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to call test endpoint", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while calling test endpoint", e);
+        }
+    }
+
     public record TestHttpResponse(int statusCode, String body) {
         public String jsonPath(String fieldName) {
             try {
@@ -79,6 +105,20 @@ public final class TestHttpClient {
             } catch (IOException e) {
                 throw new IllegalStateException("Failed to parse JSON response body", e);
             }
+        }
+    }
+
+    public record TestHttpResponseDetails(int statusCode, byte[] bodyBytes, HttpHeaders headers) {
+        public String body() {
+            return new String(bodyBytes, StandardCharsets.UTF_8);
+        }
+
+        public Optional<String> firstHeader(String headerName) {
+            return headers.firstValue(headerName);
+        }
+
+        public TestHttpResponse toTestHttpResponse() {
+            return new TestHttpResponse(statusCode, body());
         }
     }
 }

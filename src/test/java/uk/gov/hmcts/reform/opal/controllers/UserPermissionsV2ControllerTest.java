@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,9 +34,15 @@ class UserPermissionsV2ControllerTest {
     @InjectMocks
     private UserPermissionsV2Controller controller;
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {
+        MediaType.APPLICATION_JSON_VALUE,
+        MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8",
+        V2_CONTENT_TYPE,
+        V2_CONTENT_TYPE + ";charset=UTF-8"
+    })
     @DisplayName("controller.getUserStateV2 should return DTO from the service")
-    void testGetUserStateV2() throws HttpMediaTypeNotSupportedException {
+    void testGetUserStateV2(String contentType) throws HttpMediaTypeNotSupportedException {
         // Arrange
         Long userId = 123L;
         Boolean newLogin = true;
@@ -42,36 +51,25 @@ class UserPermissionsV2ControllerTest {
             .thenReturn(dto);
 
         // Act
-        ResponseEntity<UserStateV2Dto> response = controller.getUserStateV2(
-            userId, newLogin, MediaType.APPLICATION_JSON_VALUE);
+        ResponseEntity<UserStateV2Dto> response = controller.getUserStateV2(userId, newLogin, contentType);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(dto);
     }
 
-    @Test
-    @DisplayName("controller.getUserStateV2 should allow the V2 vendor content type")
-    void testGetUserStateV2_allowsV2ContentType() throws HttpMediaTypeNotSupportedException {
-        // Arrange
-        Long userId = 123L;
-        Boolean newLogin = true;
-        UserStateV2Dto dto = new UserStateV2Dto();
-        when(userPermissionsService.getUserStateV2(userId, newLogin))
-            .thenReturn(dto);
-
-        // Act
-        ResponseEntity<UserStateV2Dto> response = controller.getUserStateV2(userId, newLogin, V2_CONTENT_TYPE);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(dto);
-    }
-
-    @Test
-    @DisplayName("controller.getUserStateV2 should reject the V1 vendor content type")
-    void testGetUserStateV2_rejectsV1ContentType() {
-        assertThatThrownBy(() -> controller.getUserStateV2(123L, true, V1_CONTENT_TYPE))
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {
+        " ",
+        V1_CONTENT_TYPE,
+        "application/xml",
+        "text/plain",
+        "not-a-media-type"
+    })
+    @DisplayName("controller.getUserStateV2 should reject unsupported content types")
+    void testGetUserStateV2_rejectsUnsupportedContentTypes(String contentType) {
+        assertThatThrownBy(() -> controller.getUserStateV2(123L, true, contentType))
             .isInstanceOf(HttpMediaTypeNotSupportedException.class);
     }
 }

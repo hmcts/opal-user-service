@@ -2,6 +2,9 @@ package uk.gov.hmcts.reform.opal.openapi;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.context.ActiveProfiles;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 
 import java.io.OutputStream;
@@ -15,6 +18,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Built-in feature which saves service's swagger specs in temporary directory.
  * Each CI run on master should automatically save and upload (if updated) documentation.
  */
+@ActiveProfiles("integration")
+@AutoConfigureMockMvc
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.MOCK,
+    properties = "OPAL_ENABLE_LEGACY_STUB=false"
+)
 class OpenAPIPublisherTest extends AbstractIntegrationTest {
 
     @DisplayName("Generate swagger documentation")

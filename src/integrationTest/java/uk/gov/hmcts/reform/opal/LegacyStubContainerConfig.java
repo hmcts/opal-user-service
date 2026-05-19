@@ -17,11 +17,12 @@ public final class LegacyStubContainerConfig {
     private static final String LOCAL_LEGACY_GATEWAY_URL = "http://localhost:%d/opal".formatted(LEGACY_STUB_PORT);
     private static final String DEFAULT_LEGACY_STUB_IMAGE = "hmctsprod.azurecr.io/opal/legacy-db-stub:latest";
     private static final String LEGACY_STUB_IMAGE = resolveLegacyStubImage();
-
+    private static final boolean ENABLE_LEGACY_STUB =
+        !"false".equalsIgnoreCase(System.getenv().getOrDefault("OPAL_ENABLE_LEGACY_STUB", "true"));
     private static final GenericContainer<?> LEGACY_STUB_CONTAINER;
 
     static {
-        if (isPortAvailable(LEGACY_STUB_PORT)) {
+        if (ENABLE_LEGACY_STUB && isPortAvailable(LEGACY_STUB_PORT)) {
             LEGACY_STUB_CONTAINER = new GenericContainer<>(DockerImageName.parse(LEGACY_STUB_IMAGE))
                 .withExposedPorts(LEGACY_STUB_PORT)
                 .waitingFor(Wait.forHttp("/health").forStatusCode(200))
@@ -30,11 +31,13 @@ public final class LegacyStubContainerConfig {
             LEGACY_STUB_CONTAINER.start();
         } else {
             LEGACY_STUB_CONTAINER = null;
-            log.warn(
-                "Port {} is already in use; reusing the existing legacy gateway at {}.",
-                LEGACY_STUB_PORT,
-                legacyGatewayUrl()
-            );
+            if (ENABLE_LEGACY_STUB) {
+                log.warn(
+                    "Port {} is already in use; reusing the existing legacy gateway at {}.",
+                    LEGACY_STUB_PORT,
+                    legacyGatewayUrl()
+                );
+            }
         }
     }
 

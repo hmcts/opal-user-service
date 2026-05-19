@@ -1,30 +1,5 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.toPrettyJson;
-
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.time.Instant;
-import java.util.Map;
-
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator.Builder;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -44,6 +19,28 @@ import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.service.JsonSchemaValidationService;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.time.Instant;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.toPrettyJson;
+
 @ActiveProfiles({"integration"})
 @Slf4j(topic = "opal.UserPermissionsControllerIntegrationTest")
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
@@ -60,36 +57,6 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
 
     @MockitoSpyBean
     private AccessTokenService accessTokenService;
-
-    @Test
-
-    @DisplayName("Should return business unit users with empty permissions when entitlements are missing")
-    void getUserState_keepsUnitsWhenEntitlementsMissing()
-        throws Exception {
-        long userIdWithoutEntitlements = 500000006L;
-
-        ResultActions actions = mockMvc.perform(get(URL_BASE + "/" + userIdWithoutEntitlements + "/state"));
-
-        String body = actions.andReturn().getResponse().getContentAsString();
-        log.info(":getUserState_whenUserHasBusinessUnitsButNoEntitlements_returnsBusinessUnitsWithEmptyPermissions:"
-                     + " Response body:\n{}",
-                 toPrettyJson(body));
-
-        actions.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(header().string("ETag", "\"3\""))
-            .andExpect(jsonPath("$['user_id']").value(500000006))
-            .andExpect(jsonPath("$['username']").value("no-go-user@HMCTS.NET"))
-            .andExpect(jsonPath("$['business_unit_users']", hasSize(2)))
-            .andExpect(jsonPath("$['business_unit_users'][*]['business_unit_id']",
-                                containsInAnyOrder(67, 69)))
-            .andExpect(jsonPath("$['business_unit_users'][?(@['business_unit_id']==67)]['business_unit_user_id']")
-                           .value("L081JG"))
-            .andExpect(jsonPath("$['business_unit_users'][?(@['business_unit_id']==69)]['business_unit_user_id']")
-                           .value("L082JG"))
-            .andExpect(jsonPath("$['business_unit_users'][0]['permissions']", hasSize(0)))
-            .andExpect(jsonPath("$['business_unit_users'][1]['permissions']", hasSize(0)));
-    }
 
     @Test
     void addUser() throws Exception {

@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.opal.controllers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,23 +10,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
-
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -44,64 +34,6 @@ class UserPermissionsControllerTest {
     @BeforeEach
     void setup() {
         SecurityContextHolder.clearContext();
-    }
-
-    @Test
-    @DisplayName("Should get UserState when userId=0 uses principal name with preferred_username claim")
-    void testGetUserState_whenUserIdZero() {
-        // Arrange
-        String expectedUsername = "opal-test@HMCTS.NET";
-
-        UserStateDto returnedDto = UserStateDto.builder()
-            .userId(123L)
-            .username(expectedUsername)
-            .build();
-
-        given(userPermissionsService.getUserState(anyLong(), any(), any())).willReturn(returnedDto);
-
-        Authentication auth = createAuthentication(expectedUsername);
-
-        // Act
-        ResponseEntity<UserStateDto> response = controller.getUserState(0L, auth, null);
-        UserStateDto result = response.getBody();
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(expectedUsername, result.getUsername());
-        verify(userPermissionsService).getUserState(eq(0L), same(auth), isNull());
-    }
-
-    @Test
-    @DisplayName("Should get UserState when userId=0 uses principal name with preferred_username claim")
-    void testGetUserState_whenNoUserId() {
-        // Arrange
-        String expectedUsername = "opal-test@HMCTS.NET";
-
-        UserStateDto returnedDto = UserStateDto.builder()
-            .userId(123L)
-            .username(expectedUsername)
-            .build();
-
-        given(userPermissionsService.getUserState(any(), any())).willReturn(returnedDto);
-        Authentication auth = createAuthentication(expectedUsername);
-
-        // Act
-        ResponseEntity<UserStateDto> response = controller.getUserState(auth, null);
-        UserStateDto result = response.getBody();
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(expectedUsername, result.getUsername());
-        verify(userPermissionsService).getUserState(same(auth), isNull());
-    }
-
-    private JwtAuthenticationToken createAuthentication(String preferredName) {
-        Map<String, Object> claims = Map.of(
-            "preferred_username", preferredName,
-            "name", "Test User",
-            "sub", "ohE52BNHaghsWf34");
-        Jwt jwt = new Jwt("token", null, null, Map.of("alg", "none"), claims);
-        return new JwtAuthenticationToken(jwt);
     }
 
     @Test

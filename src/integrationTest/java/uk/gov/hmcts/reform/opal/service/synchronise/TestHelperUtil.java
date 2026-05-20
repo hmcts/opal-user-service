@@ -9,13 +9,13 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public final class TestHelperUtil {
 
     private TestHelperUtil() {
+        throw new IllegalStateException("Utility class");
     }
 
     public static LegacyBusinessUnitUserId legacyBusinessUnitUser(String businessUnitUserId, String businessUnitId) {
@@ -27,30 +27,6 @@ public final class TestHelperUtil {
 
     public static LegacyBusinessUnitUserId legacyBusinessUnitUser(String businessUnitUserId, short businessUnitId) {
         return legacyBusinessUnitUser(businessUnitUserId, Short.toString(businessUnitId));
-    }
-
-    public static String userStateUri(long userId) {
-        return "/v2/users/" + userId + "/state";
-    }
-
-    public static List<LegacyBusinessUnitUserId> legacyBusinessUnitUsersForTargetUser() {
-        return List.of(
-            legacyBusinessUnitUser("L065JG", "70"),
-            legacyBusinessUnitUser("L066JG", "68"),
-            legacyBusinessUnitUser("L067JG", "73"),
-            legacyBusinessUnitUser("L073JG", "71"),
-            legacyBusinessUnitUser("L077JG", "67"),
-            legacyBusinessUnitUser("L078JG", "69"),
-            legacyBusinessUnitUser("L080JG", "61")
-        );
-    }
-
-    public static Map<String, Set<String>> roleMappingWithSingleRoleAddition() {
-        return Map.of(
-            "1", Set.of("70"),
-            "2", Set.of("70"),
-            "3", Set.of("70")
-        );
     }
 
     public static void setAuthenticatedUser(String tokenSubject) {

@@ -11,15 +11,19 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.LegacyWireMockXmlStubHelper;
+import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
+import static uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil.legacyBusinessUnitUser;
 
 @ActiveProfiles({"integration"})
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_METHOD)
@@ -65,12 +69,12 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         UserEntity user = userRepository.findById(TARGET_USER_ID).orElseThrow();
 
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of("123"));
-        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(TestHelperUtil.legacyBusinessUnitUsersForTargetUser());
+        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(legacyBusinessUnitUsersForTargetUser());
         TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
         redisTemplate.opsForValue().set(
             cacheKey,
-            objectMapper.writeValueAsString(TestHelperUtil.roleMappingWithSingleRoleAddition())
+            objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition())
         );
 
         LocalDateTime activationBefore = testHelperService.getActivationDate(TARGET_USER_ID);
@@ -99,10 +103,10 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
 
         // Same setup as happy path, but without security context to force activateUser failure.
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of("123"));
-        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(TestHelperUtil.legacyBusinessUnitUsersForTargetUser());
+        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(legacyBusinessUnitUsersForTargetUser());
         redisTemplate.opsForValue().set(
             cacheKey,
-            objectMapper.writeValueAsString(TestHelperUtil.roleMappingWithSingleRoleAddition())
+            objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition())
         );
 
         long roleAssignmentsBefore = testHelperService.countRoleAssignments(TARGET_USER_ID);
@@ -125,4 +129,23 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         assertThat(testHelperService.getActivationDate(TARGET_USER_ID)).isNull();
     }
 
+    public static List<LegacyBusinessUnitUserId> legacyBusinessUnitUsersForTargetUser() {
+        return List.of(
+            legacyBusinessUnitUser("L065JG", "70"),
+            legacyBusinessUnitUser("L066JG", "68"),
+            legacyBusinessUnitUser("L067JG", "73"),
+            legacyBusinessUnitUser("L073JG", "71"),
+            legacyBusinessUnitUser("L077JG", "67"),
+            legacyBusinessUnitUser("L078JG", "69"),
+            legacyBusinessUnitUser("L080JG", "61")
+        );
+    }
+
+    public static Map<String, Set<String>> roleMappingWithSingleRoleAddition() {
+        return Map.of(
+            "1", Set.of("70"),
+            "2", Set.of("70"),
+            "3", Set.of("70")
+        );
+    }
 }

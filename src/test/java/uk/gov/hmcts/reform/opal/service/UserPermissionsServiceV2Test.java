@@ -7,6 +7,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -45,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -52,6 +54,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -336,6 +339,48 @@ class UserPermissionsServiceV2Test {
         );
         assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertEquals("401 UNAUTHORIZED \"Subject not found.\"", ex.getMessage());
+    }
+
+    @Test
+    void getUserStateV2_WhenAuthenticatedUserNotFound_ThrowsEntityNotFoundException() {
+
+        // Arrange
+        JwtAuthenticationToken authentication = mock(JwtAuthenticationToken.class);
+        when(authentication.getToken()).thenReturn(jwt);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
+        when(userRepository.findByTokenSubject(TOKEN_SUBJECT)).thenReturn(Optional.empty());
+
+        // Act
+        EntityNotFoundException ex = assertThrows(
+            EntityNotFoundException.class,
+            () -> service.getUserStateV2(0L, false)
+        );
+
+        // Assert
+        assertThat(ex).hasMessage("User not found with subject: " + TOKEN_SUBJECT);
+        verify(userRepository, never()).findIdWithPermissions(anyLong());
+        verifyNoInteractions(userStateMapper);
+    }
+
+    @Test
+    void getUserStateV2_WhenRequestedUserNotFound_ThrowsEntityNotFoundException() {
+
+        // Arrange
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+        // Act
+        EntityNotFoundException ex = assertThrows(
+            EntityNotFoundException.class,
+            () -> service.getUserStateV2(USER_ID, false)
+        );
+
+        // Assert
+        assertThat(ex).hasMessage("User not found with id: " + USER_ID);
+        verify(userRepository, never()).findIdWithPermissions(anyLong());
+        verifyNoInteractions(userStateMapper);
     }
 
     @Test

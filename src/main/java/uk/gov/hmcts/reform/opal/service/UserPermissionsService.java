@@ -156,6 +156,8 @@ public class UserPermissionsService {
             userService.refreshUser(user);
         }
 
+        // NB. When legacy refresh gets deleted we will need to update the first fetch to include all roles
+        // and remove this second fetch
         user = userRepository.findIdWithPermissions(user.getUserId())
             .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 

@@ -13,11 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
-import static uk.gov.hmcts.opal.utils.ContentDigestUtils.contentDigestHeaderFor;
-
 public final class TestHttpClient {
 
-    private static final String CONTENT_DIGEST = "Content-Digest";
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -29,29 +26,22 @@ public final class TestHttpClient {
             .uri(URI.create(url))
             .GET();
 
-        addHeaders(requestBuilder, headers, new byte[0], true);
+        addHeaders(requestBuilder, headers);
 
         return send(requestBuilder.build());
     }
 
     public static TestHttpResponseDetails getWithResponseDetails(String url, Map<String, String> headers) {
-        return getWithResponseDetailsInternal(url, headers, true);
+        return getWithResponseDetailsInternal(url, headers);
     }
 
-    // Allows negative digest scenarios to verify behaviour when the request header is absent.
-    public static TestHttpResponseDetails getWithResponseDetailsWithoutContentDigest(String url,
-                                                                                    Map<String, String> headers) {
-        return getWithResponseDetailsInternal(url, headers, false);
-    }
-
-    private static TestHttpResponseDetails getWithResponseDetailsInternal(String url, Map<String, String> headers,
-                                                                          boolean addContentDigest) {
+    private static TestHttpResponseDetails getWithResponseDetailsInternal(String url, Map<String, String> headers) {
         // Use this opt-in path when a test needs response headers and exact body bytes for header validation.
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
             .uri(URI.create(url))
             .GET();
 
-        addHeaders(requestBuilder, headers, new byte[0], addContentDigest);
+        addHeaders(requestBuilder, headers);
 
         return sendWithResponseDetails(requestBuilder.build());
     }
@@ -62,7 +52,7 @@ public final class TestHttpClient {
             .uri(URI.create(url))
             .POST(HttpRequest.BodyPublishers.ofString(requestBody));
 
-        addHeaders(requestBuilder, headers, bodyBytes(requestBody), true);
+        addHeaders(requestBuilder, headers);
 
         return send(requestBuilder.build());
     }
@@ -73,7 +63,7 @@ public final class TestHttpClient {
             .uri(URI.create(url))
             .PUT(HttpRequest.BodyPublishers.ofString(requestBody));
 
-        addHeaders(requestBuilder, headers, bodyBytes(requestBody), true);
+        addHeaders(requestBuilder, headers);
 
         return send(requestBuilder.build());
     }
@@ -84,23 +74,13 @@ public final class TestHttpClient {
             .uri(URI.create(url))
             .method("PATCH", HttpRequest.BodyPublishers.ofString(requestBody));
 
-        addHeaders(requestBuilder, headers, bodyBytes(requestBody), true);
+        addHeaders(requestBuilder, headers);
 
         return send(requestBuilder.build());
     }
 
-    private static void addHeaders(HttpRequest.Builder requestBuilder, Map<String, String> headers, byte[] bodyBytes,
-                                   boolean addContentDigest) {
+    private static void addHeaders(HttpRequest.Builder requestBuilder, Map<String, String> headers) {
         headers.forEach(requestBuilder::header);
-
-        // Default functional requests include a valid digest so they can run against environments that enforce it.
-        if (addContentDigest && headers.keySet().stream().noneMatch(CONTENT_DIGEST::equalsIgnoreCase)) {
-            requestBuilder.header(CONTENT_DIGEST, contentDigestHeaderFor(bodyBytes));
-        }
-    }
-
-    private static byte[] bodyBytes(String body) {
-        return body.getBytes(StandardCharsets.UTF_8);
     }
 
     private static TestHttpResponse send(HttpRequest request) {

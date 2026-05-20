@@ -48,10 +48,7 @@ public class ContentDigestStepDef extends BaseStepDef {
     }
 
     private static void getRoot(Map<String, String> headers) {
-        // Keep the missing-header scenario explicit while the shared client defaults normal requests to a valid digest.
-        TestHttpResponseDetails response = headers.containsKey(CONTENT_DIGEST)
-            ? TestHttpClient.getWithResponseDetails(getTestUrl() + "/", headers)
-            : TestHttpClient.getWithResponseDetailsWithoutContentDigest(getTestUrl() + "/", headers);
+        TestHttpResponseDetails response = TestHttpClient.getWithResponseDetails(getTestUrl() + "/", headers);
         Serenity.setSessionVariable("LAST_RESPONSE").to(response.toTestHttpResponse());
         Serenity.setSessionVariable(LAST_CONTENT_DIGEST_RESPONSE).to(response);
     }

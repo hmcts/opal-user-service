@@ -15,10 +15,11 @@ import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.LegacyWireMockXmlStubHelper;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.repository.TestRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
-import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +48,9 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    @Autowired
+    private TestRepository testRepository;
+
     private LegacyWireMockXmlStubHelper legacyWireMockXmlStubHelper;
 
     @BeforeEach
@@ -73,7 +77,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
         redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition()));
 
-        Timestamp activationBefore = getActivationDate(TARGET_USER_ID);
+        LocalDateTime activationBefore = getActivationDate(TARGET_USER_ID);
         assertThat(activationBefore).isNull();
         assertThat(hasRoleAssignment(TARGET_USER_ID, (short) 70, 3L)).isFalse();
         long roleAssignmentsBefore = countRoleAssignments(TARGET_USER_ID);
@@ -158,41 +162,15 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
     }
 
     private long countRoleAssignments(Long userId) {
-        Long count = jdbcTemplate.queryForObject(
-            """
-                SELECT count(*)
-                FROM business_unit_user_roles buur
-                JOIN business_unit_users buu ON buu.business_unit_user_id = buur.business_unit_user_id
-                WHERE buu.user_id = ?
-                """,
-            Long.class,
-            userId
-        );
-        return count == null ? 0L : count;
+        return testRepository.countRoleAssignments(userId);
     }
 
     private boolean hasRoleAssignment(Long userId, short businessUnitId, long roleId) {
-        Long count = jdbcTemplate.queryForObject(
-            """
-                SELECT count(*)
-                FROM business_unit_user_roles buur
-                JOIN business_unit_users buu ON buu.business_unit_user_id = buur.business_unit_user_id
-                WHERE buu.user_id = ? AND buu.business_unit_id = ? AND buur.role_id = ?
-                """,
-            Long.class,
-            userId,
-            businessUnitId,
-            roleId
-        );
-        return count != null && count > 0;
+        return testRepository.countRoleAssignmentsForUserBusinessUnit(userId, businessUnitId, roleId) > 0;
     }
 
-    private Timestamp getActivationDate(Long userId) {
-        return jdbcTemplate.queryForObject(
-            "SELECT activation_date FROM users WHERE user_id = ?",
-            Timestamp.class,
-            userId
-        );
+    private LocalDateTime getActivationDate(Long userId) {
+        return testRepository.findUserActivationDate(userId).orElse(null);
     }
 
     private String errorMessage(long userId, String stage, String reason) {

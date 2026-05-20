@@ -6,11 +6,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.entity.ApplicationFunctionEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
@@ -28,7 +24,6 @@ import uk.gov.hmcts.reform.opal.repository.TestRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -55,52 +50,6 @@ public class TestHelperService {
     private final StringRedisTemplate redisTemplate;
     private final EntityManager entityManager;
     private final ObjectMapper objectMapper;
-
-    public LegacyBusinessUnitUserId legacyBusinessUnitUser(String businessUnitUserId, String businessUnitId) {
-        return LegacyBusinessUnitUserId.builder()
-            .businessUnitUserId(businessUnitUserId)
-            .businessUnitId(businessUnitId)
-            .build();
-    }
-
-    public LegacyBusinessUnitUserId legacyBusinessUnitUser(String businessUnitUserId, short businessUnitId) {
-        return legacyBusinessUnitUser(businessUnitUserId, Short.toString(businessUnitId));
-    }
-
-    public String userStateUri(long userId) {
-        return "/v2/users/" + userId + "/state";
-    }
-
-    public List<LegacyBusinessUnitUserId> legacyBusinessUnitUsersForTargetUser() {
-        return List.of(
-            legacyBusinessUnitUser("L065JG", "70"),
-            legacyBusinessUnitUser("L066JG", "68"),
-            legacyBusinessUnitUser("L067JG", "73"),
-            legacyBusinessUnitUser("L073JG", "71"),
-            legacyBusinessUnitUser("L077JG", "67"),
-            legacyBusinessUnitUser("L078JG", "69"),
-            legacyBusinessUnitUser("L080JG", "61")
-        );
-    }
-
-    public Map<String, Set<String>> roleMappingWithSingleRoleAddition() {
-        return Map.of(
-            "1", Set.of("70"),
-            "2", Set.of("70"),
-            "3", Set.of("70")
-        );
-    }
-
-    public void setAuthenticatedUser(String tokenSubject) {
-        Jwt jwt = new Jwt(
-            "integration-test-token",
-            Instant.now(),
-            Instant.now().plusSeconds(3600),
-            Map.of("alg", "none"),
-            Map.of("sub", tokenSubject)
-        );
-        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
-    }
 
     public long countRoleAssignments(long userId) {
         return testRepository.countRoleAssignments(userId);
@@ -287,7 +236,10 @@ public class TestHelperService {
     public void setRoleMappingCache(UserEntity user, Map<Long, Set<Short>> roleMapping, String roleMappingUserPrefix)
         throws JsonProcessingException {
         String cacheKey = roleMappingUserPrefix + user.getTokenSubject();
-        redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(toCacheRoleMapping(roleMapping)));
+        redisTemplate.opsForValue().set(
+            cacheKey,
+            objectMapper.writeValueAsString(TestHelperUtil.toCacheRoleMapping(roleMapping))
+        );
     }
 
     public void assertRoleMappingCache(
@@ -299,7 +251,7 @@ public class TestHelperService {
         String actualRoleMappingCacheValue = redisTemplate.opsForValue().get(cacheKey);
         assertThat(actualRoleMappingCacheValue).isNotNull();
         assertThat(objectMapper.readTree(actualRoleMappingCacheValue)).isEqualTo(
-            objectMapper.readTree(objectMapper.writeValueAsString(toCacheRoleMapping(expectedRoleMapping)))
+            objectMapper.readTree(objectMapper.writeValueAsString(TestHelperUtil.toCacheRoleMapping(expectedRoleMapping)))
         );
     }
 
@@ -330,31 +282,6 @@ public class TestHelperService {
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Unable to serialise permissions snapshot for user " + userId, exception);
         }
-    }
-
-    public UserEntity buildUser(long userId, String tokenSubject) {
-        return UserEntity.builder()
-            .userId(userId)
-            .tokenSubject(tokenSubject)
-            .build();
-    }
-
-    public String synchronisePermissionsErrorMessage(long userId, String stage, String reason) {
-        return "Could not synchronise permissions for user " + userId
-            + " at stage: " + stage
-            + ". Reason: " + reason;
-    }
-
-    private Map<String, Set<String>> toCacheRoleMapping(Map<Long, Set<Short>> roleMapping) {
-        Map<String, Set<String>> cacheRoleMapping = new LinkedHashMap<>();
-        for (Map.Entry<Long, Set<Short>> roleMappingEntry : roleMapping.entrySet()) {
-            Set<String> businessUnitIds = new LinkedHashSet<>();
-            for (Short businessUnitId : roleMappingEntry.getValue()) {
-                businessUnitIds.add(Short.toString(businessUnitId));
-            }
-            cacheRoleMapping.put(Long.toString(roleMappingEntry.getKey()), businessUnitIds);
-        }
-        return cacheRoleMapping;
     }
 
     private List<Map<String, Object>> getPermissionsSnapshot(long userId) {

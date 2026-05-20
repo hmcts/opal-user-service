@@ -65,12 +65,12 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         UserEntity user = userRepository.findById(TARGET_USER_ID).orElseThrow();
 
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of("123"));
-        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(testHelperService.legacyBusinessUnitUsersForTargetUser());
-        testHelperService.setAuthenticatedUser(user.getTokenSubject());
+        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(TestHelperUtil.legacyBusinessUnitUsersForTargetUser());
+        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
         redisTemplate.opsForValue().set(
             cacheKey,
-            objectMapper.writeValueAsString(testHelperService.roleMappingWithSingleRoleAddition())
+            objectMapper.writeValueAsString(TestHelperUtil.roleMappingWithSingleRoleAddition())
         );
 
         LocalDateTime activationBefore = testHelperService.getActivationDate(TARGET_USER_ID);
@@ -99,10 +99,10 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
 
         // Same setup as happy path, but without security context to force activateUser failure.
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of("123"));
-        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(testHelperService.legacyBusinessUnitUsersForTargetUser());
+        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(TestHelperUtil.legacyBusinessUnitUsersForTargetUser());
         redisTemplate.opsForValue().set(
             cacheKey,
-            objectMapper.writeValueAsString(testHelperService.roleMappingWithSingleRoleAddition())
+            objectMapper.writeValueAsString(TestHelperUtil.roleMappingWithSingleRoleAddition())
         );
 
         long roleAssignmentsBefore = testHelperService.countRoleAssignments(TARGET_USER_ID);
@@ -111,7 +111,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         try {
             assertThatThrownBy(() -> synchronisePermissionsService.synchronise(user))
                 .isInstanceOf(SynchronisePermissionsException.class)
-                .hasMessage(testHelperService.synchronisePermissionsErrorMessage(
+                .hasMessage(TestHelperUtil.synchronisePermissionsErrorMessage(
                     TARGET_USER_ID,
                     SYNC_STAGE,
                     UNEXPECTED_RUNTIME_EXCEPTION_REASON

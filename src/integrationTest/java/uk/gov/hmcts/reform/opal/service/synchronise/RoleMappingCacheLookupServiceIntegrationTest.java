@@ -36,9 +36,6 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @Autowired
-    private TestHelperService testHelperService;
-
     @Test
     @DisplayName("Should read role mapping from Redis and convert ids to numeric types")
     void getRoleMappingByTokenSubject_readsFromRedisAndConvertsToNumericMap() throws Exception {
@@ -53,7 +50,7 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
 
         try {
             Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(
-                testHelperService.buildUser(USER_ID, TOKEN_SUBJECT)
+                TestHelperUtil.buildUser(USER_ID, TOKEN_SUBJECT)
             );
 
             assertThat(result).isEqualTo(Map.of(
@@ -73,10 +70,10 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
 
         try {
             assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(
-                testHelperService.buildUser(USER_ID, TOKEN_SUBJECT)
+                TestHelperUtil.buildUser(USER_ID, TOKEN_SUBJECT)
             ))
                 .isInstanceOf(SynchronisePermissionsException.class)
-                .hasMessage(testHelperService.synchronisePermissionsErrorMessage(
+                .hasMessage(TestHelperUtil.synchronisePermissionsErrorMessage(
                     USER_ID,
                     SYNC_STAGE,
                     COULD_NOT_PARSE_JSON_REASON
@@ -93,7 +90,7 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
         redisTemplate.delete(cacheKey);
 
         assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(
-            testHelperService.buildUser(USER_ID, TOKEN_SUBJECT)
+            TestHelperUtil.buildUser(USER_ID, TOKEN_SUBJECT)
         ))
             .isInstanceOf(UserMissingFromCacheException.class)
             .hasMessage("Nothing in cache for : " + TOKEN_SUBJECT);

@@ -47,7 +47,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
             user,
-            List.of(testHelperService.legacyBusinessUnitUser("L081JG", "70"))
+            List.of(TestHelperUtil.legacyBusinessUnitUser("L081JG", "70"))
         );
 
         TestHelperService.BusinessUnitUserSnapshot updatedRow = testHelperService.getBusinessUnitUserSnapshot("L081JG");
@@ -63,7 +63,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
             user,
-            List.of(testHelperService.legacyBusinessUnitUser("L099JG", "69"))
+            List.of(TestHelperUtil.legacyBusinessUnitUser("L099JG", "69"))
         );
 
         assertThat(testHelperService.businessUnitUserCount()).isEqualTo(countBefore + 1);
@@ -84,7 +84,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
             user,
-            List.of(testHelperService.legacyBusinessUnitUser("L091JG", "67"))
+            List.of(TestHelperUtil.legacyBusinessUnitUser("L091JG", "67"))
         );
 
         assertThat(testHelperService.businessUnitUserExists("L091JG")).isTrue();
@@ -104,10 +104,10 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
             user,
-            List.of(testHelperService.legacyBusinessUnitUser("L082JG", "999"))
+            List.of(TestHelperUtil.legacyBusinessUnitUser("L082JG", "999"))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage(testHelperService.synchronisePermissionsErrorMessage(
+            .hasMessage(TestHelperUtil.synchronisePermissionsErrorMessage(
                 user.getUserId(),
                 SYNC_STAGE,
                 "legacy business unit not found: 999"
@@ -127,10 +127,10 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
             user,
-            List.of(testHelperService.legacyBusinessUnitUser("L082JG", malformedBusinessUnitId))
+            List.of(TestHelperUtil.legacyBusinessUnitUser("L082JG", malformedBusinessUnitId))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage(testHelperService.synchronisePermissionsErrorMessage(
+            .hasMessage(TestHelperUtil.synchronisePermissionsErrorMessage(
                 user.getUserId(),
                 SYNC_STAGE,
                 "invalid business unit id: " + malformedBusinessUnitId
@@ -153,10 +153,10 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
             user,
-            List.of(testHelperService.legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
+            List.of(TestHelperUtil.legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage(testHelperService.synchronisePermissionsErrorMessage(
+            .hasMessage(TestHelperUtil.synchronisePermissionsErrorMessage(
                 user.getUserId(),
                 SYNC_STAGE,
                 "invalid business unit user id: " + malformedBusinessUnitUserId
@@ -176,10 +176,10 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
             user,
-            List.of(testHelperService.legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
+            List.of(TestHelperUtil.legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage(testHelperService.synchronisePermissionsErrorMessage(
+            .hasMessage(TestHelperUtil.synchronisePermissionsErrorMessage(
                 user.getUserId(),
                 SYNC_STAGE,
                 "invalid business unit user id: " + malformedBusinessUnitUserId
@@ -198,7 +198,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, null))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage(testHelperService.synchronisePermissionsErrorMessage(
+            .hasMessage(TestHelperUtil.synchronisePermissionsErrorMessage(
                 user.getUserId(),
                 SYNC_STAGE,
                 "legacy business unit user payload is missing"
@@ -220,7 +220,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             java.util.Collections.singletonList(null)
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage(testHelperService.synchronisePermissionsErrorMessage(
+            .hasMessage(TestHelperUtil.synchronisePermissionsErrorMessage(
                 user.getUserId(),
                 SYNC_STAGE,
                 "legacy business unit user entry is missing"

@@ -76,8 +76,8 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
             synchroniseRolesService.synchroniseRoles(
                 user,
                 List.of(
-                    testHelperService.legacyBusinessUnitUser("L066JG", "68"),
-                    testHelperService.legacyBusinessUnitUser("L067JG", "73")
+                    TestHelperUtil.legacyBusinessUnitUser("L066JG", "68"),
+                    TestHelperUtil.legacyBusinessUnitUser("L067JG", "73")
                 )
             );
 

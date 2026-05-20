@@ -36,6 +36,9 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    @Autowired
+    private TestHelperService testHelperService;
+
     @Test
     @DisplayName("Should read role mapping from Redis and convert ids to numeric types")
     void getRoleMappingByTokenSubject_readsFromRedisAndConvertsToNumericMap() throws Exception {
@@ -49,7 +52,9 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
         );
 
         try {
-            Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(user());
+            Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(
+                testHelperService.buildUser(USER_ID, TOKEN_SUBJECT)
+            );
 
             assertThat(result).isEqualTo(Map.of(
                 101L, Set.of((short) 7, (short) 8),
@@ -67,9 +72,15 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
         redisTemplate.opsForValue().set(cacheKey, "not-json");
 
         try {
-            assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user()))
+            assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(
+                testHelperService.buildUser(USER_ID, TOKEN_SUBJECT)
+            ))
                 .isInstanceOf(SynchronisePermissionsException.class)
-                .hasMessage(errorMessage(COULD_NOT_PARSE_JSON_REASON));
+                .hasMessage(testHelperService.synchronisePermissionsErrorMessage(
+                    USER_ID,
+                    SYNC_STAGE,
+                    COULD_NOT_PARSE_JSON_REASON
+                ));
         } finally {
             redisTemplate.delete(cacheKey);
         }
@@ -81,21 +92,10 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
         String cacheKey = ROLE_MAPPING_USER_PREFIX + TOKEN_SUBJECT;
         redisTemplate.delete(cacheKey);
 
-        assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user()))
+        assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(
+            testHelperService.buildUser(USER_ID, TOKEN_SUBJECT)
+        ))
             .isInstanceOf(UserMissingFromCacheException.class)
             .hasMessage("Nothing in cache for : " + TOKEN_SUBJECT);
-    }
-
-    private UserEntity user() {
-        return UserEntity.builder()
-            .userId(USER_ID)
-            .tokenSubject(TOKEN_SUBJECT)
-            .build();
-    }
-
-    private String errorMessage(String reason) {
-        return "Could not synchronise permissions for user " + USER_ID
-            + " at stage: " + SYNC_STAGE
-            + ". Reason: " + reason;
     }
 }

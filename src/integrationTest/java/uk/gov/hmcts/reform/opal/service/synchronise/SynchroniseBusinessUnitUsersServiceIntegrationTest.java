@@ -163,7 +163,8 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             List.of(legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage(errorMessage(user.getUserId(), "invalid business unit user id: " + malformedBusinessUnitUserId));
+            .hasMessage(errorMessage(user.getUserId(), "invalid business unit user id: "
+                + malformedBusinessUnitUserId));
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
         assertThat(getBusinessUnitUserRow("L082JG")).isEqualTo(rowBefore);
@@ -182,7 +183,8 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             List.of(legacyBusinessUnitUser(malformedBusinessUnitUserId, "69"))
         ))
             .isInstanceOf(SynchronisePermissionsException.class)
-            .hasMessage(errorMessage(user.getUserId(), "invalid business unit user id: " + malformedBusinessUnitUserId));
+            .hasMessage(errorMessage(user.getUserId(), "invalid business unit user id: "
+                + malformedBusinessUnitUserId));
 
         assertThat(businessUnitUserCount()).isEqualTo(countBefore);
         assertThat(getBusinessUnitUserRow("L082JG")).isEqualTo(rowBefore);

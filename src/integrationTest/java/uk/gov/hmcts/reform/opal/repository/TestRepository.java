@@ -36,7 +36,32 @@ public interface TestRepository extends JpaRepository<BusinessUnitUserEntity, St
     Optional<BusinessUnitUserRow> findBusinessUnitUserRow(@Param("userId") long userId,
                                                            @Param("businessUnitUserId") String businessUnitUserId);
 
+    @Query("""
+        select buu.businessUnitUserId as businessUnitUserId,
+               buu.businessUnit.businessUnitId as businessUnitId,
+               buu.user.userId as userId
+        from BusinessUnitUserEntity buu
+        where buu.businessUnitUserId = :businessUnitUserId
+        """)
+    Optional<BusinessUnitUserRow> findBusinessUnitUserRowByBusinessUnitUserId(
+        @Param("businessUnitUserId") String businessUnitUserId
+    );
+
     long countByBusinessUnitUserId(String businessUnitUserId);
+
+    @Query("""
+        select count(ue)
+        from UserEntitlementEntity ue
+        where ue.businessUnitUser.businessUnitUserId = :businessUnitUserId
+        """)
+    long countUserEntitlementsByBusinessUnitUserId(@Param("businessUnitUserId") String businessUnitUserId);
+
+    @Query("""
+        select count(buur)
+        from BusinessUnitUserRoleEntity buur
+        where buur.businessUnitUser.businessUnitUserId = :businessUnitUserId
+        """)
+    long countRoleMappingsByBusinessUnitUserId(@Param("businessUnitUserId") String businessUnitUserId);
 
     @Query("""
         select count(buur)

@@ -422,13 +422,13 @@ dependencies {
   testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
   testImplementation 'org.testcontainers:testcontainers-postgresql'
   testImplementation 'com.redis:testcontainers-redis'
-  testImplementation(platform('org.junit:junit-bom:6.0.3'))
+  testImplementation(platform('org.junit:junit-bom:6.1.0'))
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testImplementation 'org.springframework.boot:spring-boot-starter-test', {
     exclude group: 'junit', module: 'junit'
     exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
   }
-  testImplementation 'org.junit.platform:junit-platform-suite:6.0.3'
+  testImplementation 'org.junit.platform:junit-platform-suite:6.1.0'
   testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
 
   testImplementation "net.serenity-bdd:serenity-core:${serenityVersion}"
@@ -439,9 +439,9 @@ dependencies {
   testImplementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
 
   implementation 'org.openapitools:jackson-databind-nullable:0.2.10'
-  openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.41"
-  openapiImplementation "io.swagger.core.v3:swagger-models:2.2.49"
-  openapiImplementation "io.swagger.core.v3:swagger-core:2.2.49"
+  openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.42"
+  openapiImplementation "io.swagger.core.v3:swagger-models:2.2.50"
+  openapiImplementation "io.swagger.core.v3:swagger-core:2.2.50"
   openapiImplementation platform("com.fasterxml.jackson:jackson-bom:2.21.3")
   openapiImplementation "com.fasterxml.jackson.core:jackson-databind"
   openapiImplementation "com.fasterxml.jackson.core:jackson-core"

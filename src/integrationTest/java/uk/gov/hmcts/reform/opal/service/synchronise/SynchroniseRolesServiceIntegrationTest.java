@@ -13,6 +13,7 @@ import org.springframework.test.context.jdbc.Sql;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.repository.TestRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
 
@@ -44,6 +45,9 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private TestRepository testRepository;
 
     @MockitoBean
     private UserPermissionsService userPermissionsService;
@@ -97,35 +101,11 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     private Set<Short> getAssignedBusinessUnitIds(Long userId, Long roleId) {
-        List<Short> businessUnitIds = jdbcTemplate.queryForList(
-            """
-                SELECT buu.business_unit_id
-                FROM business_unit_user_roles buur
-                JOIN business_unit_users buu ON buu.business_unit_user_id = buur.business_unit_user_id
-                WHERE buu.user_id = ? AND buur.role_id = ?
-                """,
-            Short.class,
-            userId,
-            roleId
-        );
-        return new LinkedHashSet<>(businessUnitIds);
+        return new LinkedHashSet<>(testRepository.findAssignedBusinessUnitIdsForUserRole(userId, roleId));
     }
 
     private Set<String> getReturnedPermissionNames(String businessUnitUserId) {
-        List<String> permissionNames = jdbcTemplate.queryForList(
-            """
-                SELECT DISTINCT permission_name
-                FROM business_unit_users buu
-                JOIN business_unit_user_roles buur ON buur.business_unit_user_id = buu.business_unit_user_id
-                JOIN v_current_roles role ON role.role_id = buur.role_id
-                CROSS JOIN LATERAL unnest(role.application_function_list) AS permission_name
-                WHERE buu.business_unit_user_id = ?
-                ORDER BY permission_name
-                """,
-            String.class,
-            businessUnitUserId
-        );
-        return new LinkedHashSet<>(permissionNames);
+        return new LinkedHashSet<>(testRepository.findPermissionNamesByBusinessUnitUserId(businessUnitUserId));
     }
 
     private void logPermissionsSnapshot(String label, Long userId) {
@@ -142,37 +122,17 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     private List<Map<String, Object>> getPermissionsSnapshot(Long userId) {
-        return jdbcTemplate.query(
-            """
-                SELECT
-                  buu.business_unit_user_id,
-                  buu.business_unit_id
-                FROM business_unit_users buu
-                WHERE buu.user_id = ?
-                ORDER BY buu.business_unit_user_id
-                """,
-            (rs, rowNum) -> {
-                String businessUnitUserId = rs.getString("business_unit_user_id");
+        return testRepository.findBusinessUnitUserRowsByUserId(userId).stream()
+            .map(row -> {
                 Map<String, Object> businessUnitSnapshot = new LinkedHashMap<>();
-                businessUnitSnapshot.put("business_unit_id", rs.getShort("business_unit_id"));
-                businessUnitSnapshot.put("roles", getAssignedRoleIds(businessUnitUserId));
+                businessUnitSnapshot.put("business_unit_id", row.getBusinessUnitId());
+                businessUnitSnapshot.put("roles", getAssignedRoleIds(row.getBusinessUnitUserId()));
                 return businessUnitSnapshot;
-            },
-            userId
-        );
+            })
+            .toList();
     }
 
     private Set<Long> getAssignedRoleIds(String businessUnitUserId) {
-        List<Long> roleIds = jdbcTemplate.queryForList(
-            """
-                SELECT buur.role_id
-                FROM business_unit_user_roles buur
-                WHERE buur.business_unit_user_id = ?
-                ORDER BY buur.role_id
-                """,
-            Long.class,
-            businessUnitUserId
-        );
-        return new LinkedHashSet<>(roleIds);
+        return new LinkedHashSet<>(testRepository.findAssignedRoleIdsByBusinessUnitUserId(businessUnitUserId));
     }
 }

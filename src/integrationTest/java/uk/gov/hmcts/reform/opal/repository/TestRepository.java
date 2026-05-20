@@ -47,6 +47,16 @@ public interface TestRepository extends JpaRepository<BusinessUnitUserEntity, St
         @Param("businessUnitUserId") String businessUnitUserId
     );
 
+    @Query("""
+        select buu.businessUnitUserId as businessUnitUserId,
+               buu.businessUnit.businessUnitId as businessUnitId,
+               buu.user.userId as userId
+        from BusinessUnitUserEntity buu
+        where buu.user.userId = :userId
+        order by buu.businessUnitUserId
+        """)
+    List<BusinessUnitUserRow> findBusinessUnitUserRowsByUserId(@Param("userId") long userId);
+
     long countByBusinessUnitUserId(String businessUnitUserId);
 
     @Query("""
@@ -62,6 +72,34 @@ public interface TestRepository extends JpaRepository<BusinessUnitUserEntity, St
         where buur.businessUnitUser.businessUnitUserId = :businessUnitUserId
         """)
     long countRoleMappingsByBusinessUnitUserId(@Param("businessUnitUserId") String businessUnitUserId);
+
+    @Query("""
+        select buur.businessUnitUser.businessUnit.businessUnitId
+        from BusinessUnitUserRoleEntity buur
+        where buur.businessUnitUser.user.userId = :userId
+          and buur.role.roleId = :roleId
+        order by buur.businessUnitUser.businessUnit.businessUnitId
+        """)
+    List<Short> findAssignedBusinessUnitIdsForUserRole(@Param("userId") long userId, @Param("roleId") long roleId);
+
+    @Query("""
+        select buur.role.roleId
+        from BusinessUnitUserRoleEntity buur
+        where buur.businessUnitUser.businessUnitUserId = :businessUnitUserId
+        order by buur.role.roleId
+        """)
+    List<Long> findAssignedRoleIdsByBusinessUnitUserId(@Param("businessUnitUserId") String businessUnitUserId);
+
+    @Query(value = """
+        SELECT DISTINCT permission_name
+        FROM business_unit_users buu
+        JOIN business_unit_user_roles buur ON buur.business_unit_user_id = buu.business_unit_user_id
+        JOIN v_current_roles role ON role.role_id = buur.role_id
+        CROSS JOIN LATERAL unnest(role.application_function_list) AS permission_name
+        WHERE buu.business_unit_user_id = :businessUnitUserId
+        ORDER BY permission_name
+        """, nativeQuery = true)
+    List<String> findPermissionNamesByBusinessUnitUserId(@Param("businessUnitUserId") String businessUnitUserId);
 
     @Query("""
         select count(buur)

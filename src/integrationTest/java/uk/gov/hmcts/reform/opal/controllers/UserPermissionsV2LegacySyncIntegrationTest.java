@@ -5,8 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -17,8 +17,18 @@ import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.LegacyWireMockXmlStubHelper;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
+import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
+import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
+import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
+import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitRepository;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
+import uk.gov.hmcts.reform.opal.repository.RoleRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
+import uk.gov.hmcts.reform.opal.repository.TestRepository;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -60,6 +70,24 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BusinessUnitRepository businessUnitRepository;
+
+    @Autowired
+    private BusinessUnitUserRepository businessUnitUserRepository;
+
+    @Autowired
+    private BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private BusinessEventRepository businessEventRepository;
+
+    @Autowired
+    private TestRepository legacySyncTestRepository;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
@@ -394,6 +422,8 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         );
     }
 
+    // Causing the db exception that triggers the rollback:
+    // business unit event with id 1 is inserted, but 'RESTART IDENTITY' means next id used will be 1 so collision
     @Test
     @DisplayName("Should roll back synchronisation when business event persistence fails")
     void getUserStateV2_whenBusinessEventPersistenceFails_rollsBackSynchronisation() throws Exception {
@@ -472,22 +502,24 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         return cacheRoleMapping;
     }
 
-    private Map<String, Object> getBusinessUnitUserRow(long userId, String businessUnitUserId) {
-        return jdbcTemplate.queryForMap(
-            "SELECT business_unit_user_id, business_unit_id, user_id FROM business_unit_users WHERE user_id = ?"
-                + " AND business_unit_user_id = ?",
-            userId,
-            businessUnitUserId
-        );
+    private TestRepository.BusinessUnitUserRow getBusinessUnitUserRow(
+        long userId,
+        String businessUnitUserId
+    ) {
+        return legacySyncTestRepository.findBusinessUnitUserRow(userId, businessUnitUserId)
+            .orElseThrow(() -> new IllegalStateException(
+                "Missing business unit user row for userId=" + userId + ", businessUnitUserId=" + businessUnitUserId
+            ));
     }
 
     private void assertBusinessUnitUserRow(String businessUnitUserId, short expectedBusinessUnitId,
                                            long expectedUserId) {
-        Map<String, Object> businessUnitUserRow = getBusinessUnitUserRow(expectedUserId, businessUnitUserId);
-        assertThat(((Number) businessUnitUserRow.get("user_id")).longValue()).isEqualTo(expectedUserId);
-        assertThat(((Number) businessUnitUserRow.get("business_unit_id")).shortValue())
+        TestRepository.BusinessUnitUserRow businessUnitUserRow =
+            getBusinessUnitUserRow(expectedUserId, businessUnitUserId);
+        assertThat(businessUnitUserRow.getUserId()).isEqualTo(expectedUserId);
+        assertThat(businessUnitUserRow.getBusinessUnitId())
             .isEqualTo(expectedBusinessUnitId);
-        assertThat(businessUnitUserRow.get("business_unit_user_id")).isEqualTo(businessUnitUserId);
+        assertThat(businessUnitUserRow.getBusinessUnitUserId()).isEqualTo(businessUnitUserId);
     }
 
     private void assertBusinessUnitUserRow(
@@ -502,110 +534,53 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
     }
 
     private void updateBusinessUnitUser(String businessUnitUserId, short businessUnitId, long userId) {
-        jdbcTemplate.update(
-            "UPDATE business_unit_users SET business_unit_id = ?, user_id = ? WHERE business_unit_user_id = ?",
-            businessUnitId,
-            userId,
-            businessUnitUserId
-        );
+        BusinessUnitUserEntity businessUnitUser = getRequiredBusinessUnitUser(businessUnitUserId);
+        businessUnitUser.setBusinessUnit(getRequiredBusinessUnit(businessUnitId));
+        businessUnitUser.setUser(getRequiredUser(userId));
+        businessUnitUserRepository.saveAndFlush(businessUnitUser);
     }
 
     private void insertBusinessUnitUser(String businessUnitUserId, short businessUnitId, long userId) {
-        jdbcTemplate.update(
-            "INSERT INTO business_unit_users (business_unit_user_id, business_unit_id, user_id) VALUES (?, ?, ?)",
-            businessUnitUserId,
-            businessUnitId,
-            userId
-        );
+        BusinessUnitUserEntity businessUnitUser = BusinessUnitUserEntity.builder()
+            .businessUnitUserId(businessUnitUserId)
+            .businessUnit(getRequiredBusinessUnit(businessUnitId))
+            .user(getRequiredUser(userId))
+            .build();
+        businessUnitUserRepository.saveAndFlush(businessUnitUser);
     }
 
     private boolean businessUnitUserExists(String businessUnitUserId) {
-        Long count = jdbcTemplate.queryForObject(
-            "SELECT count(*) FROM business_unit_users WHERE business_unit_user_id = ?",
-            Long.class,
-            businessUnitUserId
-        );
-        return count != null && count > 0;
+        return legacySyncTestRepository.countByBusinessUnitUserId(businessUnitUserId) > 0;
     }
 
     private long countRoleAssignments(Long userId) {
-        Long count = jdbcTemplate.queryForObject(
-            """
-                SELECT count(*)
-                FROM business_unit_user_roles buur
-                JOIN business_unit_users buu ON buu.business_unit_user_id = buur.business_unit_user_id
-                WHERE buu.user_id = ?
-                """,
-            Long.class,
-            userId
-        );
-        return count == null ? 0L : count;
+        return legacySyncTestRepository.countRoleAssignments(userId);
     }
 
     private long countRoleAssignmentsForBusinessUnitUser(String businessUnitUserId, long roleId) {
-        Long count = jdbcTemplate.queryForObject(
-            "SELECT count(*) FROM business_unit_user_roles WHERE business_unit_user_id = ? AND role_id = ?",
-            Long.class,
-            businessUnitUserId,
-            roleId
-        );
-        return count == null ? 0L : count;
+        return legacySyncTestRepository.countRoleAssignmentsForBusinessUnitUser(businessUnitUserId, roleId);
     }
 
     private Set<Short> getUserBusinessUnitIds(long userId) {
-        List<Short> businessUnitIds = jdbcTemplate.queryForList(
-            "SELECT business_unit_id FROM business_unit_users WHERE user_id = ?",
-            Short.class,
-            userId
-        );
-        return new LinkedHashSet<>(businessUnitIds);
+        return new LinkedHashSet<>(legacySyncTestRepository.findUserBusinessUnitIds(userId));
     }
 
     private long countRoleAssignmentsForUserBusinessUnit(long userId, short businessUnitId, long roleId) {
-        Long count = jdbcTemplate.queryForObject(
-            """
-                SELECT count(*)
-                FROM business_unit_user_roles buur
-                JOIN business_unit_users buu ON buu.business_unit_user_id = buur.business_unit_user_id
-                WHERE buu.user_id = ? AND buu.business_unit_id = ? AND buur.role_id = ?
-                """,
-            Long.class,
-            userId,
-            businessUnitId,
-            roleId
-        );
-        return count == null ? 0L : count;
+        return legacySyncTestRepository.countRoleAssignmentsForUserBusinessUnit(userId, businessUnitId, roleId);
     }
 
     private long countRoleAssignmentsForUserRole(long userId, long roleId) {
-        Long count = jdbcTemplate.queryForObject(
-            """
-                SELECT count(*)
-                FROM business_unit_user_roles buur
-                JOIN business_unit_users buu ON buu.business_unit_user_id = buur.business_unit_user_id
-                WHERE buu.user_id = ? AND buur.role_id = ?
-                """,
-            Long.class,
-            userId,
-            roleId
-        );
-        return count == null ? 0L : count;
+        return legacySyncTestRepository.countRoleAssignmentsForUserRole(userId, roleId);
     }
 
     private LocalDateTime getUserActivationDate(long userId) {
-        return jdbcTemplate.queryForObject(
-            "SELECT activation_date FROM users WHERE user_id = ?",
-            LocalDateTime.class,
-            userId
-        );
+        return legacySyncTestRepository.findUserActivationDate(userId).orElse(null);
     }
 
     private void updateUserActivationDate(long userId, LocalDateTime activationDate) {
-        jdbcTemplate.update(
-            "UPDATE users SET activation_date = ? WHERE user_id = ?",
-            activationDate,
-            userId
-        );
+        UserEntity user = getRequiredUser(userId);
+        user.setActivationDate(activationDate);
+        userRepository.saveAndFlush(user);
     }
 
     private void assertUserRoleCount(long userId, long expectedRoleCount) {
@@ -649,12 +624,11 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
     }
 
     private void insertBusinessUnitUserRole(String businessUnitUserId, long roleId) {
-        jdbcTemplate.update(
-            "INSERT INTO business_unit_user_roles (business_unit_user_role_id, business_unit_user_id, role_id)"
-                + " VALUES (nextval('business_unit_user_role_id_seq'), ?, ?)",
-            businessUnitUserId,
-            roleId
-        );
+        BusinessUnitUserRoleEntity businessUnitUserRole = BusinessUnitUserRoleEntity.builder()
+            .businessUnitUser(getRequiredBusinessUnitUser(businessUnitUserId))
+            .role(getRequiredRole(roleId))
+            .build();
+        businessUnitUserRoleRepository.saveAndFlush(businessUnitUserRole);
     }
 
     private void insertBusinessEvent(
@@ -664,9 +638,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         long initiatorUserId,
         String eventDetails
     ) {
-        jdbcTemplate.update(
-            "INSERT INTO business_events (business_event_id, event_type, subject_user_id, initiator_user_id,"
-                + " event_details, event_date) VALUES (?, CAST(? AS t_event_type_enum), ?, ?, CAST(? AS json), NOW())",
+        legacySyncTestRepository.insertBusinessEvent(
             businessEventId,
             eventType.name(),
             subjectUserId,
@@ -676,7 +648,27 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
     }
 
     private void resetBusinessEventsTable() {
-        jdbcTemplate.execute("TRUNCATE TABLE business_events RESTART IDENTITY");
+        businessEventRepository.deleteAllInBatch();
+    }
+
+    private BusinessUnitEntity getRequiredBusinessUnit(short businessUnitId) {
+        return businessUnitRepository.findById(businessUnitId)
+            .orElseThrow(() -> new IllegalStateException("Missing business unit fixture: " + businessUnitId));
+    }
+
+    private UserEntity getRequiredUser(long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalStateException("Missing user fixture: " + userId));
+    }
+
+    private BusinessUnitUserEntity getRequiredBusinessUnitUser(String businessUnitUserId) {
+        return businessUnitUserRepository.findById(businessUnitUserId)
+            .orElseThrow(() -> new IllegalStateException("Missing business unit user fixture: " + businessUnitUserId));
+    }
+
+    private RoleEntity getRequiredRole(long roleId) {
+        return roleRepository.findById(roleId)
+            .orElseThrow(() -> new IllegalStateException("Missing role fixture: " + roleId));
     }
 
     private void clearRoleMappingCacheEntries() {
@@ -687,13 +679,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
     }
 
     private List<BusinessEventLogType> getLoggedBusinessEventTypes() {
-        List<String> eventTypes = jdbcTemplate.queryForList(
-            "SELECT event_type::text FROM business_events ORDER BY business_event_id",
-            String.class
-        );
-        return eventTypes.stream()
-            .map(BusinessEventLogType::valueOf)
-            .toList();
+        return legacySyncTestRepository.findLoggedBusinessEventTypes();
     }
 
     private void assertLoggedBusinessEventTypes(BusinessEventLogType... expectedEventTypes) {

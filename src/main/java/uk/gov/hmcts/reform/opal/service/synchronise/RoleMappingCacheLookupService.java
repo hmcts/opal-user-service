@@ -5,9 +5,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingCacheService;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,18 +19,17 @@ import java.util.Set;
 @Slf4j(topic = "opal.RoleMappingCacheLookupService")
 public class RoleMappingCacheLookupService {
 
-    private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
     private static final String SYNC_STAGE = "parse role mapping cache";
     private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
-    private final StringRedisTemplate redisTemplate;
+    private final UserRoleMappingCacheService userRoleMappingCacheService;
     private final ObjectMapper objectMapper;
 
     /**
      * Looks up the raw cache payload map for the user and converts it into typed identifiers used by
      * synchronisation.
      *
-     * @param user user whose token subject forms the Redis key ({@code ROLE_MAPPING_USER_<tokenSubject>}) for a
+     * @param user user whose token subject forms the Redis cache key for a
      *             payload map keyed by role id as {@link String}, with values containing business unit ids as
      *             {@link String}
      * @return map keyed by role id as {@link Long}, with values containing business unit ids as {@link Short}
@@ -40,8 +39,7 @@ public class RoleMappingCacheLookupService {
         throws UserMissingFromCacheException {
         try {
             String tokenSubject = user.getTokenSubject();
-            String cacheKey = ROLE_MAPPING_USER_PREFIX + tokenSubject;
-            String roleMappingCacheString = redisTemplate.opsForValue().get(cacheKey);
+            String roleMappingCacheString = userRoleMappingCacheService.getUserMapping(tokenSubject);
             if (roleMappingCacheString == null || roleMappingCacheString.isBlank()) {
                 throw new UserMissingFromCacheException("Nothing in cache for : " + tokenSubject);
             }

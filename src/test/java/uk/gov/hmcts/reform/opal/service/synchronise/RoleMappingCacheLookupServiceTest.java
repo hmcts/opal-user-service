@@ -9,9 +9,8 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingCacheService;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -29,7 +28,6 @@ class RoleMappingCacheLookupServiceTest {
 
     private static final long USER_ID = 123L;
     private static final String TOKEN_SUBJECT = "subject-123";
-    private static final String CACHE_KEY = "ROLE_MAPPING_USER_" + TOKEN_SUBJECT;
     private static final Type ROLE_MAPPING_CACHE_TYPE =
         new TypeReference<Map<String, Set<String>>>() { }.getType();
     private static final String SYNC_STAGE = "parse role mapping cache";
@@ -38,10 +36,7 @@ class RoleMappingCacheLookupServiceTest {
     private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
     @Mock
-    private StringRedisTemplate redisTemplate;
-
-    @Mock
-    private ValueOperations<String, String> valueOperations;
+    private UserRoleMappingCacheService userRoleMappingCacheService;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -53,8 +48,7 @@ class RoleMappingCacheLookupServiceTest {
     void getRoleMappingByTokenSubject_throwsUserMissingFromCacheException_whenCachePayloadIsMissing() {
 
         // Arrange
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenReturn(null);
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(null);
 
         // Act / Assert
         UserMissingFromCacheException exception = assertThrows(
@@ -74,8 +68,7 @@ class RoleMappingCacheLookupServiceTest {
             "101", Set.of("7", "8"),
             "202", Set.of("9")
         );
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
 
         // Act
@@ -89,7 +82,7 @@ class RoleMappingCacheLookupServiceTest {
             ),
             result
         );
-        verify(valueOperations).get(CACHE_KEY);
+        verify(userRoleMappingCacheService).getUserMapping(TOKEN_SUBJECT);
     }
 
     @Test
@@ -97,8 +90,7 @@ class RoleMappingCacheLookupServiceTest {
 
         // Arrange
         String cachePayload = "null";
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(null);
 
         // Act / Assert
@@ -117,8 +109,7 @@ class RoleMappingCacheLookupServiceTest {
         String cachePayload = "invalid-json";
         JsonProcessingException jsonProcessingException = new JsonProcessingException("invalid-json") {
         };
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference()))
             .thenThrow(jsonProcessingException);
 
@@ -139,8 +130,7 @@ class RoleMappingCacheLookupServiceTest {
         String cachePayload = "{\"101\":[\"7\"]}";
         JsonProcessingException jsonProcessingException = new JsonProcessingException("boom") {
         };
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference()))
             .thenThrow(jsonProcessingException);
 
@@ -159,8 +149,7 @@ class RoleMappingCacheLookupServiceTest {
     void getRoleMappingByTokenSubject_throwsUserMissingFromCacheException_whenCachePayloadIsBlank() {
 
         // Arrange
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenReturn("   ");
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn("   ");
 
         // Act / Assert
         UserMissingFromCacheException exception = assertThrows(
@@ -177,8 +166,7 @@ class RoleMappingCacheLookupServiceTest {
         String cachePayload = "{\"101\":null}";
         Map<String, Set<String>> cacheMap = new java.util.HashMap<>();
         cacheMap.put("101", null);
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
 
         // Act
@@ -194,8 +182,7 @@ class RoleMappingCacheLookupServiceTest {
         // Arrange
         String cachePayload = "{\"role-1\":[\"7\"]}";
         Map<String, Set<String>> cacheMap = Map.of("role-1", Set.of("7"));
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
 
         // Act / Assert
@@ -212,8 +199,7 @@ class RoleMappingCacheLookupServiceTest {
         // Arrange
         String cachePayload = "{\"101\":[\"business-unit-7\"]}";
         Map<String, Set<String>> cacheMap = Map.of("101", Set.of("business-unit-7"));
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
 
         // Act / Assert
@@ -228,8 +214,7 @@ class RoleMappingCacheLookupServiceTest {
 
         // Arrange
         RuntimeException runtimeException = new RuntimeException("redis boom");
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(CACHE_KEY)).thenThrow(runtimeException);
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenThrow(runtimeException);
 
         // Act
         SynchronisePermissionsException exception = assertThrows(

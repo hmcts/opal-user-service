@@ -3,12 +3,11 @@ package uk.gov.hmcts.reform.opal.service.synchronise;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
-import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingCacheService;
 
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +24,6 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTest {
 
     private static final long USER_ID = 500000000L;
-    private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
     private static final String TOKEN_SUBJECT = "subject-lookup-123";
     private static final String SYNC_STAGE = "parse role mapping cache";
     private static final String COULD_NOT_PARSE_JSON_REASON = "could not parse JSON";
@@ -34,18 +32,17 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
     private RoleMappingCacheLookupService roleMappingCacheLookupService;
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private UserRoleMappingCacheService userRoleMappingCacheService;
 
     @Test
     @DisplayName("Should read role mapping from Redis and convert ids to numeric types")
     void getRoleMappingByTokenSubject_readsFromRedisAndConvertsToNumericMap() throws Exception {
-        String cacheKey = ROLE_MAPPING_USER_PREFIX + TOKEN_SUBJECT;
-        redisTemplate.opsForValue().set(
-            cacheKey,
-            objectMapper.writeValueAsString(Map.of(
+        userRoleMappingCacheService.putUserMapping(
+            TOKEN_SUBJECT,
+            Map.of(
                 "101", Set.of("7", "8"),
                 "202", Set.of("9")
-            ))
+            )
         );
 
         try {
@@ -58,15 +55,14 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
                 202L, Set.of((short) 9)
             ));
         } finally {
-            redisTemplate.delete(cacheKey);
+            userRoleMappingCacheService.deleteUserMapping(TOKEN_SUBJECT);
         }
     }
 
     @Test
-    @DisplayName("Should throw SynchronisePermissionsException when Redis payload is invalid JSON")
+    @DisplayName("Should throw SynchronisePermissionsException when Redis payload is not a role mapping")
     void getRoleMappingByTokenSubject_throwsWhenRedisPayloadIsInvalid() {
-        String cacheKey = ROLE_MAPPING_USER_PREFIX + TOKEN_SUBJECT;
-        redisTemplate.opsForValue().set(cacheKey, "not-json");
+        userRoleMappingCacheService.putUserMapping(TOKEN_SUBJECT, "not-json");
 
         try {
             assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(
@@ -79,15 +75,14 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
                     COULD_NOT_PARSE_JSON_REASON
                 ));
         } finally {
-            redisTemplate.delete(cacheKey);
+            userRoleMappingCacheService.deleteUserMapping(TOKEN_SUBJECT);
         }
     }
 
     @Test
     @DisplayName("Should throw UserMissingFromCacheException when Redis payload is missing")
     void getRoleMappingByTokenSubject_throwsWhenRedisPayloadIsMissing() {
-        String cacheKey = ROLE_MAPPING_USER_PREFIX + TOKEN_SUBJECT;
-        redisTemplate.delete(cacheKey);
+        userRoleMappingCacheService.deleteUserMapping(TOKEN_SUBJECT);
 
         assertThatThrownBy(() -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(
             TestHelperUtil.buildUser(USER_ID, TOKEN_SUBJECT)

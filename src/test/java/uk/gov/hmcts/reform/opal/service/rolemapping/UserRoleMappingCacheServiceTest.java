@@ -27,7 +27,7 @@ import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-class UserSynchroniseRolesServiceTest {
+class UserRoleMappingCacheServiceTest {
 
     private static final String PREFIX = "ROLE_MAPPING_USER_";
 
@@ -72,6 +72,22 @@ class UserSynchroniseRolesServiceTest {
 
         // ASSERT
         verify(redisTemplate).delete(PREFIX + "AS1");
+    }
+
+    @Test
+    void getUserMappingDelegatesToRedisWithPrefixedKey() {
+
+        // ARRANGE
+        String tokenSubject = "AS1";
+        String payload = "{\"R1\":[\"BU1\"]}";
+        when(redisTemplate.opsForValue().get(PREFIX + tokenSubject)).thenReturn(payload);
+
+        // ACT
+        String result = cacheService.getUserMapping(tokenSubject);
+
+        // ASSERT
+        assertEquals(payload, result);
+        verify(redisTemplate.opsForValue()).get(PREFIX + tokenSubject);
     }
 
     @Test

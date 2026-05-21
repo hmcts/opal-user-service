@@ -33,6 +33,8 @@ java:
     OPAL_FRONTEND_URL: https://opal-frontend.staging.apps.hmcts.net
     TESTING_SUPPORT_ENDPOINTS_ENABLED: true
     LAUNCH_DARKLY_ENABLED: false
+    OPAL_COMMON_CONTENT_DIGEST_REQUEST_AUTO_GENERATE: true
+    OPAL_COMMON_CONTENT_DIGEST_RESPONSE_ENFORCE: false
     FLYWAY_LOCATIONS: classpath:db/migration/ddl, classpath:db/migration/data/allEnvs, classpath:db/migration/data/nle, classpath:db/migration/data/dev
     RELEASE_1A_ENABLED: true
   postgresql:

@@ -55,10 +55,6 @@ public class TestHelperService {
         return testRepository.countRoleAssignments(userId);
     }
 
-    public boolean hasRoleAssignment(long userId, short businessUnitId, long roleId) {
-        return testRepository.countRoleAssignmentsForUserBusinessUnit(userId, businessUnitId, roleId) > 0;
-    }
-
     public LocalDateTime getActivationDate(long userId) {
         return testRepository.findUserActivationDate(userId).orElse(null);
     }

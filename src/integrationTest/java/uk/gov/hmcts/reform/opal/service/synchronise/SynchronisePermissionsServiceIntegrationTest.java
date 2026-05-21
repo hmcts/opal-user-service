@@ -79,7 +79,8 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
 
         LocalDateTime activationBefore = testHelperService.getActivationDate(TARGET_USER_ID);
         assertThat(activationBefore).isNull();
-        assertThat(testHelperService.hasRoleAssignment(TARGET_USER_ID, (short) 70, 3L)).isFalse();
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 3L))
+            .isEqualTo(0L);
         long roleAssignmentsBefore = testHelperService.countRoleAssignments(TARGET_USER_ID);
 
         try {
@@ -89,9 +90,12 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         }
 
         assertThat(testHelperService.countRoleAssignments(TARGET_USER_ID)).isEqualTo(roleAssignmentsBefore + 1);
-        assertThat(testHelperService.hasRoleAssignment(TARGET_USER_ID, (short) 70, 1L)).isTrue();
-        assertThat(testHelperService.hasRoleAssignment(TARGET_USER_ID, (short) 70, 2L)).isTrue();
-        assertThat(testHelperService.hasRoleAssignment(TARGET_USER_ID, (short) 70, 3L)).isTrue();
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 1L))
+            .isGreaterThan(0L);
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 2L))
+            .isGreaterThan(0L);
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 3L))
+            .isGreaterThan(0L);
         assertThat(testHelperService.getActivationDate(TARGET_USER_ID)).isNotNull();
     }
 
@@ -125,7 +129,8 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
         }
 
         assertThat(testHelperService.countRoleAssignments(TARGET_USER_ID)).isEqualTo(roleAssignmentsBefore);
-        assertThat(testHelperService.hasRoleAssignment(TARGET_USER_ID, (short) 70, 3L)).isFalse();
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 3L))
+            .isEqualTo(0L);
         assertThat(testHelperService.getActivationDate(TARGET_USER_ID)).isNull();
     }
 

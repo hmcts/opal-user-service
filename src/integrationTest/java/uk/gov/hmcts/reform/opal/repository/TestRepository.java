@@ -137,6 +137,8 @@ public interface TestRepository extends JpaRepository<BusinessUnitUserEntity, St
         """)
     Optional<LocalDateTime> findUserActivationDate(@Param("userId") long userId);
 
+    // Triggers a rollback when an event is created with the same id as an existing entity
+    // nativeQuery=true because JPA doesn't allow us to persist an entity with @GeneratedValue id field.
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query(value = """

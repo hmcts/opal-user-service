@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import uk.gov.hmcts.reform.opal.AbstractLegacyWireMockIntegrationTest;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
@@ -32,8 +31,7 @@ import static uk.gov.hmcts.reform.opal.entity.BusinessEventLogType.BUSINESS_UNIT
 import static uk.gov.hmcts.reform.opal.entity.BusinessEventLogType.ROLE_ASSIGNED_TO_USER;
 import static uk.gov.hmcts.reform.opal.entity.BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER;
 
-@ActiveProfiles({"integration"})
-@TestPropertySource(properties = {"app-mode=legacy"})
+@ActiveProfiles({"integration", "legacy"})
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_METHOD)
 @DisplayName("UserPermissionsV2 legacy synchronisation integration tests")

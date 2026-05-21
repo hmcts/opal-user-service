@@ -36,6 +36,7 @@ java:
     OPAL_COMMON_CONTENT_DIGEST_REQUEST_AUTO_GENERATE: true
     OPAL_COMMON_CONTENT_DIGEST_RESPONSE_ENFORCE: false
     FLYWAY_LOCATIONS: classpath:db/migration/ddl, classpath:db/migration/data/allEnvs, classpath:db/migration/data/nle, classpath:db/migration/data/dev
+    RELEASE_1A_ENABLED: true
   postgresql:
     enabled: true
 hmcts-redis:

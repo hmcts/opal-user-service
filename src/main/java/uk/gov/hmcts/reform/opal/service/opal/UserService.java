@@ -51,6 +51,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
 
     private final RoleService roleService;
 
+    //@Lazy to avoid circular dependency
     @Lazy
     private final BusinessEventService businessEventService;
 

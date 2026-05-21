@@ -24,7 +24,6 @@ import uk.gov.hmcts.reform.opal.repository.TestRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -170,20 +169,6 @@ public class TestHelperService {
         assertThat(getUserBusinessUnitIds(userId)).containsExactlyInAnyOrderElementsOf(expectedBusinessUnitIdSet);
     }
 
-    public void assertUserHasNoActivationDate(long userId) {
-        assertThat(getActivationDate(userId)).isNull();
-    }
-
-    public void assertUserActivationDateIsToday(long userId) {
-        LocalDateTime activationDate = getActivationDate(userId);
-        assertThat(activationDate).isNotNull();
-        assertThat(activationDate.toLocalDate()).isEqualTo(LocalDate.now());
-    }
-
-    public void assertUserActivationDate(long userId, LocalDateTime expectedActivationDate) {
-        assertThat(getActivationDate(userId)).isEqualTo(expectedActivationDate);
-    }
-
     public void insertBusinessEvent(
         long businessEventId,
         BusinessEventLogType eventType,
@@ -235,14 +220,6 @@ public class TestHelperService {
 
     public List<BusinessEventLogType> getLoggedBusinessEventTypes() {
         return testRepository.findLoggedBusinessEventTypes();
-    }
-
-    public void assertLoggedBusinessEventTypes(BusinessEventLogType... expectedEventTypes) {
-        assertThat(getLoggedBusinessEventTypes()).containsExactly(expectedEventTypes);
-    }
-
-    public void assertLoggedBusinessEventTypesInAnyOrder(BusinessEventLogType... expectedEventTypes) {
-        assertThat(getLoggedBusinessEventTypes()).containsExactlyInAnyOrder(expectedEventTypes);
     }
 
     public Set<Short> getAssignedBusinessUnitIds(long userId, long roleId) {

@@ -14,6 +14,7 @@ import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperService;
 import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     void getUserStateV2_whenLegacyReturnsNoData_removesAllRoles() throws Exception {
         UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
-        testHelperService.assertUserHasNoActivationDate(user.getUserId());
+        assertThat(testHelperService.getActivationDate(user.getUserId())).isNull();
         long roleCountBefore = testHelperService.countRoleAssignments(user.getUserId());
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of(), 1);
         testHelperService.setRoleMappingCache(
@@ -81,8 +82,8 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             .andExpect(status().isOk());
 
         assertThat(testHelperService.countRoleAssignments(user.getUserId())).isEqualTo(0L);
-        testHelperService.assertUserHasNoActivationDate(user.getUserId());
-        testHelperService.assertLoggedBusinessEventTypes();
+        assertThat(testHelperService.getActivationDate(user.getUserId())).isNull();
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).isEmpty();
     }
 
     @Test
@@ -100,7 +101,10 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         mockMvc.perform(get(userStateUri(user.getUserId())));
 
         testHelperService.assertBusinessUnitUserRow(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
-        testHelperService.assertLoggedBusinessEventTypes(ROLE_ASSIGNED_TO_USER, ACCOUNT_ACTIVATION_INITIATED);
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactly(
+            ROLE_ASSIGNED_TO_USER,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
     }
 
     @Test
@@ -119,7 +123,10 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             .andExpect(status().isOk());
 
         testHelperService.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
-        testHelperService.assertLoggedBusinessEventTypes(ROLE_ASSIGNED_TO_USER, ACCOUNT_ACTIVATION_INITIATED);
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactly(
+            ROLE_ASSIGNED_TO_USER,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
     }
 
     @Test
@@ -139,7 +146,10 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             .andExpect(status().isOk());
 
         testHelperService.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
-        testHelperService.assertLoggedBusinessEventTypes(ROLE_ASSIGNED_TO_USER, ACCOUNT_ACTIVATION_INITIATED);
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactly(
+            ROLE_ASSIGNED_TO_USER,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
     }
 
     @Test
@@ -147,7 +157,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     void getUserStateV2_whenRoleMappingCacheEntryMissing_removesAllRoles() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
         TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
-        testHelperService.assertUserHasNoActivationDate(user.getUserId());
+        assertThat(testHelperService.getActivationDate(user.getUserId())).isNull();
         testHelperService.updateBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
             List.of(TestHelperUtil.legacyBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID))
@@ -161,8 +171,8 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             .andExpect(status().isOk());
 
         assertThat(testHelperService.countRoleAssignments(user.getUserId())).isEqualTo(0L);
-        testHelperService.assertUserHasNoActivationDate(user.getUserId());
-        testHelperService.assertLoggedBusinessEventTypes(ROLE_UNASSIGNED_FROM_USER);
+        assertThat(testHelperService.getActivationDate(user.getUserId())).isNull();
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactly(ROLE_UNASSIGNED_FROM_USER);
     }
 
     @Test
@@ -201,7 +211,10 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             buId3NotReturnedByLegacy,
             ROLE_ID
         )).isEqualTo(0L);
-        testHelperService.assertLoggedBusinessEventTypes(BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED, ACCOUNT_ACTIVATION_INITIATED);
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactly(
+            BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
     }
 
     //AC7/AC9/AC14 is the happy path
@@ -217,7 +230,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
         TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
-        testHelperService.assertUserHasNoActivationDate(user.getUserId());
+        assertThat(testHelperService.getActivationDate(user.getUserId())).isNull();
         testHelperService.insertBusinessUnitUser(buuId1, buId1, USER_ID);
         testHelperService.insertBusinessUnitUser(buuId2, buId2, USER_ID);
         testHelperService.insertBusinessUnitUserRole(buuId1, ROLE_ID);
@@ -242,8 +255,13 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         testHelperService.assertBusinessUnitUserRow(buuId1, buId1, USER_ID, ROLE_ID, 1L);
         testHelperService.assertBusinessUnitUserRow(buuId2, buId2, USER_ID, ROLE_ID, 1L);
         testHelperService.assertBusinessUnitUserRow(buuId3, buId3, USER_ID, ROLE_ID, 1L);
-        testHelperService.assertUserActivationDateIsToday(user.getUserId());
-        testHelperService.assertLoggedBusinessEventTypes(BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED, ACCOUNT_ACTIVATION_INITIATED);
+        LocalDateTime activationDateAfter = testHelperService.getActivationDate(user.getUserId());
+        assertThat(activationDateAfter).isNotNull();
+        assertThat(activationDateAfter.toLocalDate()).isEqualTo(LocalDate.now());
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactly(
+            BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
         testHelperService.assertRoleMappingCache(user, roleMappingCache, ROLE_MAPPING_USER_PREFIX);
     }
 
@@ -282,7 +300,11 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         testHelperService.assertBusinessUnitUserRow(buuId2, buId2, USER_ID, ROLE_ID, 1L);
         testHelperService.assertBusinessUnitUserRow(buuId3, buId3, USER_ID, ROLE_ID, 1L);
         assertThat(testHelperService.countRoleAssignmentsForUserRole(user.getUserId(), roleNotInCache)).isEqualTo(0L);
-        testHelperService.assertLoggedBusinessEventTypes(ROLE_ASSIGNED_TO_USER, ROLE_UNASSIGNED_FROM_USER, ACCOUNT_ACTIVATION_INITIATED);
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactly(
+            ROLE_ASSIGNED_TO_USER,
+            ROLE_UNASSIGNED_FROM_USER,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
     }
 
     @Test
@@ -318,8 +340,8 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         testHelperService.assertBusinessUnitUserRow(buuId1, buId1, USER_ID, ROLE_ID, 1L);
         testHelperService.assertBusinessUnitUserRow(buuId2, buId2, USER_ID, ROLE_ID, 1L);
         testHelperService.assertBusinessUnitUserRow(buuId3, buId3, USER_ID, ROLE_ID, 1L);
-        testHelperService.assertUserActivationDate(user.getUserId(), existingActivationDate);
-        testHelperService.assertLoggedBusinessEventTypes(BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED);
+        assertThat(testHelperService.getActivationDate(user.getUserId())).isEqualTo(existingActivationDate);
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactly(BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED);
         testHelperService.assertRoleMappingCache(user, roleMappingCache, ROLE_MAPPING_USER_PREFIX);
     }
 
@@ -341,7 +363,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
         TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
-        testHelperService.assertUserHasNoActivationDate(user.getUserId());
+        assertThat(testHelperService.getActivationDate(user.getUserId())).isNull();
         testHelperService.insertBusinessUnitUser(buuId1, buId1, USER_ID);
         testHelperService.insertBusinessUnitUser(buuId2, buId2, USER_ID);
         testHelperService.insertBusinessUnitUser(buuId5NotInLegacy, buId5NotInLegacy, USER_ID);
@@ -383,8 +405,10 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         assertThat(testHelperService.countRoleAssignmentsForUserRole(user.getUserId(), secondRoleId)).isEqualTo(3L);
         assertThat(testHelperService.countRoleAssignmentsForUserRole(user.getUserId(), thirdRoleId)).isEqualTo(2L);
         assertThat(testHelperService.countRoleAssignments(user.getUserId())).isEqualTo(8L);
-        testHelperService.assertUserActivationDateIsToday(user.getUserId());
-        testHelperService.assertLoggedBusinessEventTypesInAnyOrder(
+        LocalDateTime activationDateAfter = testHelperService.getActivationDate(user.getUserId());
+        assertThat(activationDateAfter).isNotNull();
+        assertThat(activationDateAfter.toLocalDate()).isEqualTo(LocalDate.now());
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactlyInAnyOrder(
             BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
             BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
             ROLE_ASSIGNED_TO_USER,
@@ -399,7 +423,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     void getUserStateV2_whenBusinessEventPersistenceFails_rollsBackSynchronisation() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
         TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
-        testHelperService.assertUserHasNoActivationDate(user.getUserId());
+        assertThat(testHelperService.getActivationDate(user.getUserId())).isNull();
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
             List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
         );
@@ -420,8 +444,8 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
         assertThat(testHelperService.businessUnitUserExists(BUSINESS_UNIT_USER_ID)).isFalse();
         assertThat(testHelperService.countRoleAssignments(user.getUserId())).isEqualTo(roleCountBefore);
-        testHelperService.assertUserHasNoActivationDate(user.getUserId());
-        testHelperService.assertLoggedBusinessEventTypes(ROLE_ASSIGNED_TO_USER);
+        assertThat(testHelperService.getActivationDate(user.getUserId())).isNull();
+        assertThat(testHelperService.getLoggedBusinessEventTypes()).containsExactly(ROLE_ASSIGNED_TO_USER);
     }
 
     private String userStateUri(long userId) {

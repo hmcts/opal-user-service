@@ -1,17 +1,14 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
-import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
-import uk.gov.hmcts.reform.opal.LegacyWireMockXmlStubHelper;
+import uk.gov.hmcts.reform.opal.AbstractLegacyWireMockIntegrationTest;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperService;
@@ -39,7 +36,7 @@ import static uk.gov.hmcts.reform.opal.entity.BusinessEventLogType.ROLE_UNASSIGN
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_METHOD)
 @DisplayName("UserPermissionsV2 legacy synchronisation integration tests")
-class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest {
+class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockIntegrationTest {
 
     private static final long USER_ID = 500000001L; // seeded with no permissions
     private static final long USER_WITH_EXISTING_ROLE = 500000000L;
@@ -57,22 +54,11 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
     @Autowired
     private TestHelperService testHelperService;
 
-    private LegacyWireMockXmlStubHelper legacyWireMockXmlStubHelper;
-
     @BeforeEach
     void initialiseEachTest() throws Exception {
-        legacyWireMockXmlStubHelper = LegacyWireMockXmlStubHelper.initialise(objectMapper);
         testHelperService.resetBusinessEventsTable();
         testHelperService.clearRoleMappingCacheEntries(ROLE_MAPPING_USER_PREFIX);
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of("SU001"));
-    }
-
-    @AfterEach
-    void clearTestState() throws Exception {
-        SecurityContextHolder.clearContext();
-        if (legacyWireMockXmlStubHelper != null) {
-            legacyWireMockXmlStubHelper.clearRegisteredStubs();
-        }
     }
 
     @Test

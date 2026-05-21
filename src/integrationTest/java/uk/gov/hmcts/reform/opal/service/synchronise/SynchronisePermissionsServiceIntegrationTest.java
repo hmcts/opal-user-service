@@ -6,11 +6,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
-import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
-import uk.gov.hmcts.reform.opal.LegacyWireMockXmlStubHelper;
+import uk.gov.hmcts.reform.opal.AbstractLegacyWireMockIntegrationTest;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
@@ -29,7 +27,7 @@ import static uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil.legacy
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_METHOD)
 @Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_METHOD)
 @DisplayName("SynchronisePermissionsService integration tests")
-class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTest {
+class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMockIntegrationTest {
 
     private static final long TARGET_USER_ID = 500000000L;
     private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
@@ -48,19 +46,14 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractIntegrationTe
     @Autowired
     private TestHelperService testHelperService;
 
-    private LegacyWireMockXmlStubHelper legacyWireMockXmlStubHelper;
-
     @BeforeEach
-    void initialiseLegacyGatewayWireMock() throws Exception {
-        legacyWireMockXmlStubHelper = LegacyWireMockXmlStubHelper.initialise(objectMapper);
+    void initialiseEachTest() {
+        testHelperService.clearRoleMappingCacheEntries(ROLE_MAPPING_USER_PREFIX);
     }
 
     @AfterEach
-    void clearTestState() throws Exception {
-        SecurityContextHolder.clearContext();
-        if (legacyWireMockXmlStubHelper != null) {
-            legacyWireMockXmlStubHelper.clearRegisteredStubs();
-        }
+    void clearTestState() {
+        testHelperService.clearRoleMappingCacheEntries(ROLE_MAPPING_USER_PREFIX);
     }
 
     @Test

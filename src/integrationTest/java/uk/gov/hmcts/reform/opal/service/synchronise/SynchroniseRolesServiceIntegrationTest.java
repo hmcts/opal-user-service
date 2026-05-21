@@ -44,7 +44,7 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
     private StringRedisTemplate redisTemplate;
 
     @Autowired
-    private TestHelperService testHelperService;
+    private TestHelperService helper;
 
     @MockitoBean
     private UserPermissionsService userPermissionsService;
@@ -62,14 +62,14 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
             "3", Set.of("68", "70")
         )));
 
-        assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 1L)).containsExactly((short) 70);
-        assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 2L)).containsExactly((short) 70);
-        assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 3L)).isEmpty();
+        assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 1L)).containsExactly((short) 70);
+        assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 2L)).containsExactly((short) 70);
+        assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 3L)).isEmpty();
         log.info(
             "User {} permissions {} sync:\n{}",
             USER_WITH_EXISTING_ROLE,
             "before",
-            testHelperService.formatPermissionsSnapshotAsJson(USER_WITH_EXISTING_ROLE)
+            helper.formatPermissionsSnapshotAsJson(USER_WITH_EXISTING_ROLE)
         );
 
         try {
@@ -83,18 +83,18 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
             );
 
             // Assert
-            assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 1L)).isEmpty();
-            assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 2L))
+            assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 1L)).isEmpty();
+            assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 2L))
                 .containsExactlyInAnyOrder((short) 68, (short) 73);
-            assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 3L)).containsExactly((short) 68);
-            assertThat(testHelperService.getReturnedPermissionNames("L065JG")).isEmpty();
-            assertThat(testHelperService.getReturnedPermissionNames("L066JG")).isNotEmpty();
-            assertThat(testHelperService.getReturnedPermissionNames("L067JG")).isNotEmpty();
+            assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 3L)).containsExactly((short) 68);
+            assertThat(helper.getReturnedPermissionNames("L065JG")).isEmpty();
+            assertThat(helper.getReturnedPermissionNames("L066JG")).isNotEmpty();
+            assertThat(helper.getReturnedPermissionNames("L067JG")).isNotEmpty();
             log.info(
                 "User {} permissions {} sync:\n{}",
                 USER_WITH_EXISTING_ROLE,
                 "after",
-                testHelperService.formatPermissionsSnapshotAsJson(USER_WITH_EXISTING_ROLE)
+                helper.formatPermissionsSnapshotAsJson(USER_WITH_EXISTING_ROLE)
             );
         } finally {
             redisTemplate.delete(cacheKey);

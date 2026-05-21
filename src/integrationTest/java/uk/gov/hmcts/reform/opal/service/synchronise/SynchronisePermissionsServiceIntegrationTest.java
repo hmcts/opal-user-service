@@ -44,16 +44,16 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
     private StringRedisTemplate redisTemplate;
 
     @Autowired
-    private TestHelperService testHelperService;
+    private TestHelperService helper;
 
     @BeforeEach
     void initialiseEachTest() {
-        testHelperService.clearRoleMappingCacheEntries(ROLE_MAPPING_USER_PREFIX);
+        helper.clearRoleMappingCacheEntries(ROLE_MAPPING_USER_PREFIX);
     }
 
     @AfterEach
     void clearTestState() {
-        testHelperService.clearRoleMappingCacheEntries(ROLE_MAPPING_USER_PREFIX);
+        helper.clearRoleMappingCacheEntries(ROLE_MAPPING_USER_PREFIX);
     }
 
     @Test
@@ -70,11 +70,11 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
             objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition())
         );
 
-        LocalDateTime activationBefore = testHelperService.getActivationDate(USER_WITH_EXISTING_ROLE);
+        LocalDateTime activationBefore = helper.getActivationDate(USER_WITH_EXISTING_ROLE);
         assertThat(activationBefore).isNull();
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 3L))
+        assertThat(helper.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 3L))
             .isEqualTo(0L);
-        long roleAssignmentsBefore = testHelperService.countRoleAssignments(USER_WITH_EXISTING_ROLE);
+        long roleAssignmentsBefore = helper.countRoleAssignments(USER_WITH_EXISTING_ROLE);
 
         try {
             synchronisePermissionsService.synchronise(user);
@@ -82,14 +82,14 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
             redisTemplate.delete(cacheKey);
         }
 
-        assertThat(testHelperService.countRoleAssignments(USER_WITH_EXISTING_ROLE)).isEqualTo(roleAssignmentsBefore + 1);
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 1L))
+        assertThat(helper.countRoleAssignments(USER_WITH_EXISTING_ROLE)).isEqualTo(roleAssignmentsBefore + 1);
+        assertThat(helper.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 1L))
             .isGreaterThan(0L);
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 2L))
+        assertThat(helper.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 2L))
             .isGreaterThan(0L);
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 3L))
+        assertThat(helper.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 3L))
             .isGreaterThan(0L);
-        assertThat(testHelperService.getActivationDate(USER_WITH_EXISTING_ROLE)).isNotNull();
+        assertThat(helper.getActivationDate(USER_WITH_EXISTING_ROLE)).isNotNull();
     }
 
     @Test
@@ -106,8 +106,8 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
             objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition())
         );
 
-        long roleAssignmentsBefore = testHelperService.countRoleAssignments(USER_WITH_EXISTING_ROLE);
-        assertThat(testHelperService.getActivationDate(USER_WITH_EXISTING_ROLE)).isNull();
+        long roleAssignmentsBefore = helper.countRoleAssignments(USER_WITH_EXISTING_ROLE);
+        assertThat(helper.getActivationDate(USER_WITH_EXISTING_ROLE)).isNull();
 
         try {
             assertThatThrownBy(() -> synchronisePermissionsService.synchronise(user))
@@ -121,10 +121,10 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
             redisTemplate.delete(cacheKey);
         }
 
-        assertThat(testHelperService.countRoleAssignments(USER_WITH_EXISTING_ROLE)).isEqualTo(roleAssignmentsBefore);
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 3L))
+        assertThat(helper.countRoleAssignments(USER_WITH_EXISTING_ROLE)).isEqualTo(roleAssignmentsBefore);
+        assertThat(helper.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 3L))
             .isEqualTo(0L);
-        assertThat(testHelperService.getActivationDate(USER_WITH_EXISTING_ROLE)).isNull();
+        assertThat(helper.getActivationDate(USER_WITH_EXISTING_ROLE)).isNull();
     }
 
     public static List<LegacyBusinessUnitUserId> legacyBusinessUnitUsersForTargetUser() {

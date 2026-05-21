@@ -105,7 +105,8 @@ public class TestHelperService {
         return row;
     }
 
-    public void assertBusinessUnitUserRow(String businessUnitUserId, short expectedBusinessUnitId, long expectedUserId) {
+    public void assertBusinessUnitUserRow(String businessUnitUserId, short expectedBusinessUnitId,
+                                          long expectedUserId) {
         BusinessUnitUserSnapshot businessUnitUserRow = getBusinessUnitUserSnapshot(expectedUserId, businessUnitUserId);
         assertThat(businessUnitUserRow.userId()).isEqualTo(expectedUserId);
         assertThat(businessUnitUserRow.businessUnitId()).isEqualTo(expectedBusinessUnitId);
@@ -214,7 +215,8 @@ public class TestHelperService {
         String actualRoleMappingCacheValue = redisTemplate.opsForValue().get(cacheKey);
         assertThat(actualRoleMappingCacheValue).isNotNull();
         assertThat(objectMapper.readTree(actualRoleMappingCacheValue)).isEqualTo(
-            objectMapper.readTree(objectMapper.writeValueAsString(TestHelperUtil.toCacheRoleMapping(expectedRoleMapping)))
+            objectMapper.readTree(objectMapper.writeValueAsString(
+                TestHelperUtil.toCacheRoleMapping(expectedRoleMapping)))
         );
     }
 

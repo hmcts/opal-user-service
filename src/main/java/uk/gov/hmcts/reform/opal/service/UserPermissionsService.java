@@ -19,7 +19,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -90,7 +89,6 @@ public class UserPermissionsService {
     private final CacheConfiguration cacheConfiguration;
     private final SynchronisePermissionsService synchronisePermissionsService;
     private final AppModeConfiguration appModeConfiguration;
-    @Lazy
     private final UserService userService;
 
     @Transactional(readOnly = true)

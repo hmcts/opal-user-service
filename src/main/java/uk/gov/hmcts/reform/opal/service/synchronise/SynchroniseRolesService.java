@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.opal.service.synchronise;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
@@ -30,7 +29,6 @@ public class SynchroniseRolesService {
     private static final String SYNC_STAGE = "synchronise roles";
     private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
-    @Lazy
     private final UserService userService;
 
     private final BusinessUnitUserService businessUnitUserService;

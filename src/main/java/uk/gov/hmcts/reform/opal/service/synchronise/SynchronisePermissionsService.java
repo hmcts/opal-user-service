@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.opal.service.synchronise;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
@@ -28,7 +27,6 @@ public class SynchronisePermissionsService {
     private final SynchroniseBusinessUnitUsersService synchroniseBusinessUnitUsersService;
     private final SynchroniseRolesService synchroniseRolesService;
 
-    @Lazy
     private final UserService userService;
 
     @Transactional(propagation = REQUIRES_NEW, rollbackFor = Exception.class)

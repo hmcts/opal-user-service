@@ -31,16 +31,6 @@ public interface TestRepository extends JpaRepository<BusinessUnitUserEntity, St
                buu.businessUnit.businessUnitId as businessUnitId,
                buu.user.userId as userId
         from BusinessUnitUserEntity buu
-        where buu.user.userId = :userId and buu.businessUnitUserId = :businessUnitUserId
-        """)
-    Optional<BusinessUnitUserRow> findBusinessUnitUserRow(@Param("userId") long userId,
-                                                           @Param("businessUnitUserId") String businessUnitUserId);
-
-    @Query("""
-        select buu.businessUnitUserId as businessUnitUserId,
-               buu.businessUnit.businessUnitId as businessUnitId,
-               buu.user.userId as userId
-        from BusinessUnitUserEntity buu
         where buu.businessUnitUserId = :businessUnitUserId
         """)
     Optional<BusinessUnitUserRow> findBusinessUnitUserRowByBusinessUnitUserId(

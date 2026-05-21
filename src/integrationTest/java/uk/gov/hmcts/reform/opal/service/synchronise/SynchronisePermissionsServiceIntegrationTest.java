@@ -29,7 +29,7 @@ import static uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil.legacy
 @DisplayName("SynchronisePermissionsService integration tests")
 class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMockIntegrationTest {
 
-    private static final long TARGET_USER_ID = 500000000L;
+    private static final long USER_WITH_EXISTING_ROLE = 500000000L;
     private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
     private static final String SYNC_STAGE = "synchronise roles";
     private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
@@ -59,7 +59,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
     @Test
     @DisplayName("Happy path should add one role to one business unit")
     void synchronise_happyPath_addsSingleRoleAssignment() throws Exception {
-        UserEntity user = userRepository.findById(TARGET_USER_ID).orElseThrow();
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
 
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of("123"));
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(legacyBusinessUnitUsersForTargetUser());
@@ -70,11 +70,11 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
             objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition())
         );
 
-        LocalDateTime activationBefore = testHelperService.getActivationDate(TARGET_USER_ID);
+        LocalDateTime activationBefore = testHelperService.getActivationDate(USER_WITH_EXISTING_ROLE);
         assertThat(activationBefore).isNull();
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 3L))
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 3L))
             .isEqualTo(0L);
-        long roleAssignmentsBefore = testHelperService.countRoleAssignments(TARGET_USER_ID);
+        long roleAssignmentsBefore = testHelperService.countRoleAssignments(USER_WITH_EXISTING_ROLE);
 
         try {
             synchronisePermissionsService.synchronise(user);
@@ -82,20 +82,20 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
             redisTemplate.delete(cacheKey);
         }
 
-        assertThat(testHelperService.countRoleAssignments(TARGET_USER_ID)).isEqualTo(roleAssignmentsBefore + 1);
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 1L))
+        assertThat(testHelperService.countRoleAssignments(USER_WITH_EXISTING_ROLE)).isEqualTo(roleAssignmentsBefore + 1);
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 1L))
             .isGreaterThan(0L);
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 2L))
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 2L))
             .isGreaterThan(0L);
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 3L))
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 3L))
             .isGreaterThan(0L);
-        assertThat(testHelperService.getActivationDate(TARGET_USER_ID)).isNotNull();
+        assertThat(testHelperService.getActivationDate(USER_WITH_EXISTING_ROLE)).isNotNull();
     }
 
     @Test
     @DisplayName("Should rollback role change when activateUser throws")
     void synchronise_rollsBackRoleChange_whenActivateUserThrows() throws Exception {
-        UserEntity user = userRepository.findById(TARGET_USER_ID).orElseThrow();
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
 
         // Same setup as happy path, but without security context to force activateUser failure.
@@ -106,14 +106,14 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
             objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition())
         );
 
-        long roleAssignmentsBefore = testHelperService.countRoleAssignments(TARGET_USER_ID);
-        assertThat(testHelperService.getActivationDate(TARGET_USER_ID)).isNull();
+        long roleAssignmentsBefore = testHelperService.countRoleAssignments(USER_WITH_EXISTING_ROLE);
+        assertThat(testHelperService.getActivationDate(USER_WITH_EXISTING_ROLE)).isNull();
 
         try {
             assertThatThrownBy(() -> synchronisePermissionsService.synchronise(user))
                 .isInstanceOf(SynchronisePermissionsException.class)
                 .hasMessage(TestHelperUtil.synchronisePermissionsErrorMessage(
-                    TARGET_USER_ID,
+                    USER_WITH_EXISTING_ROLE,
                     SYNC_STAGE,
                     UNEXPECTED_RUNTIME_EXCEPTION_REASON
                 ));
@@ -121,10 +121,10 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
             redisTemplate.delete(cacheKey);
         }
 
-        assertThat(testHelperService.countRoleAssignments(TARGET_USER_ID)).isEqualTo(roleAssignmentsBefore);
-        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(TARGET_USER_ID, (short) 70, 3L))
+        assertThat(testHelperService.countRoleAssignments(USER_WITH_EXISTING_ROLE)).isEqualTo(roleAssignmentsBefore);
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(USER_WITH_EXISTING_ROLE, (short) 70, 3L))
             .isEqualTo(0L);
-        assertThat(testHelperService.getActivationDate(TARGET_USER_ID)).isNull();
+        assertThat(testHelperService.getActivationDate(USER_WITH_EXISTING_ROLE)).isNull();
     }
 
     public static List<LegacyBusinessUnitUserId> legacyBusinessUnitUsersForTargetUser() {

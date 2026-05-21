@@ -26,6 +26,8 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @DisplayName("SynchroniseBusinessUnitUsersService integration tests")
 class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegrationTest {
 
+    private static final long USER_ID = 500000001L; // seeded with no permissions
+    private static final long USER_WITH_EXISTING_ROLE = 500000000L;
     private static final String SYNC_STAGE = "synchronise business unit users";
 
     @Autowired
@@ -40,7 +42,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @Test
     @DisplayName("Should update existing business unit user when business unit and user differ")
     void synchroniseBusinessUnitUsers_updatesExistingBusinessUnitUser() {
-        UserEntity user = userRepository.findById(500000000L).orElseThrow();
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L081JG");
         assertThat(rowBefore.businessUnitId()).isEqualTo((short) 67);
         assertThat(rowBefore.userId()).isEqualTo(500000006L);
@@ -52,13 +54,13 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         BusinessUnitUserSnapshot updatedRow = testHelperService.getBusinessUnitUserSnapshot("L081JG");
         assertThat(updatedRow.businessUnitId()).isEqualTo((short) 70);
-        assertThat(updatedRow.userId()).isEqualTo(500000000L);
+        assertThat(updatedRow.userId()).isEqualTo(USER_WITH_EXISTING_ROLE);
     }
 
     @Test
     @DisplayName("Should insert a missing business unit user with mapped user and business unit")
     void synchroniseBusinessUnitUsers_insertsMissingBusinessUnitUser() {
-        UserEntity user = userRepository.findById(500000001L).orElseThrow();
+        UserEntity user = userRepository.findById(USER_ID).orElseThrow();
         long countBefore = testHelperService.businessUnitUserCount();
 
         refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
@@ -69,13 +71,13 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
         assertThat(testHelperService.businessUnitUserCount()).isEqualTo(countBefore + 1);
         BusinessUnitUserSnapshot insertedRow = testHelperService.getBusinessUnitUserSnapshot("L099JG");
         assertThat(insertedRow.businessUnitId()).isEqualTo((short) 69);
-        assertThat(insertedRow.userId()).isEqualTo(500000001L);
+        assertThat(insertedRow.userId()).isEqualTo(USER_ID);
     }
 
     @Test
     @DisplayName("Should delete business unit users no longer returned by legacy")
     void synchroniseBusinessUnitUsers_deletesBusinessUnitsUserMissingFromLegacy() {
-        UserEntity user = userRepository.findById(500000001L).orElseThrow();
+        UserEntity user = userRepository.findById(USER_ID).orElseThrow();
 
         testHelperService.insertBusinessUnitUser("L091JG", (short) 67, user.getUserId());
         testHelperService.insertBusinessUnitUser("L092JG", (short) 69, user.getUserId());
@@ -98,7 +100,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @Test
     @DisplayName("Should reject unknown business unit and leave existing business unit users unchanged")
     void synchroniseBusinessUnitUsers_rejectsUnknownBusinessUnit() {
-        UserEntity user = userRepository.findById(500000000L).orElseThrow();
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 
@@ -121,7 +123,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @ValueSource(strings = {"ABC", "40000"})
     @DisplayName("Should reject malformed business unit id and leave existing business unit users unchanged")
     void synchroniseBusinessUnitUsers_rejectsMalformedBusinessUnitId(String malformedBusinessUnitId) {
-        UserEntity user = userRepository.findById(500000000L).orElseThrow();
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 
@@ -147,7 +149,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @ValueSource(strings = {"", " "})
     @DisplayName("Should reject missing business unit user id and leave existing business unit users unchanged")
     void synchroniseBusinessUnitUsers_rejectsMissingBusinessUnitUserId(String malformedBusinessUnitUserId) {
-        UserEntity user = userRepository.findById(500000000L).orElseThrow();
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 
@@ -169,7 +171,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @Test
     @DisplayName("Should reject overlength business unit user id and leave existing business unit users unchanged")
     void synchroniseBusinessUnitUsers_rejectsOverlengthBusinessUnitUserId() {
-        UserEntity user = userRepository.findById(500000000L).orElseThrow();
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
         String malformedBusinessUnitUserId = "L082JG1";
@@ -192,7 +194,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @Test
     @DisplayName("Should reject null legacy BU user payload and leave existing BU users unchanged")
     void synchroniseBusinessUnitUsers_rejectsNullLegacyBusinessUnitUsersPayload() {
-        UserEntity user = userRepository.findById(500000000L).orElseThrow();
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 
@@ -211,7 +213,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @Test
     @DisplayName("Should reject null entry in legacy BU user payload and leave existing BU users unchanged")
     void synchroniseBusinessUnitUsers_rejectsNullEntryInLegacyBusinessUnitUsersPayload() {
-        UserEntity user = userRepository.findById(500000000L).orElseThrow();
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 

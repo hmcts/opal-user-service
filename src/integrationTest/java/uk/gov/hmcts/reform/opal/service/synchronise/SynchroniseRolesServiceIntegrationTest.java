@@ -31,6 +31,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @Slf4j(topic = "opal.SynchroniseRolesServiceIntegrationTest")
 class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
 
+    private static final long USER_WITH_EXISTING_ROLE = 500000000L;
     private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
 
     @Autowired
@@ -52,8 +53,8 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("Should apply cached role mappings and remove stale roles for legacy business units")
     void synchroniseRoles_appliesCachedRolesAndRemovesStaleRoles() throws JsonProcessingException {
         // Arrange
-        UserEntity user = userRepository.findById(500000000L).orElseThrow();
-        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000000L);
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(USER_WITH_EXISTING_ROLE);
 
         String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
         redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(Map.of(
@@ -61,14 +62,14 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
             "3", Set.of("68", "70")
         )));
 
-        assertThat(testHelperService.getAssignedBusinessUnitIds(500000000L, 1L)).containsExactly((short) 70);
-        assertThat(testHelperService.getAssignedBusinessUnitIds(500000000L, 2L)).containsExactly((short) 70);
-        assertThat(testHelperService.getAssignedBusinessUnitIds(500000000L, 3L)).isEmpty();
+        assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 1L)).containsExactly((short) 70);
+        assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 2L)).containsExactly((short) 70);
+        assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 3L)).isEmpty();
         log.info(
             "User {} permissions {} sync:\n{}",
-            500000000L,
+            USER_WITH_EXISTING_ROLE,
             "before",
-            testHelperService.formatPermissionsSnapshotAsJson(500000000L)
+            testHelperService.formatPermissionsSnapshotAsJson(USER_WITH_EXISTING_ROLE)
         );
 
         try {
@@ -82,18 +83,18 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
             );
 
             // Assert
-            assertThat(testHelperService.getAssignedBusinessUnitIds(500000000L, 1L)).isEmpty();
-            assertThat(testHelperService.getAssignedBusinessUnitIds(500000000L, 2L))
+            assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 1L)).isEmpty();
+            assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 2L))
                 .containsExactlyInAnyOrder((short) 68, (short) 73);
-            assertThat(testHelperService.getAssignedBusinessUnitIds(500000000L, 3L)).containsExactly((short) 68);
+            assertThat(testHelperService.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 3L)).containsExactly((short) 68);
             assertThat(testHelperService.getReturnedPermissionNames("L065JG")).isEmpty();
             assertThat(testHelperService.getReturnedPermissionNames("L066JG")).isNotEmpty();
             assertThat(testHelperService.getReturnedPermissionNames("L067JG")).isNotEmpty();
             log.info(
                 "User {} permissions {} sync:\n{}",
-                500000000L,
+                USER_WITH_EXISTING_ROLE,
                 "after",
-                testHelperService.formatPermissionsSnapshotAsJson(500000000L)
+                testHelperService.formatPermissionsSnapshotAsJson(USER_WITH_EXISTING_ROLE)
             );
         } finally {
             redisTemplate.delete(cacheKey);

@@ -92,14 +92,8 @@ public class TestHelperService {
     }
 
     public BusinessUnitUserSnapshot getBusinessUnitUserSnapshot(String businessUnitUserId) {
-        TestRepository.BusinessUnitUserRow row = testRepository.findBusinessUnitUserRowByBusinessUnitUserId(
-            businessUnitUserId
-        ).orElseThrow(() -> new IllegalStateException("Missing business unit user fixture: " + businessUnitUserId));
-        return new BusinessUnitUserSnapshot(
-            row.getBusinessUnitUserId(),
-            row.getBusinessUnitId(),
-            row.getUserId()
-        );
+        return testRepository.findBusinessUnitUserSnapshotByBusinessUnitUserId(businessUnitUserId)
+            .orElseThrow(() -> new IllegalStateException("Missing business unit user fixture: " + businessUnitUserId));
     }
 
     public BusinessUnitUserSnapshot getBusinessUnitUserSnapshot(long userId, String businessUnitUserId) {
@@ -174,10 +168,6 @@ public class TestHelperService {
             expectedBusinessUnitIdSet.add(businessUnitId);
         }
         assertThat(getUserBusinessUnitIds(userId)).containsExactlyInAnyOrderElementsOf(expectedBusinessUnitIdSet);
-    }
-
-    public void assertUserBusinessUnitRoleCount(long userId, short businessUnitId, long roleId, long expectedRoleCount) {
-        assertThat(countRoleAssignmentsForUserBusinessUnit(userId, businessUnitId, roleId)).isEqualTo(expectedRoleCount);
     }
 
     public void assertUserHasNoActivationDate(long userId) {
@@ -273,11 +263,11 @@ public class TestHelperService {
     }
 
     private List<Map<String, Object>> getPermissionsSnapshot(long userId) {
-        return testRepository.findBusinessUnitUserRowsByUserId(userId).stream()
-            .map(row -> {
+        return testRepository.findBusinessUnitUserSnapshotsByUserId(userId).stream()
+            .map(snapshot -> {
                 Map<String, Object> businessUnitSnapshot = new LinkedHashMap<>();
-                businessUnitSnapshot.put("business_unit_id", row.getBusinessUnitId());
-                businessUnitSnapshot.put("roles", getAssignedRoleIds(row.getBusinessUnitUserId()));
+                businessUnitSnapshot.put("business_unit_id", snapshot.businessUnitId());
+                businessUnitSnapshot.put("roles", getAssignedRoleIds(snapshot.businessUnitUserId()));
                 return businessUnitSnapshot;
             })
             .toList();
@@ -307,6 +297,4 @@ public class TestHelperService {
             .orElseThrow(() -> new IllegalStateException("Missing role fixture: " + roleId));
     }
 
-    public record BusinessUnitUserSnapshot(String businessUnitUserId, short businessUnitId, long userId) {
-    }
 }

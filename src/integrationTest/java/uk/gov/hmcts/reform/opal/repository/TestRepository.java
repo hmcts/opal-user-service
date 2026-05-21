@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
+import uk.gov.hmcts.reform.opal.service.synchronise.BusinessUnitUserSnapshot;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,34 +19,30 @@ import java.util.Optional;
 @Profile("integration")
 public interface TestRepository extends JpaRepository<BusinessUnitUserEntity, String> {
 
-    interface BusinessUnitUserRow {
-        String getBusinessUnitUserId();
-
-        Short getBusinessUnitId();
-
-        Long getUserId();
-    }
-
     @Query("""
-        select buu.businessUnitUserId as businessUnitUserId,
-               buu.businessUnit.businessUnitId as businessUnitId,
-               buu.user.userId as userId
+        select new uk.gov.hmcts.reform.opal.service.synchronise.BusinessUnitUserSnapshot(
+            buu.businessUnitUserId,
+            buu.businessUnit.businessUnitId,
+            buu.user.userId
+        )
         from BusinessUnitUserEntity buu
         where buu.businessUnitUserId = :businessUnitUserId
         """)
-    Optional<BusinessUnitUserRow> findBusinessUnitUserRowByBusinessUnitUserId(
+    Optional<BusinessUnitUserSnapshot> findBusinessUnitUserSnapshotByBusinessUnitUserId(
         @Param("businessUnitUserId") String businessUnitUserId
     );
 
     @Query("""
-        select buu.businessUnitUserId as businessUnitUserId,
-               buu.businessUnit.businessUnitId as businessUnitId,
-               buu.user.userId as userId
+        select new uk.gov.hmcts.reform.opal.service.synchronise.BusinessUnitUserSnapshot(
+            buu.businessUnitUserId,
+            buu.businessUnit.businessUnitId,
+            buu.user.userId
+        )
         from BusinessUnitUserEntity buu
         where buu.user.userId = :userId
         order by buu.businessUnitUserId
         """)
-    List<BusinessUnitUserRow> findBusinessUnitUserRowsByUserId(@Param("userId") long userId);
+    List<BusinessUnitUserSnapshot> findBusinessUnitUserSnapshotsByUserId(@Param("userId") long userId);
 
     long countByBusinessUnitUserId(String businessUnitUserId);
 

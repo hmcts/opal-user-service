@@ -210,7 +210,11 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         testHelperService.assertUserBusinessUnitIds(user.getUserId(), buId1, buId2);
         testHelperService.assertBusinessUnitUserRow(buuId1, buId1, USER_ID, ROLE_ID, 1L);
         testHelperService.assertBusinessUnitUserRow(buuId2, buId2, USER_ID, ROLE_ID, 1L);
-        testHelperService.assertUserBusinessUnitRoleCount(user.getUserId(), buId3NotReturnedByLegacy, ROLE_ID, 0L);
+        assertThat(testHelperService.countRoleAssignmentsForUserBusinessUnit(
+            user.getUserId(),
+            buId3NotReturnedByLegacy,
+            ROLE_ID
+        )).isEqualTo(0L);
         testHelperService.assertLoggedBusinessEventTypes(BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED, ACCOUNT_ACTIVATION_INITIATED);
     }
 

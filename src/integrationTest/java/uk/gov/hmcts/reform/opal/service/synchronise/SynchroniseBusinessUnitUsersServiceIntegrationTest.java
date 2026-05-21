@@ -41,7 +41,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should update existing business unit user when business unit and user differ")
     void synchroniseBusinessUnitUsers_updatesExistingBusinessUnitUser() {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
-        TestHelperService.BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L081JG");
+        BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L081JG");
         assertThat(rowBefore.businessUnitId()).isEqualTo((short) 67);
         assertThat(rowBefore.userId()).isEqualTo(500000006L);
 
@@ -50,7 +50,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
             List.of(TestHelperUtil.legacyBusinessUnitUser("L081JG", "70"))
         );
 
-        TestHelperService.BusinessUnitUserSnapshot updatedRow = testHelperService.getBusinessUnitUserSnapshot("L081JG");
+        BusinessUnitUserSnapshot updatedRow = testHelperService.getBusinessUnitUserSnapshot("L081JG");
         assertThat(updatedRow.businessUnitId()).isEqualTo((short) 70);
         assertThat(updatedRow.userId()).isEqualTo(500000000L);
     }
@@ -67,7 +67,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
         );
 
         assertThat(testHelperService.businessUnitUserCount()).isEqualTo(countBefore + 1);
-        TestHelperService.BusinessUnitUserSnapshot insertedRow = testHelperService.getBusinessUnitUserSnapshot("L099JG");
+        BusinessUnitUserSnapshot insertedRow = testHelperService.getBusinessUnitUserSnapshot("L099JG");
         assertThat(insertedRow.businessUnitId()).isEqualTo((short) 69);
         assertThat(insertedRow.userId()).isEqualTo(500000001L);
     }
@@ -99,7 +99,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should reject unknown business unit and leave existing business unit users unchanged")
     void synchroniseBusinessUnitUsers_rejectsUnknownBusinessUnit() {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
-        TestHelperService.BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
+        BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
@@ -122,7 +122,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should reject malformed business unit id and leave existing business unit users unchanged")
     void synchroniseBusinessUnitUsers_rejectsMalformedBusinessUnitId(String malformedBusinessUnitId) {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
-        TestHelperService.BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
+        BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
@@ -148,7 +148,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should reject missing business unit user id and leave existing business unit users unchanged")
     void synchroniseBusinessUnitUsers_rejectsMissingBusinessUnitUserId(String malformedBusinessUnitUserId) {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
-        TestHelperService.BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
+        BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
@@ -170,7 +170,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should reject overlength business unit user id and leave existing business unit users unchanged")
     void synchroniseBusinessUnitUsers_rejectsOverlengthBusinessUnitUserId() {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
-        TestHelperService.BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
+        BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
         String malformedBusinessUnitUserId = "L082JG1";
 
@@ -193,7 +193,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should reject null legacy BU user payload and leave existing BU users unchanged")
     void synchroniseBusinessUnitUsers_rejectsNullLegacyBusinessUnitUsersPayload() {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
-        TestHelperService.BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
+        BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, null))
@@ -212,7 +212,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should reject null entry in legacy BU user payload and leave existing BU users unchanged")
     void synchroniseBusinessUnitUsers_rejectsNullEntryInLegacyBusinessUnitUsersPayload() {
         UserEntity user = userRepository.findById(500000000L).orElseThrow();
-        TestHelperService.BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
+        BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L082JG");
         long countBefore = testHelperService.businessUnitUserCount();
 
         assertThatThrownBy(() -> refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(

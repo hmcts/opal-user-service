@@ -94,7 +94,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         mockMvc.perform(get(userStateUri(user.getUserId())))
             .andExpect(status().isOk());
 
-        testHelperService.assertUserRoleCount(user.getUserId(), 0L);
+        assertThat(testHelperService.countRoleAssignments(user.getUserId())).isEqualTo(0L);
         testHelperService.assertUserHasNoActivationDate(user.getUserId());
         testHelperService.assertLoggedBusinessEventTypes();
     }
@@ -174,7 +174,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         mockMvc.perform(get(userStateUri(user.getUserId())))
             .andExpect(status().isOk());
 
-        testHelperService.assertUserRoleCount(user.getUserId(), 0L);
+        assertThat(testHelperService.countRoleAssignments(user.getUserId())).isEqualTo(0L);
         testHelperService.assertUserHasNoActivationDate(user.getUserId());
         testHelperService.assertLoggedBusinessEventTypes(ROLE_UNASSIGNED_FROM_USER);
     }
@@ -392,7 +392,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         testHelperService.assertUserRoleAssignmentCount(user.getUserId(), ROLE_ID, 3L);
         testHelperService.assertUserRoleAssignmentCount(user.getUserId(), secondRoleId, 3L);
         testHelperService.assertUserRoleAssignmentCount(user.getUserId(), thirdRoleId, 2L);
-        testHelperService.assertUserRoleCount(user.getUserId(), 8L);
+        assertThat(testHelperService.countRoleAssignments(user.getUserId())).isEqualTo(8L);
         testHelperService.assertUserActivationDateIsToday(user.getUserId());
         testHelperService.assertLoggedBusinessEventTypesInAnyOrder(
             BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
@@ -429,7 +429,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
             ));
 
         assertThat(testHelperService.businessUnitUserExists(BUSINESS_UNIT_USER_ID)).isFalse();
-        testHelperService.assertUserRoleCount(user.getUserId(), roleCountBefore);
+        assertThat(testHelperService.countRoleAssignments(user.getUserId())).isEqualTo(roleCountBefore);
         testHelperService.assertUserHasNoActivationDate(user.getUserId());
         testHelperService.assertLoggedBusinessEventTypes(ROLE_ASSIGNED_TO_USER);
     }

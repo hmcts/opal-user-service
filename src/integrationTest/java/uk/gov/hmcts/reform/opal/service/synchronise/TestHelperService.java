@@ -172,10 +172,6 @@ public class TestHelperService {
         userRepository.saveAndFlush(user);
     }
 
-    public void assertUserRoleCount(long userId, long expectedRoleCount) {
-        assertThat(countRoleAssignments(userId)).isEqualTo(expectedRoleCount);
-    }
-
     public void assertUserBusinessUnitIds(long userId, short... expectedBusinessUnitIds) {
         Set<Short> expectedBusinessUnitIdSet = new LinkedHashSet<>();
         for (short businessUnitId : expectedBusinessUnitIds) {

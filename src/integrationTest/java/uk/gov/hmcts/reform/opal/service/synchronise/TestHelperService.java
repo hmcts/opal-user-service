@@ -184,10 +184,6 @@ public class TestHelperService {
         assertThat(countRoleAssignmentsForUserBusinessUnit(userId, businessUnitId, roleId)).isEqualTo(expectedRoleCount);
     }
 
-    public void assertUserRoleAssignmentCount(long userId, long roleId, long expectedRoleCount) {
-        assertThat(countRoleAssignmentsForUserRole(userId, roleId)).isEqualTo(expectedRoleCount);
-    }
-
     public void assertUserHasNoActivationDate(long userId) {
         assertThat(getActivationDate(userId)).isNull();
     }

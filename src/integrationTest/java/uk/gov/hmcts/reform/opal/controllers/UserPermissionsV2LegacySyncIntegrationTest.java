@@ -291,7 +291,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         testHelperService.assertBusinessUnitUserRow(buuId1, buId1, USER_ID, ROLE_ID, 1L);
         testHelperService.assertBusinessUnitUserRow(buuId2, buId2, USER_ID, ROLE_ID, 1L);
         testHelperService.assertBusinessUnitUserRow(buuId3, buId3, USER_ID, ROLE_ID, 1L);
-        testHelperService.assertUserRoleAssignmentCount(user.getUserId(), roleNotInCache, 0L);
+        assertThat(testHelperService.countRoleAssignmentsForUserRole(user.getUserId(), roleNotInCache)).isEqualTo(0L);
         testHelperService.assertLoggedBusinessEventTypes(ROLE_ASSIGNED_TO_USER, ROLE_UNASSIGNED_FROM_USER, ACCOUNT_ACTIVATION_INITIATED);
     }
 
@@ -389,9 +389,9 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractIntegrationTest
         testHelperService.assertBusinessUnitUserRow(buuId3, buId3, USER_ID, thirdRoleId, 1L);
         testHelperService.assertBusinessUnitUserRow(buuId4, buId4, USER_ID, thirdRoleId, 1L);
         assertThat(testHelperService.businessUnitUserExists(buuId5NotInLegacy)).isFalse();
-        testHelperService.assertUserRoleAssignmentCount(user.getUserId(), ROLE_ID, 3L);
-        testHelperService.assertUserRoleAssignmentCount(user.getUserId(), secondRoleId, 3L);
-        testHelperService.assertUserRoleAssignmentCount(user.getUserId(), thirdRoleId, 2L);
+        assertThat(testHelperService.countRoleAssignmentsForUserRole(user.getUserId(), ROLE_ID)).isEqualTo(3L);
+        assertThat(testHelperService.countRoleAssignmentsForUserRole(user.getUserId(), secondRoleId)).isEqualTo(3L);
+        assertThat(testHelperService.countRoleAssignmentsForUserRole(user.getUserId(), thirdRoleId)).isEqualTo(2L);
         assertThat(testHelperService.countRoleAssignments(user.getUserId())).isEqualTo(8L);
         testHelperService.assertUserActivationDateIsToday(user.getUserId());
         testHelperService.assertLoggedBusinessEventTypesInAnyOrder(

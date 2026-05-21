@@ -75,8 +75,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         String cacheKey = "USER_STATE_" + subject;
         redisTemplate.delete(cacheKey);
 
-        MockHttpServletRequestBuilder builder = get("/v2" + URL_BASE + "/" + userIdWithPermissions + "/state")
-            .contentType(MediaType.APPLICATION_JSON);
+        MockHttpServletRequestBuilder builder = get("/v2" + URL_BASE + "/" + userIdWithPermissions + "/state");
         addLoginHeader(newLogin, builder);
         ResultActions actions = mockMvc.perform(builder);
 
@@ -126,8 +125,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         LocalDateTime before = readLastLoginDate(userIdWithPermissions);
 
         MockHttpServletRequestBuilder builder =
-            get("/v2" + URL_BASE + "/" + userIdWithPermissions + "/state")
-                .contentType(MediaType.APPLICATION_JSON);
+            get("/v2" + URL_BASE + "/" + userIdWithPermissions + "/state");
         addLoginHeader(newLogin, builder);
 
         mockMvc.perform(builder)
@@ -154,8 +152,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         //call once, check we have the initial TTL
-        ResultActions firstCall = mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state")
-                                                     .contentType(MediaType.APPLICATION_JSON))
+        ResultActions firstCall = mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
         String firstBody = firstCall.andReturn().getResponse().getContentAsString();
@@ -170,8 +167,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         assertThat(ttlBeforeRefreshMinutes2).isBetween(4L, 5L);
 
         //call a second time and check we get the new TTL.
-        ResultActions secondCall = mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state")
-                                                      .contentType(MediaType.APPLICATION_JSON))
+        ResultActions secondCall = mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
         String secondBody = secondCall.andReturn().getResponse().getContentAsString();
@@ -191,8 +187,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         // Populate cache by calling the API with valid data.
-        mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state")
-                            .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 

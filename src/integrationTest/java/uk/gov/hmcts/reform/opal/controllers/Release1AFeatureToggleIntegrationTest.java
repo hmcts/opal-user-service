@@ -94,8 +94,6 @@ class Release1AFeatureToggleIntegrationTest {
                 get("/testing-support/token/user").header(X_USER_EMAIL, "opal-test@dev.platform.hmcts.net")),
             args("GET /testing-support/token/parse",
                 get("/testing-support/token/parse").header(AUTHORIZATION, AUTHORIZATION_VALUE)),
-            args("GET /users/state", get("/users/state")),
-            args("GET /users/{userId}/state", get("/users/500000003/state")),
             args("POST /users", post("/users").header(AUTHORIZATION, AUTHORIZATION_VALUE)),
             args("PUT /users", put("/users")
                 .header(AUTHORIZATION, AUTHORIZATION_VALUE)

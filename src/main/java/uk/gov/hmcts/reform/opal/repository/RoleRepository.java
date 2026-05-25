@@ -15,9 +15,7 @@ public interface RoleRepository extends JpaRepository<RoleEntity, Long>, JpaSpec
 
     boolean existsByRoleId(Long roleId);
 
-    boolean existsByRoleIdAndIsActiveTrue(Long roleId);
+    Optional<RoleEntity> findByRoleId(Long roleId);
 
-    long countByRoleIdAndIsActiveTrue(Long roleId);
-
-    Optional<RoleEntity> findByRoleIdAndIsActiveTrue(Long roleId);
+    long countByRoleId(Long roleId);
 }

@@ -5,6 +5,6 @@ import java.util.Set;
 
 record ParsedUserMapping(
     String emailAddress,
-    Map<String, Set<String>> businessUnitToRoles
+    Map<String, Set<String>> roleToBusinessUnits
 ) {
 }

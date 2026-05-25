@@ -35,9 +35,6 @@ public class RoleEntity {
     @Column(name = "role_name", nullable = false)
     private String name;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean isActive;
-
     @Column(name = "application_function_list", nullable = false)
     private List<String> applicationFunctionList;
 }

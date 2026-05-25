@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -69,6 +71,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @Autowired
     StringRedisTemplate redisTemplate;
 
+<<<<<<< PO-2845-Integrate-Legacy-File-read-process-into-a-scheduler
     @BeforeEach
     void resetLastLoginDate() {
         jdbcTemplate.update(
@@ -77,6 +80,9 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             500000000L
         );
     }
+=======
+    private ObjectMapper objectMapper = new ObjectMapper();
+>>>>>>> master
 
     @ParameterizedTest
     @NullSource
@@ -422,7 +428,10 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         actions.andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        assertThat(body).isEqualTo(objectMapper.readTree(EXPECTED_V2_USER_STATE).toString());
+        JsonNode expectedNode = objectMapper.readTree(EXPECTED_V2_USER_STATE);
+        JsonNode actualNode = objectMapper.readTree(body);
+        assertThat(actualNode).isEqualTo(expectedNode);
+
         if (newLogin) {
             verify(eventLoggingService).logEvent(
                 eq("User Authentication"),
@@ -439,7 +448,10 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             verifyNoInteractions(eventLoggingService);
         }
         // verification of redis caching of user state
-        assertThat(EXPECTED_V2_USER_STATE).isEqualTo(redisTemplate.opsForValue().get(cacheKey));
+        JsonNode actualFromCacheNode = objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey));
+        assertThat(actualFromCacheNode).isEqualTo(expectedNode);
+
+
         Long ttl = redisTemplate.getExpire(cacheKey, TimeUnit.MINUTES);
         assertThat(ttl).isBetween(29L, 30L); //30 mins TTL seems to immediately tick down to 29 mins.
     }
@@ -523,7 +535,9 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        assertThat(redisTemplate.opsForValue().get(cacheKey)).isEqualTo(EXPECTED_V2_USER_STATE);
+        JsonNode expectedNode = objectMapper.readTree(EXPECTED_V2_USER_STATE);
+        JsonNode actualNode = objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey));
+        assertThat(actualNode).isEqualTo(expectedNode);
 
         // Simulate "30 minutes later"
         Boolean ttlSet = redisTemplate.expire(cacheKey, 1, TimeUnit.SECONDS);
@@ -588,8 +602,11 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
                   "permission_name" : "Check and Validate Draft Accounts"
                 }, {
                   "permission_id" : 6,
-                  "permission_name" : "Search and View Accounts"
-                } ]
+                  "permission_name" : "Search and view accounts"
+                }, {
+                   "permission_id": 7,
+                   "permission_name": "Account Maintenance"
+                 } ]
               }, {
                 "business_unit_user_id" : "L066JG",
                 "business_unit_id" : 68,

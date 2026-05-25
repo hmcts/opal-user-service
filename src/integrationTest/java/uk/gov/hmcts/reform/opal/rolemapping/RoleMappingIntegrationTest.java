@@ -85,12 +85,13 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
                      redisTemplate.opsForValue().get("USER_MAPPING_FILE_LAST_UPDATE_AT"));
 
         assertRedisJsonEquals(OPAL_TEST_KEY, Map.of(
-            "BU70", List.of("R1", "R2"),
-            "BU68", List.of("R3")
+            "R1", List.of("BU70"),
+            "R2", List.of("BU70"),
+            "R3", List.of("BU68")
         ));
 
         assertRedisJsonEquals(NO_GO_USER_KEY, Map.of(
-            "BU67", List.of("R4")
+            "R4", List.of("BU67")
         ));
     }
 
@@ -125,20 +126,20 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
                 opal-test@HMCTS.NET,BU70,R1
                 """);
 
-        redisTemplate.opsForValue().set(OPAL_TEST_KEY, "{\"BU70\":[\"R1\"]}", Duration.ofHours(1));
+        redisTemplate.opsForValue().set(OPAL_TEST_KEY, "{\"R1\":[\"BU70\"]}", Duration.ofHours(1));
         redisTemplate.opsForValue().set("USER_MAPPING_FILE_LAST_UPDATE_AT", lastModifiedAt, Duration.ofHours(1));
 
         refreshService.refreshMappings();
 
-        assertEquals("{\"BU70\":[\"R1\"]}",
+        assertEquals("{\"R1\":[\"BU70\"]}",
                      redisTemplate.opsForValue().get(OPAL_TEST_KEY));
     }
 
     // --- AC4 ---
     @Test
     void ac4_whenEmailReappearsNonContiguously_deletesInvalidUserCache() throws Exception {
-        redisTemplate.opsForValue().set(OPAL_TEST_KEY, "{\"BU70\":[\"R1\"]}", Duration.ofHours(1));
-        redisTemplate.opsForValue().set(NO_GO_USER_KEY, "{\"BU67\":[\"R2\"]}", Duration.ofHours(1));
+        redisTemplate.opsForValue().set(OPAL_TEST_KEY, "{\"R1\":[\"BU70\"]}", Duration.ofHours(1));
+        redisTemplate.opsForValue().set(NO_GO_USER_KEY, "{\"R2\":[\"BU67\"]}", Duration.ofHours(1));
 
         uploadCsv("""
                 email_address,business_unit_id,role_id
@@ -157,9 +158,9 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
     // --- AC5 ---
     @Test
     void ac5_whenUserRemovedFromFile_deletesStaleCacheEntry() throws Exception {
-        redisTemplate.opsForValue().set(OPAL_TEST_KEY, "{\"BU70\":[\"R1\"]}", Duration.ofHours(1));
-        redisTemplate.opsForValue().set(NO_GO_USER_KEY, "{\"BU67\":[\"R2\"]}", Duration.ofHours(1));
-        redisTemplate.opsForValue().set(TEST_USER_KEY, "{\"BU73\":[\"R3\"]}", Duration.ofHours(1));
+        redisTemplate.opsForValue().set(OPAL_TEST_KEY, "{\"R1\":[\"BU70\"]}", Duration.ofHours(1));
+        redisTemplate.opsForValue().set(NO_GO_USER_KEY, "{\"R2\":[\"BU67\"]}", Duration.ofHours(1));
+        redisTemplate.opsForValue().set(TEST_USER_KEY, "{\"R3\":[\"BU73\"]}", Duration.ofHours(1));
 
         uploadCsv("""
                 email_address,business_unit_id,role_id
@@ -195,14 +196,16 @@ class RoleMappingIntegrationTest extends AbstractIntegrationTest {
                 email_address,business_unit_id,role_id
                 opal-test@HMCTS.NET,BU70,R1
                 opal-test@HMCTS.NET,BU70,R2
+                opal-test@HMCTS.NET,BU68,R1
                 opal-test@HMCTS.NET,BU68,R3
                 """);
 
         refreshService.refreshMappings();
 
         assertRedisJsonEquals(OPAL_TEST_KEY, Map.of(
-            "BU70", List.of("R1", "R2"),
-            "BU68", List.of("R3")
+            "R1", List.of("BU70", "BU68"),
+            "R2", List.of("BU70"),
+            "R3", List.of("BU68")
         ));
     }
 

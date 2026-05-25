@@ -1,5 +1,8 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A;
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_ENABLED_PROPERTY;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,7 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleService;
+import uk.gov.hmcts.opal.common.launchdarkly.FeatureToggle;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
@@ -35,23 +39,24 @@ public class TestingSupportController {
 
     private static final String X_USER_EMAIL = "X-User-Email";
 
-    private final FeatureToggleService featureToggleService;
+    private final FeatureToggleApi featureToggleApi;
     private final TestingSupportAccessTokenService testingSupportAccessTokenService;
     private final AccessTokenService userAccessTokenService;
     private final UserService userService;
 
     @GetMapping("/launchdarkly/bool/{featureKey}")
     public ResponseEntity<Boolean> isFeatureEnabled(@PathVariable String featureKey) {
-        return ResponseEntity.ok(this.featureToggleService.isFeatureEnabled(featureKey));
+        return ResponseEntity.ok(this.featureToggleApi.isFeatureEnabled(featureKey));
     }
 
     @GetMapping("/launchdarkly/string/{featureKey}")
     public ResponseEntity<String> getFeatureValue(@PathVariable String featureKey) {
-        return ResponseEntity.ok(this.featureToggleService.getFeatureValue(featureKey));
+        return ResponseEntity.ok(this.featureToggleApi.getFeatureValue(featureKey,""));
     }
 
     @GetMapping("/token/test-user")
     @Operation(summary = "Retrieves the token for default test user")
+    @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
     public ResponseEntity<TestingSupportTokenResponse> getToken() {
         log.debug(":getToken: for test user defined at: opal.test-user.email");
         AccessTokenResponse accessTokenResponse = testingSupportAccessTokenService.getTestUserToken();
@@ -60,6 +65,7 @@ public class TestingSupportController {
 
     @GetMapping("/token/user")
     @Operation(summary = "Retrieves the token for a given user")
+    @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
     public ResponseEntity<TestingSupportTokenResponse> getTokenForUser(@RequestHeader(value = X_USER_EMAIL)
                                                                        String userEmail) {
         log.debug(":getTokenForUser: user: {}", userEmail);
@@ -68,6 +74,7 @@ public class TestingSupportController {
     }
 
     @GetMapping("/token/parse")
+    @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
     public ResponseEntity<String> parseToken(@RequestHeader("Authorization") String authorization) {
         return ResponseEntity.ok(this.userAccessTokenService.extractPreferredUsername(authorization));
     }
@@ -94,16 +101,11 @@ public class TestingSupportController {
     }
 
     @PatchMapping("/users/{userId}")
-    public ResponseEntity<Void> activateUser(
-        @PathVariable Long userId,
-        @RequestBody ActivateUserRequest request) {
+    public ResponseEntity<Void> activateUser(@PathVariable Long userId, @RequestBody ActivateUserRequest request) {
 
         log.debug(":activateUser : userId: {}, activateDate: {}", userId, request.activationDate());
 
-        userService.activateUser(
-            userId,
-            request.activationDate()
-        );
+        userService.activateUser(userId, request.activationDate());
 
         return ResponseEntity.noContent().build();
     }

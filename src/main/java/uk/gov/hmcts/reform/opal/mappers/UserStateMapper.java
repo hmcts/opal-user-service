@@ -7,15 +7,14 @@ import org.mapstruct.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Domain;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.DomainDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.PermissionDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
+import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
-import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
@@ -129,7 +128,6 @@ public interface UserStateMapper {
         return businessUnitUserRoleList.stream()
             .map(BusinessUnitUserRoleEntity::getRole)
             .filter(Objects::nonNull)
-            .filter(RoleEntity::isActive)
             .flatMap(role -> role.getApplicationFunctionList().stream())
             .map(Permissions::toPermissionOrNull)
             .filter(Objects::nonNull)

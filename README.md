@@ -59,6 +59,47 @@ You should get a response similar to this:
   {"status":"UP","diskSpace":{"status":"UP","total":249644974080,"free":137188298752,"threshold":10485760}}
 ```
 
+### Running functional tests
+
+Functional tests live under `src/functionalTest` and call the running service over HTTP.
+By default they target `http://localhost:4555`. To run them against another environment,
+set `TEST_URL` first.
+
+Run the default Opal functional suite:
+
+```bash
+./gradlew functionalOpal
+```
+
+Run the full functional task with report aggregation:
+
+```bash
+./gradlew functional
+```
+
+Run the toggle-only functional scenarios:
+
+```bash
+./gradlew functionalOpalToggle
+```
+
+The default functional suite only runs scenarios under `src/functionalTest/resources/features/functional`.
+Toggle scenarios are kept separately under `src/functionalTest/resources/features/toggle`
+and should only be run against an environment with the expected feature-flag configuration.
+
+Run the functional tests against a non-local environment:
+
+```bash
+TEST_URL=http://localhost:4555 ./gradlew functionalOpal
+TEST_URL=https://<target-host> ./gradlew functionalOpalToggle
+```
+
+Serenity HTML output is copied to:
+
+```bash
+functional-test-report/index.html
+```
+
 ### Alternative script to run application
 
 To skip all the setting up and building, just execute the following command:

@@ -84,13 +84,13 @@ class UserRoleMappingRefreshServiceTest {
                 new ParsedUserMapping(
                     "user1@test.com",
                     Map.of(
-                        "BU1", Set.of("R1", "R2"),
-                        "BU2", Set.of("R3")
+                        "R1", Set.of("BU1", "BU2"),
+                        "R2", Set.of("BU1")
                     )
                 ),
                 new ParsedUserMapping(
                     "user2@test.com",
-                    Map.of("BU4", Set.of("R4"))
+                    Map.of("R4", Set.of("BU4"))
                 )
             ),
             Set.of("baduser@test.com")
@@ -114,14 +114,14 @@ class UserRoleMappingRefreshServiceTest {
         verify(cacheService).putUserMapping(
             "AS1",
             Map.of(
-                "BU1", Set.of("R1", "R2"),
-                "BU2", Set.of("R3")
+                "R1", Set.of("BU1", "BU2"),
+                "R2", Set.of("BU1")
             )
         );
 
         verify(cacheService).putUserMapping(
             "AS2",
-            Map.of("BU4", Set.of("R4"))
+            Map.of("R4", Set.of("BU4"))
         );
 
         verify(cacheService).deleteUserMapping("AS9");
@@ -147,11 +147,11 @@ class UserRoleMappingRefreshServiceTest {
             List.of(
                 new ParsedUserMapping(
                     "user1@test.com",
-                    Map.of("BU1", Set.of("R1"))
+                    Map.of("R1", Set.of("BU1"))
                 ),
                 new ParsedUserMapping(
                     "missing@test.com",
-                    Map.of("BU2", Set.of("R2"))
+                    Map.of("R2", Set.of("BU2"))
                 )
             ),
             Set.of()
@@ -171,7 +171,7 @@ class UserRoleMappingRefreshServiceTest {
         // ASSERT
         verify(cacheService).putUserMapping(
             "AS1",
-            Map.of("BU1", Set.of("R1"))
+            Map.of("R1", Set.of("BU1"))
         );
 
         verify(cacheService, never()).putUserMapping(
@@ -200,7 +200,7 @@ class UserRoleMappingRefreshServiceTest {
             List.of(
                 new ParsedUserMapping(
                     "user1@test.com",
-                    Map.of("BU1", Set.of("R1"))
+                    Map.of("R1", Set.of("BU1"))
                 )
             ),
             Set.of()

@@ -71,7 +71,6 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @Autowired
     StringRedisTemplate redisTemplate;
 
-<<<<<<< PO-2845-Integrate-Legacy-File-read-process-into-a-scheduler
     @BeforeEach
     void resetLastLoginDate() {
         jdbcTemplate.update(
@@ -80,9 +79,9 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             500000000L
         );
     }
-=======
+
     private ObjectMapper objectMapper = new ObjectMapper();
->>>>>>> master
+
 
     @ParameterizedTest
     @NullSource

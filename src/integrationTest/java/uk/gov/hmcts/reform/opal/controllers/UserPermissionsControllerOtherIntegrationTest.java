@@ -289,7 +289,12 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
                             .header("If-Match", "0")
                             .accept(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(status().isRequestTimeout())
-            .andExpect(content().string(""));
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.status").value(HttpStatus.REQUEST_TIMEOUT.value()))
+            .andExpect(jsonPath("$.title").value("Request Timeout"))
+            .andExpect(jsonPath("$.detail").value("Request timed out"))
+            .andExpect(jsonPath("$.type").value("https://hmcts.gov.uk/problems/response-status"))
+            .andExpect(jsonPath("$.retriable").value(true));
     }
 
     @Test
@@ -303,7 +308,12 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
                             .header("If-Match", "0")
                             .accept(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(status().isServiceUnavailable())
-            .andExpect(content().string(""));
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.status").value(HttpStatus.SERVICE_UNAVAILABLE.value()))
+            .andExpect(jsonPath("$.title").value("Service Unavailable"))
+            .andExpect(jsonPath("$.detail").value("Service unavailable"))
+            .andExpect(jsonPath("$.type").value("https://hmcts.gov.uk/problems/response-status"))
+            .andExpect(jsonPath("$.retriable").value(true));
     }
 
     private String createSignedToken(String subject) throws NoSuchAlgorithmException {

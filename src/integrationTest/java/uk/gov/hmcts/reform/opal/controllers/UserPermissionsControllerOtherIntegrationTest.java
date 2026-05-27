@@ -44,7 +44,7 @@ import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.service.JsonSchemaValidationService;
 
-@ActiveProfiles({"integration"})
+@ActiveProfiles({"integration", "opal"})
 @Slf4j(topic = "opal.UserPermissionsControllerIntegrationTest")
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_CLASS)

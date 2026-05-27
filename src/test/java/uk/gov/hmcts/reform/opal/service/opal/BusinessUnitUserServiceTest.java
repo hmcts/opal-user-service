@@ -15,6 +15,8 @@ import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
 import uk.gov.hmcts.reform.opal.dto.search.BusinessUnitUserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
+import uk.gov.hmcts.reform.opal.entity.RoleEntity;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 
 import java.util.Collections;
@@ -96,6 +98,21 @@ class BusinessUnitUserServiceTest {
         assertNotNull(result);
         assertEquals(1, result.size());
 
+    }
+
+    @Test
+    void testFindAllRolesOfUser() {
+        // Arrange
+        UserEntity user = UserEntity.builder().userId(123L).build();
+        RoleEntity roleOne = RoleEntity.builder().roleId(101L).build();
+        RoleEntity roleTwo = RoleEntity.builder().roleId(202L).build();
+        when(businessUnitUserRepository.findDistinctRolesByUserId(123L)).thenReturn(Set.of(roleOne, roleTwo));
+
+        // Act
+        Set<RoleEntity> result = businessUnitUserService.findAllRolesOfUser(user);
+
+        // Assert
+        assertEquals(Set.of(roleOne, roleTwo), result);
     }
 
     @Test

@@ -2,8 +2,11 @@ package uk.gov.hmcts.reform.opal.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
+import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 
 import java.util.List;
 import java.util.Set;
@@ -16,4 +19,16 @@ public interface BusinessUnitUserRepository extends JpaRepository<BusinessUnitUs
 
     List<BusinessUnitUserEntity> findAllByUser_UserIdAndBusinessUnit_BusinessUnitIdIn(
         Long userId, Set<Short> businessUnitIds);
+
+    List<BusinessUnitUserEntity> findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
+        Long userId, Set<String> excludedBusinessUnitUserIds
+    );
+
+    @Query("""
+        select distinct bur.role
+        from BusinessUnitUserEntity buu
+        join buu.businessUnitUserRoleList bur
+        where buu.user.userId = :userId
+        """)
+    Set<RoleEntity> findDistinctRolesByUserId(@Param("userId") Long userId);
 }

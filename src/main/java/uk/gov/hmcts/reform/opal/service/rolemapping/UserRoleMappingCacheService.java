@@ -34,6 +34,10 @@ public class UserRoleMappingCacheService {
         write(buildUserKey(tokenSubject), payload, properties.getUserTtl());
     }
 
+    public String getUserMapping(String tokenSubject) {
+        return redisTemplate.opsForValue().get(buildUserKey(tokenSubject));
+    }
+
     public void deleteUserMapping(String tokenSubject) {
         redisTemplate.delete(buildUserKey(tokenSubject));
     }

@@ -1,0 +1,103 @@
+package uk.gov.hmcts.reform.opal.service.synchronise;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.jdbc.Sql;
+import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.repository.UserRepository;
+import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
+
+@ActiveProfiles({"integration"})
+@Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
+@Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DisplayName("SynchroniseRolesService integration tests")
+@Slf4j(topic = "opal.SynchroniseRolesServiceIntegrationTest")
+class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
+
+    private static final long USER_WITH_EXISTING_ROLE = 500000000L;
+    private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
+
+    @Autowired
+    private SynchroniseRolesService synchroniseRolesService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private TestHelperService helper;
+
+    @MockitoBean
+    private UserPermissionsService userPermissionsService;
+
+    @Test
+    @DisplayName("Should apply cached role mappings and remove stale roles for legacy business units")
+    void synchroniseRoles_appliesCachedRolesAndRemovesStaleRoles() throws JsonProcessingException {
+        // Arrange
+        UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
+        when(userPermissionsService.getAuthenticatedUserId()).thenReturn(USER_WITH_EXISTING_ROLE);
+
+        String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
+        redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(Map.of(
+            "2", Set.of("68", "73"),
+            "3", Set.of("68", "70")
+        )));
+
+        assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 1L)).containsExactly((short) 70);
+        assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 2L)).containsExactly((short) 70);
+        assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 3L)).isEmpty();
+        log.info(
+            "User {} permissions {} sync:\n{}",
+            USER_WITH_EXISTING_ROLE,
+            "before",
+            helper.formatPermissionsSnapshotAsJson(USER_WITH_EXISTING_ROLE)
+        );
+
+        try {
+            // Act
+            synchroniseRolesService.synchroniseRoles(
+                user,
+                List.of(
+                    TestHelperUtil.legacyBusinessUnitUser("L066JG", "68"),
+                    TestHelperUtil.legacyBusinessUnitUser("L067JG", "73")
+                )
+            );
+
+            // Assert
+            assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 1L)).isEmpty();
+            assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 2L))
+                .containsExactlyInAnyOrder((short) 68, (short) 73);
+            assertThat(helper.getAssignedBusinessUnitIds(USER_WITH_EXISTING_ROLE, 3L)).containsExactly((short) 68);
+            assertThat(helper.getReturnedPermissionNames("L065JG")).isEmpty();
+            assertThat(helper.getReturnedPermissionNames("L066JG")).isNotEmpty();
+            assertThat(helper.getReturnedPermissionNames("L067JG")).isNotEmpty();
+            log.info(
+                "User {} permissions {} sync:\n{}",
+                USER_WITH_EXISTING_ROLE,
+                "after",
+                helper.formatPermissionsSnapshotAsJson(USER_WITH_EXISTING_ROLE)
+            );
+        } finally {
+            redisTemplate.delete(cacheKey);
+        }
+    }
+}

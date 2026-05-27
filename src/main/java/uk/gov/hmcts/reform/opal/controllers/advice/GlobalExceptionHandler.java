@@ -35,6 +35,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import uk.gov.hmcts.opal.common.dto.Versioned;
 import uk.gov.hmcts.opal.common.exception.OpalApiException;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
+import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsException;
 
 import java.net.ConnectException;
 import java.net.URI;
@@ -315,6 +316,20 @@ public class GlobalExceptionHandler {
             "A persistence error occurred while processing your request",
             "jpa-system-error",
             jpaSystemException
+        );
+
+        return responseWithProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, problemDetail);
+    }
+
+    @ExceptionHandler(SynchronisePermissionsException.class)
+    public ResponseEntity<ProblemDetail> handleSynchronisePermissionsException(
+        SynchronisePermissionsException synchronisePermissionsException) {
+        ProblemDetail problemDetail = createProblemDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            INTERNAL_SERVER_ERROR,
+            synchronisePermissionsException.getMessage(),
+            "permissions-synchronization",
+            synchronisePermissionsException
         );
 
         return responseWithProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, problemDetail);

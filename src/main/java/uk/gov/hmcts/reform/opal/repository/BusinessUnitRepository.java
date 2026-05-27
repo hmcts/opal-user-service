@@ -8,4 +8,6 @@ import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 @Repository
 public interface BusinessUnitRepository extends JpaRepository<BusinessUnitEntity, Short>,
     JpaSpecificationExecutor<BusinessUnitEntity> {
+
+    BusinessUnitEntity findByBusinessUnitCode(String code);
 }

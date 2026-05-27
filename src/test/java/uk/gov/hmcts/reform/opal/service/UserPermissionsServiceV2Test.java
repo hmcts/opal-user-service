@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.opal.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,12 +7,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -23,6 +22,7 @@ import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authentication.service.TokenValidator;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
+import uk.gov.hmcts.reform.opal.config.properties.AppModeConfiguration;
 import uk.gov.hmcts.reform.opal.config.properties.CacheConfiguration;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
@@ -30,38 +30,45 @@ import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
+import uk.gov.hmcts.reform.opal.service.opal.UserService;
+import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsService;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 
 @ExtendWith(MockitoExtension.class)
 class UserPermissionsServiceV2Test {
 
     private static final long USER_ID = 42L;
+    private static final long AUTHENTICATED_USER_ID = 84L;
     private static final long CACHE_TIMEOUT_MINUTES = 30L;
     private static final String TOKEN_PREFERRED_USERNAME = "opal-user@hmcts.net";
     private static final String TOKEN_NAME = "John Smith";
     private static final String TOKEN_SUBJECT = "hcv732JFVWhf3Fd";
+    private static final String AUTHENTICATED_TOKEN_SUBJECT = "auth-subject-84";
 
     @Mock
     SecurityContext securityContext;
@@ -111,9 +118,17 @@ class UserPermissionsServiceV2Test {
     @Mock
     private CacheConfiguration cacheConfiguration;
 
+    @Mock
+    private SynchronisePermissionsService synchronisePermissionsService;
+
+    @Mock
+    private AppModeConfiguration appModeConfiguration;
+
+    @Mock
+    private UserService userService;
+
     @BeforeEach
     void setUp() {
-        service = spy(service);
         userEntity = UserEntity.builder()
             .userId(USER_ID)
             .username(TOKEN_PREFERRED_USERNAME)
@@ -125,57 +140,7 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.clearContext();
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         lenient().when(cacheConfiguration.getUserStateTimeoutMinutes()).thenReturn(CACHE_TIMEOUT_MINUTES);
-    }
-
-    @Test
-    void getUserV2_longReturnsUserWhenFound() {
-        // Arrange
-        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
-
-        // Act
-        UserEntity result = service.getUserV2(USER_ID);
-
-        // Assert
-        assertEquals(userEntity, result);
-        verify(userRepository).findIdWithPermissions(USER_ID);
-    }
-
-    @Test
-    void getUserV2_longThrowsWhenUserMissing() {
-        // Arrange
-        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        EntityNotFoundException ex = assertThrows(
-            EntityNotFoundException.class,
-            () -> service.getUserV2(USER_ID)
-        );
-        assertEquals("User not found with id: " + USER_ID, ex.getMessage());
-    }
-
-    @Test
-    void getUserV2_stringReturnsUserWhenFound() {
-        // Arrange
-        when(userRepository.findByTokenSubjectWithPermissions(TOKEN_SUBJECT)).thenReturn(Optional.of(userEntity));
-
-        // Act
-        UserEntity result = service.getUserV2(TOKEN_SUBJECT);
-
-        // Assert
-        assertEquals(userEntity, result);
-    }
-
-    @Test
-    void getUserV2_stringThrowsWhenUserMissing() {
-        // Arrange
-        when(userRepository.findByTokenSubjectWithPermissions(TOKEN_SUBJECT)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        EntityNotFoundException ex = assertThrows(
-            EntityNotFoundException.class,
-            () -> service.getUserV2(TOKEN_SUBJECT)
-        );
-        assertEquals("User not found with subject: " + TOKEN_SUBJECT, ex.getMessage());
+        lenient().when(appModeConfiguration.getAppMode()).thenReturn("opal");
     }
 
     @Test
@@ -193,13 +158,14 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
+        when(userRepository.findByTokenSubject(TOKEN_SUBJECT)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(true);
+        UserStateV2Dto result = service.getUserStateV2(0L, true);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -219,13 +185,14 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
+        when(userRepository.findByTokenSubject(TOKEN_SUBJECT)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(false);
+        UserStateV2Dto result = service.getUserStateV2(0L, false);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -243,7 +210,8 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
+        when(userRepository.findByTokenSubject(TOKEN_SUBJECT)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
@@ -253,7 +221,7 @@ class UserPermissionsServiceV2Test {
             .set(eq("USER_STATE_" + TOKEN_SUBJECT), anyString(), eq(CACHE_TIMEOUT_MINUTES), eq(TimeUnit.MINUTES));
 
         // act & assert
-        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(false));
+        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(0L, false));
 
         assertThat(result).isEqualTo(dto);
         assertThat(result.getCacheName()).isEqualTo("USER_STATE_" + TOKEN_SUBJECT);
@@ -264,8 +232,8 @@ class UserPermissionsServiceV2Test {
     void getUserStateV2IdMethod_whenRedisCachingFails_doesNotThrowAndReturnsDto() {
 
         // arrange
-        doReturn(userEntity).when(service).getUserV2(USER_ID);
-
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         doThrow(new DataAccessResourceFailureException("Redis unavailable"))
@@ -281,6 +249,63 @@ class UserPermissionsServiceV2Test {
     }
 
     @Test
+    void getUserStateV2_whenLegacySynchronisationSucceeds_callsSynchroniseAndRefreshUser() {
+
+        // Arrange
+        when(appModeConfiguration.getAppMode()).thenReturn("legacy");
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
+
+        // Act
+        UserStateV2Dto result = service.getUserStateV2(USER_ID, false);
+
+        // Assert
+        assertThat(result).isEqualTo(dto);
+        verify(synchronisePermissionsService).synchronise(userEntity);
+        verify(userService).refreshUser(userEntity);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
+    }
+
+    @Test
+    void getUserStateV2_whenLegacySynchronisationThrowsRuntime_propagatesRuntimeException() {
+
+        // Arrange
+        RuntimeException runtimeException = new RuntimeException("sync failed");
+        when(appModeConfiguration.getAppMode()).thenReturn("legacy");
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userEntity));
+        doThrow(runtimeException).when(synchronisePermissionsService).synchronise(userEntity);
+
+        // Act
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
+            () -> service.getUserStateV2(USER_ID, false)
+        );
+
+        // Assert
+        assertThat(thrown).isSameAs(runtimeException);
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void getUserStateV2_whenAppModeIsOpal_doesNotCallLegacySynchronisationServices() {
+
+        // Arrange
+        when(appModeConfiguration.getAppMode()).thenReturn("opal");
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
+
+        // Act
+        UserStateV2Dto result = service.getUserStateV2(USER_ID, false);
+
+        // Assert
+        assertThat(result).isEqualTo(dto);
+        verifyNoInteractions(synchronisePermissionsService, userService);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
+    }
+
+    @Test
     void getUserStateV2_NewLogin_NotJwtAuthenticationToken() {
 
         // Arrange
@@ -291,7 +316,7 @@ class UserPermissionsServiceV2Test {
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.getUserStateV2(true)
+            () -> service.getUserStateV2(0L, true)
         );
         assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertEquals("401 UNAUTHORIZED \"Authentication Token not of type Jwt.\"", ex.getMessage());
@@ -310,10 +335,52 @@ class UserPermissionsServiceV2Test {
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.getUserStateV2(true)
+            () -> service.getUserStateV2(0L, true)
         );
         assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertEquals("401 UNAUTHORIZED \"Subject not found.\"", ex.getMessage());
+    }
+
+    @Test
+    void getUserStateV2_WhenAuthenticatedUserNotFound_ThrowsEntityNotFoundException() {
+
+        // Arrange
+        JwtAuthenticationToken authentication = mock(JwtAuthenticationToken.class);
+        when(authentication.getToken()).thenReturn(jwt);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
+        when(userRepository.findByTokenSubject(TOKEN_SUBJECT)).thenReturn(Optional.empty());
+
+        // Act
+        EntityNotFoundException ex = assertThrows(
+            EntityNotFoundException.class,
+            () -> service.getUserStateV2(0L, false)
+        );
+
+        // Assert
+        assertThat(ex).hasMessage("User not found with subject: " + TOKEN_SUBJECT);
+        verify(userRepository, never()).findIdWithPermissions(anyLong());
+        verifyNoInteractions(userStateMapper);
+    }
+
+    @Test
+    void getUserStateV2_WhenRequestedUserNotFound_ThrowsEntityNotFoundException() {
+
+        // Arrange
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+        // Act
+        EntityNotFoundException ex = assertThrows(
+            EntityNotFoundException.class,
+            () -> service.getUserStateV2(USER_ID, false)
+        );
+
+        // Assert
+        assertThat(ex).hasMessage("User not found with id: " + USER_ID);
+        verify(userRepository, never()).findIdWithPermissions(anyLong());
+        verifyNoInteractions(userStateMapper);
     }
 
     @Test
@@ -326,13 +393,13 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
+        when(userRepository.findByTokenSubject(TOKEN_SUBJECT)).thenReturn(Optional.of(userEntity));
         when(jwt.getClaimAsString("preferred_username")).thenReturn(null);
 
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.getUserStateV2(true)
+            () -> service.getUserStateV2(0L, true)
         );
         assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertEquals("401 UNAUTHORIZED \"Claim not found: preferred_username\"", ex.getMessage());
@@ -346,15 +413,11 @@ class UserPermissionsServiceV2Test {
         ZoneId fixedZone = ZoneId.of("UTC");
         when(clock.instant()).thenReturn(fixedInstant);
         when(clock.getZone()).thenReturn(fixedZone);
+        setAuthenticatedCaller(AUTHENTICATED_USER_ID, AUTHENTICATED_TOKEN_SUBJECT);
 
-        Authentication authentication = mock(JwtAuthenticationToken.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
-        doReturn(userEntity).when(service).getUserV2(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
-        Long clientUserId = 123L;
-        doReturn(clientUserId).when(service).getUserId(authentication);
 
         // Act
         UserStateV2Dto result = service.getUserStateV2(USER_ID, true);
@@ -364,6 +427,17 @@ class UserPermissionsServiceV2Test {
         assertThat(userEntity.getLastLoginDate())
             .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
         verify(userRepository).saveAndFlush(userEntity);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> eventDataCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(securityEventLoggingService).logEvent(
+            eq("User Authentication"),
+            eq("Success"),
+            isNull(),
+            eq("Authentication"),
+            any(),
+            eventDataCaptor.capture()
+        );
+        assertThat(eventDataCaptor.getValue()).containsEntry("UserIdentifier", AUTHENTICATED_USER_ID);
         assertDtoWasCachedForSubject(TOKEN_SUBJECT);
     }
 
@@ -371,7 +445,8 @@ class UserPermissionsServiceV2Test {
     void getUserStateV2IdMethod_NonNewLoginWhenIdIsNonZero() {
 
         // Arrange
-        doReturn(userEntity).when(service).getUserV2(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
@@ -387,14 +462,30 @@ class UserPermissionsServiceV2Test {
     void getUserStateV2IdMethod_WhenIdIsZero() {
 
         // Arrange
-        doReturn(dto).when(service).getUserStateV2(true);
+        Instant fixedInstant = Instant.parse("2026-04-14T10:15:30Z");
+        ZoneId fixedZone = ZoneId.of("UTC");
+        when(clock.instant()).thenReturn(fixedInstant);
+        when(clock.getZone()).thenReturn(fixedZone);
+
+        JwtAuthenticationToken authentication = mock(JwtAuthenticationToken.class);
+        when(authentication.getToken()).thenReturn(jwt);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
+        when(userRepository.findByTokenSubject(TOKEN_SUBJECT)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
+        when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
         UserStateV2Dto result = service.getUserStateV2(0L, true);
 
         // Assert
         assertThat(result).isEqualTo(dto);
-        verifyNoInteractions(securityEventLoggingService);
+        verify(userRepository).saveAndFlush(userEntity);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
     }
 
     @Test
@@ -411,13 +502,14 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(jwt.getSubject()).thenReturn(TOKEN_SUBJECT);
-        doReturn(userEntity).when(service).getUserV2(TOKEN_SUBJECT);
+        when(userRepository.findByTokenSubject(TOKEN_SUBJECT)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(true);
+        UserStateV2Dto result = service.getUserStateV2(0L, true);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -434,17 +526,11 @@ class UserPermissionsServiceV2Test {
         ZoneId fixedZone = ZoneId.of("UTC");
         when(clock.instant()).thenReturn(fixedInstant);
         when(clock.getZone()).thenReturn(fixedZone);
+        setAuthenticatedCaller(AUTHENTICATED_USER_ID, AUTHENTICATED_TOKEN_SUBJECT);
 
-        Authentication authentication = mock(JwtAuthenticationToken.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
-        doReturn(userEntity).when(service).getUserV2(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
-
-        Long clientUserId = 123L;
-
-        doReturn(clientUserId).when(service).getUserId(authentication);
 
         // Act
         UserStateV2Dto result = service.getUserStateV2(USER_ID, true);
@@ -469,5 +555,19 @@ class UserPermissionsServiceV2Test {
         );
         assertThat(dto.getCacheName()).isEqualTo(cacheKey);
         assertThat(payloadCaptor.getValue()).isEqualTo(objectToPrettyJson(dto));
+    }
+
+    private void setAuthenticatedCaller(long callerUserId, String callerSubject) {
+        JwtAuthenticationToken authentication = mock(JwtAuthenticationToken.class);
+        when(authentication.getToken()).thenReturn(jwt);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        UserEntity callerUser = UserEntity.builder()
+            .userId(callerUserId)
+            .tokenSubject(callerSubject)
+            .build();
+        when(jwt.getSubject()).thenReturn(callerSubject);
+        when(userRepository.findByTokenSubject(callerSubject)).thenReturn(Optional.of(callerUser));
     }
 }

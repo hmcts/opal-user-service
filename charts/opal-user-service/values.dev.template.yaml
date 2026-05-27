@@ -55,3 +55,31 @@ hmcts-redis:
     enabled: false
   metrics:
     enabled: false
+
+user-role-mapping-refresh:
+  image: ${IMAGE_NAME}
+  devmemoryRequests: "1Gi"
+  devcpuRequests: "250m"
+  devmemoryLimits: "2Gi"
+  devcpuLimits: "2500m"
+  postgresql:
+    auth:
+      username: javapostgres
+      password: javapassword
+      database: javadatabase
+  environment:
+    REDIS_CONNECTION_STRING: redis://${SERVICE_NAME}-hmcts-redis-master:6379
+    OPAL_USER_DB_HOST: "{{ .Release.Name }}-postgresql"
+    OPAL_USER_DB_NAME: "{{ .Values.postgresql.auth.database}}"
+    OPAL_USER_DB_USERNAME: "{{ .Values.postgresql.auth.username}}"
+    OPAL_USER_DB_PASSWORD: "{{ .Values.postgresql.auth.password}}"
+    OPAL_USER_DB_OPTIONS: "?stringtype=unspecified"
+    OPAL_USER_DB_PORT: 5432
+    RUN_DB_MIGRATION_ON_STARTUP: false
+    OPAL_FRONTEND_URL: https://opal-frontend.staging.apps.hmcts.net
+    TESTING_SUPPORT_ENDPOINTS_ENABLED: false
+    LAUNCH_DARKLY_ENABLED: false
+    OPAL_COMMON_CONTENT_DIGEST_REQUEST_AUTO_GENERATE: true
+    OPAL_COMMON_CONTENT_DIGEST_RESPONSE_ENFORCE: false
+    FLYWAY_LOCATIONS: classpath:db/migration/ddl, classpath:db/migration/data/allEnvs, classpath:db/migration/data/nle, classpath:db/migration/data/dev
+    RELEASE_1A_ENABLED: true

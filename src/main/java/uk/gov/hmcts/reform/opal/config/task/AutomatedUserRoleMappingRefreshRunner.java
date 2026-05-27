@@ -24,5 +24,6 @@ class AutomatedUserRoleMappingRefreshRunner implements ApplicationRunner {
     public void run(ApplicationArguments args) throws IOException {
         log.info("Starting automated role mapping refresher");
         service.refreshMappings();
+        log.info("Completed automated role mapping refresher");
     }
 }

@@ -16,6 +16,6 @@ dependencies:
     condition: hmcts-redis.enabled
   - name: job
     alias: user-role-mapping-refresh
-    version: 0.1.4
+    version: 2.2.0
     repository: 'oci://hmctsprod.azurecr.io/helm'
     condition: user-role-mapping-refresh.enabled

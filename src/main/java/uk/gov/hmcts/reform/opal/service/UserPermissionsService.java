@@ -1,5 +1,20 @@
 package uk.gov.hmcts.reform.opal.service;
 
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
+import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
+import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +36,7 @@ import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
+import uk.gov.hmcts.reform.opal.config.properties.AppModeConfiguration;
 import uk.gov.hmcts.reform.opal.config.properties.CacheConfiguration;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
@@ -32,6 +48,8 @@ import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
+import uk.gov.hmcts.reform.opal.service.opal.UserService;
+import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsService;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -59,7 +77,6 @@ public class UserPermissionsService {
 
     //The claim used to map the authorised user to the user entity.
     private static final String PREFERRED_USERNAME_CLAIM = "preferred_username";
-
     private final BusinessUnitUserRepository businessUnitUserRepository;
     private final UserEntitlementRepository userEntitlementRepository;
     private final UserRepository userRepository;
@@ -70,6 +87,9 @@ public class UserPermissionsService {
     private final StringRedisTemplate redisTemplate;
     private final Clock clock;
     private final CacheConfiguration cacheConfiguration;
+    private final SynchronisePermissionsService synchronisePermissionsService;
+    private final AppModeConfiguration appModeConfiguration;
+    private final UserService userService;
 
     @Transactional(readOnly = true)
     @Deprecated //Use getUserStateV2 equivalent method
@@ -117,44 +137,56 @@ public class UserPermissionsService {
     }
 
     @Transactional
-    public UserStateV2Dto getUserStateV2(Boolean newLogin) {
+    public UserStateV2Dto getUserStateV2(Long userId, Boolean newLogin) {
+        log.debug(":getUserState: userId: {}", userId);
+
+        UserEntity user;
+        if (userId == 0) {
+            user = getAndValidateAuthenticatedUser();
+        } else {
+            user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+        }
+
+        if (appModeConfiguration.getAppMode().equalsIgnoreCase("legacy")) {
+            synchronisePermissionsService.synchronise(user);
+            // synchronise() was processed in a different transaction, so we need to refresh user entity
+            userService.refreshUser(user);
+        }
+
+        // NB. When legacy refresh gets deleted we will need to update the first fetch to include all roles
+        // and remove this second fetch
+        user = userRepository.findIdWithPermissions(user.getUserId())
+            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+        if (Optional.ofNullable(newLogin).orElse(false)) {
+            Long authenticationEventUserId = user.getUserId();
+            if (userId != 0) {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                authenticationEventUserId = getUserId(authentication);
+            }
+            logUserAuthenticationEvent(authenticationEventUserId);
+            updateLastLogin(user);
+        }
+
+        UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
+        cacheUserState(dto, user);
+        return dto;
+    }
+
+    private UserEntity getAndValidateAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = getJwtToken(authentication);
         String subject = extractSubject(jwt);
-        UserEntity user = getUserV2(subject);
+
+        UserEntity user = userRepository.findByTokenSubject(subject)
+            .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
 
         String username = extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
         compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
         String name = extractClaim(jwt, NAME_CLAIM);
         compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
-
-        log.debug(":getUserState: found User: {}", username);
-        UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
-        if (Optional.ofNullable(newLogin).orElse(false)) {
-            logUserAuthenticationEvent(user.getUserId());
-            updateLastLogin(user);
-        }
-        cacheUserState(dto, user);
-        return dto;
-    }
-
-    @Transactional
-    public UserStateV2Dto getUserStateV2(Long userId, Boolean newLogin) {
-        log.debug(":getUserState: userId: {}", userId);
-        if (userId == 0) {
-            return getUserStateV2(newLogin);
-        } else {
-            UserEntity user = getUserV2(userId);
-            UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
-            if (Optional.ofNullable(newLogin).orElse(false)) {
-                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                Long clientUserId = getUserId(authentication);
-                logUserAuthenticationEvent(clientUserId);
-                updateLastLogin(user);
-            }
-            cacheUserState(dto, user);
-            return dto;
-        }
+        return user;
     }
 
     @Transactional(readOnly = true)
@@ -247,18 +279,6 @@ public class UserPermissionsService {
     @Transactional(readOnly = true)
     public UserEntity getUser(String subject) {
         return userRepository.findByTokenSubject(subject)
-            .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
-    }
-
-    @Transactional(readOnly = true)
-    public UserEntity getUserV2(Long userId) {
-        return userRepository.findIdWithPermissions(userId)
-            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
-    }
-
-    @Transactional(readOnly = true)
-    public UserEntity getUserV2(String subject) {
-        return userRepository.findByTokenSubjectWithPermissions(subject)
             .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
     }
 

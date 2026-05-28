@@ -75,6 +75,22 @@ class UserRoleMappingCacheServiceTest {
     }
 
     @Test
+    void getUserMappingDelegatesToRedisWithPrefixedKey() {
+
+        // ARRANGE
+        String tokenSubject = "AS1";
+        String payload = "{\"R1\":[\"BU1\"]}";
+        when(redisTemplate.opsForValue().get(PREFIX + tokenSubject)).thenReturn(payload);
+
+        // ACT
+        String result = cacheService.getUserMapping(tokenSubject);
+
+        // ASSERT
+        assertEquals(payload, result);
+        verify(redisTemplate.opsForValue()).get(PREFIX + tokenSubject);
+    }
+
+    @Test
     void setAndGetLastUpdateAtDelegatesToRedis() {
 
         // ARRANGE

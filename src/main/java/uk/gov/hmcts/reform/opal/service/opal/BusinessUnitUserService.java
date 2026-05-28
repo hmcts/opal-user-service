@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
 import uk.gov.hmcts.reform.opal.dto.search.BusinessUnitUserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
+import uk.gov.hmcts.reform.opal.entity.RoleEntity;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.jpa.BusinessUnitUserSpecs;
 import uk.gov.hmcts.reform.opal.service.BusinessUnitUserServiceInterface;
@@ -43,6 +45,11 @@ public class BusinessUnitUserService implements BusinessUnitUserServiceInterface
                     ffq -> ffq.page(Pageable.unpaged()));
 
         return page.getContent();
+    }
+
+    @Override
+    public Set<RoleEntity> findAllRolesOfUser(UserEntity user) {
+        return businessUnitUserRepository.findDistinctRolesByUserId(user.getUserId());
     }
 
     /**

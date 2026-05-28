@@ -28,7 +28,6 @@ public class UserPermissionsV2Controller {
         @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
 
         log.debug(":GET:getUserStateV2: userId: {}, new login: {}", userId, newLogin);
-        return buildResponse(userPermissionsService
-                                 .getUserStateV2(userId, newLogin));
+        return buildResponse(userPermissionsService.getUserStateV2(userId, newLogin));
     }
 }

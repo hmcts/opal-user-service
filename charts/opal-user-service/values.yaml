@@ -32,6 +32,8 @@ java:
           alias: AZURE_STORAGE_CONNECTION_STRING
         - name: redis-connection-string
           alias: REDIS_CONNECTION_STRING
+        - name: launch-darkly-sdk-key
+          alias: LAUNCH_DARKLY_SDK_KEY
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true
     OPAL_FRONTEND_URL: https://opal-frontend.{{ .Values.global.environment }}.apps.hmcts.net

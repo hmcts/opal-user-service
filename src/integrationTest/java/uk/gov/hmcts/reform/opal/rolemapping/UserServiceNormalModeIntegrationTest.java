@@ -28,7 +28,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @Slf4j(topic = "opal.UserServiceNormalModeIntegrationTest")
 class UserServiceNormalModeIntegrationTest extends AbstractIntegrationTest {
 
-    private static final String URL_BASE = "/users";
+    private static final String URL_BASE = "/v2/users";
 
     @Test
     @DisplayName("AC2: should load APIs normally when AutomatedTask is absent")

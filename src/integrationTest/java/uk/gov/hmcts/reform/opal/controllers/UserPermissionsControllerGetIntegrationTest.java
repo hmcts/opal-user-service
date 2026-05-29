@@ -55,6 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTest {
 
     private static final String URL_BASE = "/users";
+    private static final String V2_CURRENT_USER_STATE_URI = "/v2" + URL_BASE + "/0/state";
     private static final String X_NEW_LOGIN = "X-New-Login";
 
     @MockitoSpyBean
@@ -87,7 +88,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         String cacheKey = "USER_STATE_" + subject;
         redisTemplate.delete(cacheKey);
 
-        MockHttpServletRequestBuilder builder = get("/v2" + URL_BASE + "/" + userIdWithPermissions + "/state");
+        MockHttpServletRequestBuilder builder = get(V2_CURRENT_USER_STATE_URI);
         addLoginHeader(newLogin, builder);
         ResultActions actions = mockMvc.perform(builder);
 
@@ -125,36 +126,6 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         assertThat(ttl).isBetween(29L, 30L); //30 mins TTL seems to immediately tick down to 29 mins.
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    @DisplayName("PO-2816, AC3: V2 with ID should update last_login_date only when newLogin is true")
-    void getV2UserStateWithId_updatesLastLoginDateInDb(boolean newLogin) throws Exception {
-        long userIdWithPermissions = 500000000L;
-
-        String subject = "k9LpT2xVqR8m";
-        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
-        SecurityContextHolder.getContext().setAuthentication(auth);
-
-        LocalDateTime before = readLastLoginDate(userIdWithPermissions);
-
-        MockHttpServletRequestBuilder builder =
-            get("/v2" + URL_BASE + "/" + userIdWithPermissions + "/state");
-        addLoginHeader(newLogin, builder);
-
-        mockMvc.perform(builder)
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
-
-        LocalDateTime after = readLastLoginDate(userIdWithPermissions);
-
-        if (newLogin) {
-            assertThat(after).isNotNull();
-            assertThat(after).isAfter(before);
-        } else {
-            assertThat(after).isEqualTo(before);
-        }
-    }
-
     @Test
     @DisplayName("PO-2835 AC2: should refresh cached user state and TTL")
     void getV2UserStateViaPrincipal_refreshesTtlOfRedisEntry() throws Exception {
@@ -165,7 +136,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         //call once, check we have the initial TTL
-        ResultActions firstCall = mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state"))
+        ResultActions firstCall = mockMvc.perform(get(V2_CURRENT_USER_STATE_URI))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
         String firstBody = firstCall.andReturn().getResponse().getContentAsString();
@@ -180,7 +151,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         assertThat(ttlBeforeRefreshMinutes2).isBetween(4L, 5L);
 
         //call a second time and check we get the new TTL.
-        ResultActions secondCall = mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state"))
+        ResultActions secondCall = mockMvc.perform(get(V2_CURRENT_USER_STATE_URI))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
         String secondBody = secondCall.andReturn().getResponse().getContentAsString();
@@ -188,39 +159,6 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
             .isEqualTo(objectMapper.readTree(secondBody));
         Long ttlBeforeRefreshMinutes3 = redisTemplate.getExpire(cacheKey, TimeUnit.MINUTES);
         assertThat(ttlBeforeRefreshMinutes3).isBetween(29L, 30L);
-    }
-
-    @Test
-    @DisplayName("PO-2835 AC3: cached user state should expire and return no data")
-    void getV2UserStateWithId_cachedStateExpiresAfterTtl() throws Exception {
-        long userId = 500000000L;
-        String subject = "k9LpT2xVqR8m";
-        String cacheKey = "USER_STATE_" + subject;
-        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
-        SecurityContextHolder.getContext().setAuthentication(auth);
-
-        // Populate cache by calling the API with valid data.
-        mockMvc.perform(get("/v2" + URL_BASE + "/" + userId + "/state"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
-
-        JsonNode expectedNode = expectedV2UserState(false);
-        JsonNode actualNode = objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey));
-        assertThat(actualNode).isEqualTo(expectedNode);
-
-        // Simulate "30 minutes later"
-        Boolean ttlSet = redisTemplate.expire(cacheKey, 1, TimeUnit.SECONDS);
-        assertThat(ttlSet).isTrue();
-
-        // Poll until the entry disappears from Redis
-        String cachedValue = redisTemplate.opsForValue().get(cacheKey);
-        long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-        while (cachedValue != null && System.nanoTime() < deadlineNanos) {
-            Thread.sleep(100L);
-            cachedValue = redisTemplate.opsForValue().get(cacheKey);
-        }
-
-        assertThat(cachedValue).isNull();
     }
 
     private LocalDateTime readLastLoginDate(long userId) {

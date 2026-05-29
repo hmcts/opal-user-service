@@ -40,6 +40,21 @@ public final class TestHelperUtil {
         SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
     }
 
+    public static void setAuthenticatedUser(UserEntity user) {
+        Jwt jwt = new Jwt(
+            "integration-test-token",
+            Instant.now(),
+            Instant.now().plusSeconds(3600),
+            Map.of("alg", "none"),
+            Map.of(
+                "sub", user.getTokenSubject(),
+                "preferred_username", user.getUsername(),
+                "name", user.getTokenName()
+            )
+        );
+        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
+    }
+
     public static UserEntity buildUser(long userId, String tokenSubject) {
         return UserEntity.builder()
             .userId(userId)

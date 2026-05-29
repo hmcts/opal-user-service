@@ -37,10 +37,20 @@ class UserPermissionsV2OpalModeIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("Should not trigger legacy synchronisation when app mode is opal")
     void getUserStateV2_whenAppModeIsOpal_doesNotSynchroniseWithLegacy() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
+
+        mockMvc.perform(get("/v2/users/0/state"))
+            .andExpect(status().isOk());
+
+        verify(synchronisePermissionsService, never()).synchronise(any(UserEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should reject non-zero user id requests")
+    void getUserStateV2_whenUserIdIsNonZero_returnsBadRequest() throws Exception {
 
         mockMvc.perform(get("/v2/users/" + USER_ID + "/state"))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
         verify(synchronisePermissionsService, never()).synchronise(any(UserEntity.class));
     }

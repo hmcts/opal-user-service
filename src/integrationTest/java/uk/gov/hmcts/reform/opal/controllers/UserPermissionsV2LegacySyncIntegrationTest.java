@@ -37,7 +37,7 @@ import static uk.gov.hmcts.reform.opal.entity.BusinessEventLogType.ROLE_UNASSIGN
 @DisplayName("UserPermissionsV2 legacy synchronisation integration tests")
 class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockIntegrationTest {
 
-    private static final long USER_ID = 500000001L; // seeded with no permissions
+    private static final long USER_ID = 500000003L; // seeded with no permissions
     private static final long USER_WITH_EXISTING_ROLE = 500000000L;
     private static final long DIFFERENT_USER_ID = 500000006L;
     private static final short BUSINESS_UNIT_ID = 69;
@@ -46,6 +46,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     private static final String EXISTING_BUSINESS_UNIT_USER_ID = "L081JG";
     private static final long ROLE_ID = 1L;
     private static final String ROLE_MAPPING_USER_PREFIX = "ROLE_MAPPING_USER_";
+    private static final String CURRENT_USER_STATE_URI = "/v2/users/0/state";
 
     @Autowired
     private UserRepository userRepository;
@@ -64,7 +65,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     @DisplayName("AC1/AC13: should remove roles and keep activation date unset when legacy returns no BU data")
     void getUserStateV2_whenLegacyReturnsNoData_removesAllRoles() throws Exception {
         UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
         long roleCountBefore = helper.countRoleAssignments(user.getUserId());
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of(), 1);
@@ -76,7 +77,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
         assertThat(roleCountBefore).isGreaterThan(0L);
 
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
 
         assertThat(helper.countRoleAssignments(user.getUserId())).isEqualTo(0L);
@@ -88,7 +89,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     @DisplayName("AC2: should create missing BUU and assign role from cache when legacy returns BUU")
     void getUserStateV2_createsMissingBusinessUnitUserAndAssignsRole() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
             List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
         );
@@ -96,7 +97,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
         assertThat(helper.businessUnitUserExists(BUSINESS_UNIT_USER_ID)).isFalse();
 
-        mockMvc.perform(get(userStateUri(user.getUserId())));
+        mockMvc.perform(get(CURRENT_USER_STATE_URI));
 
         helper.assertBusinessUnitUserRow(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
@@ -109,7 +110,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     @DisplayName("AC3: should reassign existing BUU to the requested user and assign role from cache")
     void getUserStateV2_reassignsExistingBusinessUnitUserToRequestedUser() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
             List.of(TestHelperUtil.legacyBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID))
         );
@@ -117,7 +118,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
         helper.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, DIFFERENT_USER_ID);
 
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
 
         helper.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
@@ -131,7 +132,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     @DisplayName("AC4: should update BU on existing BUU and assign role from cache")
     void getUserStateV2_updatesBusinessUnitIdOnExistingBusinessUnitUser() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         helper.updateBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
             List.of(TestHelperUtil.legacyBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
@@ -140,7 +141,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
         helper.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID);
 
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
 
         helper.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
@@ -154,7 +155,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     @DisplayName("AC5/AC12: should return valid state, remove roles, and keep activation date unset when cache miss")
     void getUserStateV2_whenRoleMappingCacheEntryMissing_removesAllRoles() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
         helper.updateBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
@@ -165,7 +166,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
         assertThat(roleCountBefore).isGreaterThan(0L);
 
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
 
         assertThat(helper.countRoleAssignments(user.getUserId())).isEqualTo(0L);
@@ -183,7 +184,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         final short buId3NotReturnedByLegacy = 68;
 
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         helper.insertBusinessUnitUser(buuId1, buId1, USER_ID);
         helper.insertBusinessUnitUser(buuId2, buId2, USER_ID);
         helper.insertBusinessUnitUserRole(buuId1, ROLE_ID);
@@ -198,7 +199,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             ROLE_MAPPING_USER_PREFIX
         );
 
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
 
         helper.assertUserBusinessUnitIds(user.getUserId(), buId1, buId2);
@@ -227,7 +228,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         final short buId3 = 68;
 
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
         helper.insertBusinessUnitUser(buuId1, buId1, USER_ID);
         helper.insertBusinessUnitUser(buuId2, buId2, USER_ID);
@@ -242,7 +243,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         helper.setRoleMappingCache(user, roleMappingCache, ROLE_MAPPING_USER_PREFIX);
 
         //assertions on the response verify changes from the inner transaction are visible to outer calling code
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk())
             .andExpect(jsonPath(
                 "$.domains.*.business_unit_users[*].business_unit_id",
@@ -275,7 +276,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         final long roleNotInCache = 2L;
 
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         helper.insertBusinessUnitUser(buuId1, buId1, USER_ID);
         helper.insertBusinessUnitUser(buuId2, buId2, USER_ID);
         helper.insertBusinessUnitUserRole(buuId1, roleNotInCache);
@@ -290,7 +291,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             ROLE_MAPPING_USER_PREFIX
         );
 
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
 
         helper.assertUserBusinessUnitIds(user.getUserId(), buId1, buId2, buId3);
@@ -317,7 +318,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         final LocalDateTime existingActivationDate = LocalDateTime.parse("2025-01-02T03:04:05.678");
 
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         helper.updateUserActivationDate(user.getUserId(), existingActivationDate);
         helper.insertBusinessUnitUser(buuId1, buId1, USER_ID);
         helper.insertBusinessUnitUser(buuId2, buId2, USER_ID);
@@ -331,7 +332,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         Map<Long, Set<Short>> roleMappingCache = Map.of(ROLE_ID, Set.of(buId1, buId2, buId3));
         helper.setRoleMappingCache(user, roleMappingCache, ROLE_MAPPING_USER_PREFIX);
 
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
 
         helper.assertUserBusinessUnitIds(user.getUserId(), buId1, buId2, buId3);
@@ -360,7 +361,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         final long thirdRoleId = 3L;
 
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
         helper.insertBusinessUnitUser(buuId1, buId1, USER_ID);
         helper.insertBusinessUnitUser(buuId2, buId2, USER_ID);
@@ -386,7 +387,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             ROLE_MAPPING_USER_PREFIX
         );
 
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
 
         helper.assertUserBusinessUnitIds(user.getUserId(), buId1, buId2, buId3, buId4);
@@ -420,7 +421,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     @DisplayName("Should roll back synchronisation when business event persistence fails")
     void getUserStateV2_whenBusinessEventPersistenceFails_rollsBackSynchronisation() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
-        TestHelperUtil.setAuthenticatedUser(user.getTokenSubject());
+        TestHelperUtil.setAuthenticatedUser(user);
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
             List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
@@ -430,7 +431,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         assertThat(helper.businessUnitUserExists(BUSINESS_UNIT_USER_ID)).isFalse();
         long roleCountBefore = helper.countRoleAssignments(user.getUserId());
 
-        mockMvc.perform(get(userStateUri(user.getUserId())))
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isInternalServerError())
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Internal Server Error"))
@@ -446,7 +447,4 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(ROLE_ASSIGNED_TO_USER);
     }
 
-    private String userStateUri(long userId) {
-        return "/v2/users/" + userId + "/state";
-    }
 }

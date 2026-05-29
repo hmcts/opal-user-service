@@ -3,6 +3,8 @@ package uk.gov.hmcts.reform.opal.rolemapping;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -33,11 +35,11 @@ class UserServiceNormalModeIntegrationTest extends AbstractIntegrationTest {
     @Test
     @DisplayName("AC2: should load APIs normally when AutomatedTask is absent")
     void shouldLoadApiNormally() throws Exception {
-        long userIdWithPermissions = 500000000L;
 
-        MockHttpServletRequestBuilder builder = get(URL_BASE + "/" + userIdWithPermissions + "/state")
-            .principal(createJwtPrincipal());
+        Authentication auth = createJwtPrincipal("k9LpT2xVqR8m","opal-test@HMCTS.NET", "Pablo");
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
+        MockHttpServletRequestBuilder builder = get(URL_BASE + "/0/state");
         mockMvc.perform(builder)
             .andExpect(status().isOk())
             .andExpect(content().contentType(APPLICATION_JSON))
@@ -45,16 +47,15 @@ class UserServiceNormalModeIntegrationTest extends AbstractIntegrationTest {
             .andExpect(jsonPath("$.username").value("opal-test@HMCTS.NET"));
     }
 
-    private JwtAuthenticationToken createJwtPrincipal() {
+    private JwtAuthenticationToken createJwtPrincipal(String sub, String preferred, String name) {
         Jwt jwt = new Jwt(
             "mock-token-value",
             Instant.now(),
             Instant.now().plusSeconds(3600),
             Map.of("alg", "none"),
-            Map.of(
-                "sub", "jjqwGAERGW43",
-                "preferred_username", "opal-test@HMCTS.NET",
-                "name", "Pablo"
+            Map.of("sub", sub,
+                   "preferred_username", preferred,
+                   "name", name
             )
         );
 

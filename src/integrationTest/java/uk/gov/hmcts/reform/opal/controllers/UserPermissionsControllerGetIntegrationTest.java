@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,15 +41,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles({"integration", "opal"})
 @Slf4j(topic = "opal.UserPermissionsControllerIntegrationTest")
-@Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
-@Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_CLASS)
+@Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_METHOD)
+@Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_METHOD)
 @DisplayName("UserPermissionsControllerGetIntegrationTest")
 class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTest {
 
@@ -64,15 +63,6 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @Autowired
     StringRedisTemplate redisTemplate;
 
-    @BeforeEach
-    void resetLastLoginDate() {
-        jdbcTemplate.update(
-            "update users set last_login_date = ? where user_id = ?",
-            java.sql.Timestamp.valueOf(LocalDateTime.of(2026, 4, 14, 10, 15, 30)),
-            500000000L
-        );
-    }
-
     private ObjectMapper objectMapper = new ObjectMapper();
 
 
@@ -80,7 +70,6 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @ValueSource(booleans = {false, true})
     @DisplayName("V2 with ID Should return 200 and full V2 user state for a user with permissions")
     void getV2UserStateWithId_returnsFullState(boolean newLogin) throws Exception {
-        long userIdWithPermissions = 500000000L;
         String subject = "k9LpT2xVqR8m";
         Authentication auth = createJwtPrincipal(subject,"opal-test@HMCTS.NET", "Pablo");
         SecurityContextHolder.getContext().setAuthentication(auth);
@@ -138,34 +127,29 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         updateLastLoginDate(userIdWithPermissions, existingLastLoginDate);
-        try {
-            LocalDateTime before = readLastLoginDate(userIdWithPermissions);
-            assertThat(before).isEqualTo(existingLastLoginDate);
+        LocalDateTime before = readLastLoginDate(userIdWithPermissions);
+        assertThat(before).isEqualTo(existingLastLoginDate);
 
-            MockHttpServletRequestBuilder builder = get(V2_CURRENT_USER_STATE_URI);
-            addLoginHeader(newLogin, builder);
+        MockHttpServletRequestBuilder builder = get(V2_CURRENT_USER_STATE_URI);
+        addLoginHeader(newLogin, builder);
 
-            mockMvc.perform(builder)
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        mockMvc.perform(builder)
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-            LocalDateTime after = readLastLoginDate(userIdWithPermissions);
+        LocalDateTime after = readLastLoginDate(userIdWithPermissions);
 
-            if (newLogin) {
-                assertThat(after).isNotNull();
-                assertThat(after).isAfter(before);
-            } else {
-                assertThat(after).isEqualTo(before);
-            }
-        } finally {
-            clearLastLoginDate(userIdWithPermissions);
+        if (newLogin) {
+            assertThat(after).isNotNull();
+            assertThat(after).isAfter(before);
+        } else {
+            assertThat(after).isEqualTo(before);
         }
     }
 
     @Test
     @DisplayName("PO-2835 AC2: should refresh cached user state and TTL")
     void getV2UserStateViaPrincipal_refreshesTtlOfRedisEntry() throws Exception {
-        long userId = 500000000L;
         String subject = "k9LpT2xVqR8m";
         String cacheKey = "USER_STATE_" + subject;
         Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
@@ -241,13 +225,6 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         jdbcTemplate.update(
             "update users set last_login_date = ? where user_id = ?",
             lastLoginDate,
-            userId
-        );
-    }
-
-    private void clearLastLoginDate(long userId) {
-        jdbcTemplate.update(
-            "update users set last_login_date = null where user_id = ?",
             userId
         );
     }

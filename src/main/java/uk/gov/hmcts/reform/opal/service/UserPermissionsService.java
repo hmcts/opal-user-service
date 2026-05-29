@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -50,22 +49,6 @@ import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsService;
-
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
-import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
-import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
-
 
 @Service
 @RequiredArgsConstructor

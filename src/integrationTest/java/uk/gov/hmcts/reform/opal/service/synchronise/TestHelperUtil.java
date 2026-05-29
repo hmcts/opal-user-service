@@ -29,17 +29,6 @@ public final class TestHelperUtil {
         return legacyBusinessUnitUser(businessUnitUserId, Short.toString(businessUnitId));
     }
 
-    public static void setAuthenticatedUser(String tokenSubject) {
-        Jwt jwt = new Jwt(
-            "integration-test-token",
-            Instant.now(),
-            Instant.now().plusSeconds(3600),
-            Map.of("alg", "none"),
-            Map.of("sub", tokenSubject)
-        );
-        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
-    }
-
     public static void setAuthenticatedUser(UserEntity user) {
         Jwt jwt = new Jwt(
             "integration-test-token",

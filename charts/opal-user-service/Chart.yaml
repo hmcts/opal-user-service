@@ -3,7 +3,7 @@ appVersion: "1.0"
 description: A Helm chart for opal-user-service App
 name: opal-user-service
 home: https://github.com/hmcts/opal-user-service
-version: 0.0.48
+version: 0.0.49
 maintainers:
   - name: HMCTS opal team
 dependencies:
@@ -14,3 +14,8 @@ dependencies:
     version: 1.0.0
     repository: "oci://hmctsprod.azurecr.io/helm"
     condition: hmcts-redis.enabled
+  - name: job
+    alias: user-role-mapping-refresh
+    version: 2.2.0
+    repository: 'oci://hmctsprod.azurecr.io/helm'
+    condition: user-role-mapping-refresh.enabled

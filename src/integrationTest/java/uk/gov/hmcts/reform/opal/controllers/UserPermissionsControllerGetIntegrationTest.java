@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -62,7 +63,17 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @Autowired
     StringRedisTemplate redisTemplate;
 
+    @BeforeEach
+    void resetLastLoginDate() {
+        jdbcTemplate.update(
+            "update users set last_login_date = ? where user_id = ?",
+            java.sql.Timestamp.valueOf(LocalDateTime.of(2026, 4, 14, 10, 15, 30)),
+            500000000L
+        );
+    }
+
     private ObjectMapper objectMapper = new ObjectMapper();
+
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
@@ -224,9 +235,9 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     static class FixedClockConfig {
         @Bean
         @Primary
-        Clock clock() {
+        Clock fixedClock() {
             return Clock.fixed(
-                Instant.parse("2026-04-14T10:15:30Z"),
+                Instant.parse("2026-04-14T10:20:30Z"),
                 ZoneId.of("UTC")
             );
         }

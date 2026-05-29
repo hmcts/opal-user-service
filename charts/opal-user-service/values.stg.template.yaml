@@ -8,3 +8,12 @@ java:
     RELEASE_1A_ENABLED: true
     OPAL_COMMON_CONTENT_DIGEST_REQUEST_AUTO_GENERATE: true
     FLYWAY_LOCATIONS: classpath:db/migration/ddl, classpath:db/migration/data/allEnvs, classpath:db/migration/data/nle, classpath:db/migration/data/stg
+
+user-role-mapping-refresh:
+  image: ${IMAGE_NAME}
+  environment:
+    OPAL_FRONTEND_URL: https://opal-frontend-staging.staging.apps.hmcts.net
+    TESTING_SUPPORT_ENDPOINTS_ENABLED: false
+    RELEASE_1A_ENABLED: true
+    OPAL_COMMON_CONTENT_DIGEST_REQUEST_AUTO_GENERATE: true
+    FLYWAY_LOCATIONS: classpath:db/migration/ddl, classpath:db/migration/data/allEnvs, classpath:db/migration/data/nle, classpath:db/migration/data/stg

@@ -45,7 +45,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -140,6 +143,18 @@ class UserPermissionsServiceV2Test {
         assertThat(userEntity.getLastLoginDate())
             .isEqualTo(LocalDateTime.ofInstant(fixedInstant, fixedZone));
         verify(userRepository).saveAndFlush(userEntity);
+        verify(securityEventLoggingService).logEvent(
+            eq("User Authentication"),
+            eq("Success"),
+            isNull(),
+            eq("Authentication"),
+            notNull(),
+            argThat(data ->
+                        data != null
+                            && data.size() == 1
+                            && Long.valueOf(USER_ID).equals(data.get("UserIdentifier"))
+            )
+        );
         assertDtoWasCachedForSubject(TOKEN_SUBJECT);
     }
 

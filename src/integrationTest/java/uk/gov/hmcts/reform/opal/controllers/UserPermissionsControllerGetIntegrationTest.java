@@ -126,6 +126,42 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         assertThat(ttl).isBetween(29L, 30L); //30 mins TTL seems to immediately tick down to 29 mins.
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("PO-2816, AC3: V2 with ID should update last_login_date only when newLogin is true")
+    void getV2UserStateWithId_updatesLastLoginDateInDb(boolean newLogin) throws Exception {
+        long userIdWithPermissions = 500000000L;
+        LocalDateTime existingLastLoginDate = LocalDateTime.parse("2026-04-10T09:00:00");
+
+        String subject = "k9LpT2xVqR8m";
+        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        updateLastLoginDate(userIdWithPermissions, existingLastLoginDate);
+        try {
+            LocalDateTime before = readLastLoginDate(userIdWithPermissions);
+            assertThat(before).isEqualTo(existingLastLoginDate);
+
+            MockHttpServletRequestBuilder builder = get(V2_CURRENT_USER_STATE_URI);
+            addLoginHeader(newLogin, builder);
+
+            mockMvc.perform(builder)
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+            LocalDateTime after = readLastLoginDate(userIdWithPermissions);
+
+            if (newLogin) {
+                assertThat(after).isNotNull();
+                assertThat(after).isAfter(before);
+            } else {
+                assertThat(after).isEqualTo(before);
+            }
+        } finally {
+            clearLastLoginDate(userIdWithPermissions);
+        }
+    }
+
     @Test
     @DisplayName("PO-2835 AC2: should refresh cached user state and TTL")
     void getV2UserStateViaPrincipal_refreshesTtlOfRedisEntry() throws Exception {
@@ -161,10 +197,57 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         assertThat(ttlBeforeRefreshMinutes3).isBetween(29L, 30L);
     }
 
+    @Test
+    @DisplayName("PO-2835 AC3: cached user state should expire and return no data")
+    void getV2UserState_cachedStateExpiresAfterTtl() throws Exception {
+        String subject = "k9LpT2xVqR8m";
+        String cacheKey = "USER_STATE_" + subject;
+        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // Populate cache by calling the API with valid data.
+        mockMvc.perform(get(V2_CURRENT_USER_STATE_URI))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        JsonNode expectedNode = expectedV2UserState(false);
+        JsonNode actualNode = objectMapper.readTree(redisTemplate.opsForValue().get(cacheKey));
+        assertThat(actualNode).isEqualTo(expectedNode);
+
+        // Simulate "30 minutes later"
+        Boolean ttlSet = redisTemplate.expire(cacheKey, 1, TimeUnit.SECONDS);
+        assertThat(ttlSet).isTrue();
+
+        // Poll until the entry disappears from Redis
+        String cachedValue = redisTemplate.opsForValue().get(cacheKey);
+        long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (cachedValue != null && System.nanoTime() < deadlineNanos) {
+            Thread.sleep(100L);
+            cachedValue = redisTemplate.opsForValue().get(cacheKey);
+        }
+
+        assertThat(cachedValue).isNull();
+    }
+
     private LocalDateTime readLastLoginDate(long userId) {
         return jdbcTemplate.queryForObject(
             "select last_login_date from users where user_id = ?",
             (rs, rowNum) -> rs.getObject("last_login_date", LocalDateTime.class),
+            userId
+        );
+    }
+
+    private void updateLastLoginDate(long userId, LocalDateTime lastLoginDate) {
+        jdbcTemplate.update(
+            "update users set last_login_date = ? where user_id = ?",
+            lastLoginDate,
+            userId
+        );
+    }
+
+    private void clearLastLoginDate(long userId) {
+        jdbcTemplate.update(
+            "update users set last_login_date = null where user_id = ?",
             userId
         );
     }

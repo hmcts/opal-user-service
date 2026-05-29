@@ -21,6 +21,8 @@ paths:
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 0
         - name: X-New-Login
           in: header
           required: true

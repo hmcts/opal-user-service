@@ -46,3 +46,40 @@ java:
       tag: '17.5.0'
 hmcts-redis:
   enabled: false
+
+user-role-mapping-refresh:
+  enabled: true
+  kind: CronJob
+  image: 'hmctsprod.azurecr.io/opal/user-service:latest'
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  args:
+    - AutomatedTask:UserRoleMappingFileRefresh
+  aadIdentityName: opal
+  keyVaults:
+    opal:
+      secrets:
+        - name: app-insights-connection-string
+          alias: app-insights-connection-string
+        - name: user-service-POSTGRES-HOST
+          alias: OPAL_USER_DB_HOST
+        - name: user-service-POSTGRES-PASS
+          alias: OPAL_USER_DB_PASSWORD
+        - name: user-service-POSTGRES-PORT
+          alias: OPAL_USER_DB_PORT
+        - name: user-service-POSTGRES-USER
+          alias: OPAL_USER_DB_USERNAME
+        - name: user-service-POSTGRES-DATABASE
+          alias: OPAL_USER_DB_NAME
+        - name: role-mapping-storage-container-name
+          alias: ROLE_MAPPING_STORAGE_CONTAINER_NAME
+        - name: storage-connection-string
+          alias: AZURE_STORAGE_CONNECTION_STRING
+        - name: redis-connection-string
+          alias: REDIS_CONNECTION_STRING
+  environment:
+    RUN_DB_MIGRATION_ON_STARTUP: false
+    OPAL_FRONTEND_URL: https://opal-frontend.{{ .Values.global.environment }}.apps.hmcts.net
+    TESTING_SUPPORT_ENDPOINTS_ENABLED: false
+    LAUNCH_DARKLY_ENABLED: false
+    FLYWAY_LOCATIONS: classpath:db/migration/ddl,classpath:db/migration/data/allEnvs

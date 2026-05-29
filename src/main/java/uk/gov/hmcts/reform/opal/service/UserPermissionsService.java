@@ -104,15 +104,8 @@ public class UserPermissionsService {
     public UserStateV2Dto getUserStateV2(boolean newLogin) {
         log.debug(":getUserState");
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Jwt jwt = getJwtToken(authentication);
-        String subject = extractSubject(jwt);
-
-        UserEntity user = userRepository.findByTokenSubject(subject)
-            .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
+        UserEntity user = getUserFromAuthentication();
         Long userId = user.getUserId();
-
-        validateAuthenticatedUser(user, jwt);
 
         if (appModeConfiguration.getAppMode().equalsIgnoreCase("legacy")) {
             synchronisePermissionsService.synchronise(user);
@@ -133,6 +126,16 @@ public class UserPermissionsService {
         UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
         cacheUserState(dto, user);
         return dto;
+    }
+
+    private UserEntity getUserFromAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt jwt = getJwtToken(authentication);
+        String subject = extractSubject(jwt);
+        UserEntity user = userRepository.findByTokenSubject(subject)
+            .orElseThrow(() -> new EntityNotFoundException("User not found with subject: " + subject));
+        validateAuthenticatedUser(user, jwt);
+        return user;
     }
 
     private void validateAuthenticatedUser(UserEntity user, Jwt jwt) {

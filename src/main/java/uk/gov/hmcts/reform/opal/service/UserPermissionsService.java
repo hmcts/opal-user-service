@@ -92,42 +92,6 @@ public class UserPermissionsService {
     private final UserService userService;
 
     @Transactional(readOnly = true)
-    @Deprecated //Use getUserStateV2 equivalent method
-    public UserStateDto getUserState(Authentication authentication, Boolean newLogin) {
-        Jwt jwt = getJwtToken(authentication);
-        String subject = extractSubject(jwt);
-        UserEntity user = getUser(subject);
-
-        String username = extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
-        compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
-        String name = extractClaim(jwt, NAME_CLAIM);
-        compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
-
-        log.debug(":getUserState: found User: {}", username);
-        UserStateDto dto = buildUserState(user);
-        if (Optional.ofNullable(newLogin).orElse(false)) {
-            logUserAuthenticationEvent(dto.getUserId());
-        }
-        return dto;
-    }
-
-    @Transactional(readOnly = true)
-    @Deprecated //Use getUserStateV2 equivalent method
-    public UserStateDto getUserState(Long userId, Authentication authentication, Boolean newLogin) {
-        log.debug(":getUserState: userId: {}", userId);
-        if (userId == 0) {
-            return getUserState(authentication, newLogin);
-        } else {
-            UserStateDto dto = buildUserState(getUser(userId));
-            if (Optional.ofNullable(newLogin).orElse(false)) {
-                Long clientUserId = getUserId(authentication);
-                logUserAuthenticationEvent(clientUserId);
-            }
-            return dto;
-        }
-    }
-
-    @Transactional(readOnly = true)
     public Long getAuthenticatedUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {

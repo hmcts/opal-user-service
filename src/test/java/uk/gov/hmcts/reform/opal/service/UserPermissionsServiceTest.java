@@ -3,30 +3,25 @@ package uk.gov.hmcts.reform.opal.service;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.nimbusds.jwt.JWT;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.verification.VerificationMode;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authentication.service.TokenValidator;
-import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
@@ -40,6 +35,7 @@ import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
+import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -51,17 +47,12 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.math.BigInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -124,47 +115,6 @@ class UserPermissionsServiceTest {
     }
 
     @Test
-    @DisplayName("getUserState(Long) throws when no entitlements and user missing")
-    void testBuildUserState_longNoEntitlements_throws() {
-        when(userRepository.findById(USER_ID))
-            .thenReturn(java.util.Optional.empty());
-
-        EntityNotFoundException ex = assertThrows(
-            EntityNotFoundException.class,
-            () -> service.getUserState(USER_ID, null, null)
-        );
-        assertEquals("User not found with id: " + USER_ID, ex.getMessage());
-
-        verify(userRepository).findById(USER_ID);
-    }
-
-    @ParameterizedTest
-    @NullSource
-    @ValueSource(booleans = {false, true})
-    @DisplayName("getUserState(String) delegates to getUserState(Long) after lookup")
-    void testGetUserState_jwtAuthPrinciple(Boolean newLogin) {
-        // Arrange
-        final JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
-        when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.of(userEntity));
-        doReturn(userDto).when(service).buildUserState(any());
-        boolean testNewLogin = Boolean.TRUE.equals(newLogin);
-        if (testNewLogin) {
-            doAnswer(invocation -> {
-                log.info(":SecurityEventLoggingService.logEvent: <mock log message>");
-                return null;
-            }).when(securityEventLoggingService).logEvent(any(), any(), any(), any(), any(), any());
-        }
-
-        UserStateDto result = service.getUserState(jwtAuthToken, newLogin);
-
-        assertEquals(userDto, result);
-        verify(userRepository).findByTokenSubject(any());
-        verify(service).buildUserState(any());
-        VerificationMode mode = testNewLogin ? times(1) : never();
-        verify(securityEventLoggingService, mode).logEvent(any(), any(), any(), any(), any(), any());
-    }
-
-    @Test
     @DisplayName("getUserId(String) from Authentication object")
     void testGetUserId() {
         // Arrange
@@ -203,25 +153,6 @@ class UserPermissionsServiceTest {
         );
 
         assertEquals("No authenticated user found in the security context.", ex.getMessage());
-    }
-
-    @ParameterizedTest
-    @NullSource
-    @ValueSource(booleans = {false, true})
-    @DisplayName("getUserState(String) throws when username not found")
-    void testGetUserState_jwtAuthPrinciple_throws(Boolean newLogin) {
-        // Arrange
-        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
-        when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.empty());
-
-        EntityNotFoundException ex = assertThrows(
-            EntityNotFoundException.class,
-            () -> service.getUserState(jwtAuthToken, newLogin)
-        );
-        assertEquals("User not found with subject: lkkljnwb7D1DFs", ex.getMessage());
-
-        verify(userRepository).findByTokenSubject(any());
-        verify(securityEventLoggingService, never()).logEvent(any(), any(), any(), any(), any(), any());
     }
 
     @Test

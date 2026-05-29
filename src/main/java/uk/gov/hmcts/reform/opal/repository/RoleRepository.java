@@ -18,4 +18,6 @@ public interface RoleRepository extends JpaRepository<RoleEntity, Long>, JpaSpec
     Optional<RoleEntity> findByRoleId(Long roleId);
 
     long countByRoleId(Long roleId);
+
+    RoleEntity findByName(String name);
 }

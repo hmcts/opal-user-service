@@ -12,4 +12,6 @@ public interface BusinessUnitUserRoleRepository extends JpaRepository<BusinessUn
     JpaSpecificationExecutor<BusinessUnitUserRoleEntity> {
 
     List<BusinessUnitUserRoleEntity> findAllByBusinessUnitUser_User_UserIdAndRole_RoleId(Long userId, Long roleId);
+
+    void deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(List<String> businessUnitUserIds);
 }

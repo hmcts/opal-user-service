@@ -1,5 +1,30 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.toPrettyJson;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.time.Instant;
+import java.util.Map;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator.Builder;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -19,29 +44,7 @@ import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.service.JsonSchemaValidationService;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.time.Instant;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.toPrettyJson;
-
-@ActiveProfiles({"integration"})
+@ActiveProfiles({"integration", "opal"})
 @Slf4j(topic = "opal.UserPermissionsControllerIntegrationTest")
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
 @Sql(scripts = "classpath:db.insertData/insert_authorisation_data.sql", executionPhase = BEFORE_TEST_CLASS)
@@ -256,7 +259,12 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
                             .header("If-Match", "0")
                             .accept(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(status().isRequestTimeout())
-            .andExpect(content().string(""));
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.status").value(HttpStatus.REQUEST_TIMEOUT.value()))
+            .andExpect(jsonPath("$.title").value("Request Timeout"))
+            .andExpect(jsonPath("$.detail").value("Request timed out"))
+            .andExpect(jsonPath("$.type").value("https://hmcts.gov.uk/problems/response-status"))
+            .andExpect(jsonPath("$.retriable").value(true));
     }
 
     @Test
@@ -270,7 +278,12 @@ class UserPermissionsControllerOtherIntegrationTest extends AbstractIntegrationT
                             .header("If-Match", "0")
                             .accept(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(status().isServiceUnavailable())
-            .andExpect(content().string(""));
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.status").value(HttpStatus.SERVICE_UNAVAILABLE.value()))
+            .andExpect(jsonPath("$.title").value("Service Unavailable"))
+            .andExpect(jsonPath("$.detail").value("Service unavailable"))
+            .andExpect(jsonPath("$.type").value("https://hmcts.gov.uk/problems/response-status"))
+            .andExpect(jsonPath("$.retriable").value(true));
     }
 
     private String createSignedToken(String subject) throws NoSuchAlgorithmException {

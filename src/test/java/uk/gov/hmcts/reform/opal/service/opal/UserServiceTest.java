@@ -322,6 +322,15 @@ class UserServiceTest {
         );
     }
 
+    @Test
+    void refreshUser_delegatesToRepository() {
+        UserEntity user = user(123L);
+
+        userService.refreshUser(user);
+
+        verify(userRepository).refresh(user);
+    }
+
     private BusinessUnitUserEntity businessUnitUser(String businessUnitUserId, Long userId, Short businessUnitId) {
         return BusinessUnitUserEntity.builder()
             .businessUnitUserId(businessUnitUserId)

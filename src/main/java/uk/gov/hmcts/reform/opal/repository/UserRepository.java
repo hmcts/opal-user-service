@@ -23,6 +23,13 @@ public interface UserRepository extends JpaRepository<UserEntity, Long>,
     })
     Optional<UserEntity> findByTokenSubject(String tokenSubject);
 
+    @EntityGraph(attributePaths = {
+        "businessUnitUsers",
+        "businessUnitUsers.businessUnit",
+        "businessUnitUsers.businessUnit.domain",
+        "businessUnitUsers.businessUnitUserRoleList",
+        "businessUnitUsers.businessUnitUserRoleList.role"
+    })
     Optional<UserEntity> findByUserId(long userId);
 
     Optional<UserEntity> findByUsernameIgnoreCase(String tokenPreferredUsername);

@@ -19,7 +19,6 @@ import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -34,9 +33,6 @@ class BusinessUnitUserServiceTest {
 
     @Mock
     private BusinessUnitUserRepository businessUnitUserRepository;
-
-    @Mock
-    private UserEntitlementService userEntitlementService;
 
     @InjectMocks
     private BusinessUnitUserService businessUnitUserService;
@@ -77,26 +73,6 @@ class BusinessUnitUserServiceTest {
 
         // Assert
         assertEquals(List.of(businessUnitUserEntity), result);
-
-    }
-
-    @Test
-    void testGetAuthorisationBusinessUnitPermissionsByUserId() {
-        // Arrange
-        BusinessUnitEntity bue = BusinessUnitEntity.builder().businessUnitId((short)100).build();
-        BusinessUnitUserEntity businessUnitUserEntity = BusinessUnitUserEntity.builder()
-            .businessUnitUserId("BUUserABCD").businessUnit(bue).build();
-        List<BusinessUnitUserEntity> list = List.of(businessUnitUserEntity);
-        when(businessUnitUserRepository.findAllByUser_UserId(any())).thenReturn(list);
-        when(userEntitlementService.getPermissionsByBusinessUnitUserId(any())).thenReturn(Collections.emptySet());
-
-        // Act
-        Set<BusinessUnitUser> result = businessUnitUserService
-            .getAuthorisationBusinessUnitPermissionsByUserId(0L);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
 
     }
 

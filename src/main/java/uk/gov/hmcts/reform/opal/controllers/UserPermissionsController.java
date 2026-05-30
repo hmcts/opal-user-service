@@ -24,7 +24,6 @@ import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
 @Slf4j(topic = "opal.UserPermissionsController")
 public class UserPermissionsController {
 
-    private static final String X_NEW_LOGIN = "X-New-Login";
     private final UserPermissionsService userPermissionsService;
 
     @PostMapping()

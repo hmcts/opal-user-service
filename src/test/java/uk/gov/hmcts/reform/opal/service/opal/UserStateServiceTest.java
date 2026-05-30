@@ -5,140 +5,50 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
-import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
-import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
-import uk.gov.hmcts.reform.opal.config.properties.BeDeveloperConfiguration;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 
+import java.time.Clock;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static uk.gov.hmcts.reform.opal.service.opal.UserStateService.DEVELOPER_PERMISSIONS;
 
 @ExtendWith(MockitoExtension.class)
 class UserStateServiceTest {
 
     static final String BEARER_TOKEN = "Bearer a_token_here";
 
-    @Mock
-    private AccessTokenService tokenService;
 
     @Mock
     private UserService userService;
-
     @Mock
-    private UserEntitlementService userEntitlementService;
-
+    private UserStateMapper userStateMapper;
     @Mock
-    private BeDeveloperConfiguration developerConfiguration;
+    private Clock clock;
 
     @InjectMocks
     private UserStateService userStateService;
 
     @Test
-    void testGetUserState_fromUserEntitlementService() {
-        // Arrange
-        UserState userState = UserState.builder().userId(123L).userName("John Smith").build();
-        when(userEntitlementService.getUserStateByUsername(any())).thenReturn(Optional.of(userState));
-
-        // Act
-        UserState result = userStateService.getUserStateUsingAuthToken(BEARER_TOKEN);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(123L, result.getUserId());
-        assertEquals("John Smith", result.getUserName());
-
-    }
-
-    @Test
     void testGetUserState_fromUserService() {
 
         // Arrange
-        Optional<UserState> userState = Optional.of(UserState.builder()
-                                                        .userId(123L).userName("John Smith").build());
-        when(userEntitlementService.getUserStateByUsername(any())).thenReturn(Optional.empty());
-        when(userService.getLimitedUserStateByUsername(any())).thenReturn((userState));
+        Optional<UserStateV2> userState = Optional.of(UserStateV2.builder()
+            .userId(123L).username("John Smith").build());
+        UserEntity userEntity = UserEntity.builder().userId(123L).username("John Smith").build();
+
+        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userStateMapper.toUserStateV2(userEntity, clock)).thenReturn(userState.get());
 
         // Act
-        UserState result = userStateService.getUserStateUsingAuthToken(BEARER_TOKEN);
+        UserStateV2 result = userStateService.getUserStateUsingAuthToken();
 
         // Assert
         assertNotNull(result);
         assertEquals(123L, result.getUserId());
-        assertEquals("John Smith", result.getUserName());
-
-    }
-
-    @Test
-    void testGetUserState_developerUserState() {
-
-        // Arrange
-        when(userEntitlementService.getUserStateByUsername(any())).thenReturn(Optional.empty());
-        when(userService.getLimitedUserStateByUsername(any())).thenReturn((Optional.empty()));
-        when(developerConfiguration.getUserRolePermissions()).thenReturn(DEVELOPER_PERMISSIONS);
-
-        // Act
-        UserState result = userStateService.getUserStateUsingAuthToken(BEARER_TOKEN);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(0L, result.getUserId());
-        assertEquals("Developer_User", result.getUserName());
-
-    }
-
-    @Test
-    void testGetUserState_failure() {
-
-        // Arrange
-        when(userEntitlementService.getUserStateByUsername(any())).thenReturn(Optional.empty());
-        when(userService.getLimitedUserStateByUsername(any())).thenReturn((Optional.empty()));
-
-        // Act
-        AccessDeniedException ex = assertThrows(
-            AccessDeniedException.class,
-            () -> userStateService.getUserStateUsingAuthToken(BEARER_TOKEN)
-        );
-
-        // Assert
-        assertNotNull(ex);
-        assertEquals("No authorised user with username 'null' found", ex.getMessage());
-
-    }
-
-    @Test
-    void testCheckForAuthorisedUser_success() {
-
-        // Arrange
-        when(userEntitlementService.getUserStateByUsername(any())).thenReturn(Optional.empty());
-        when(userService.getLimitedUserStateByUsername(any())).thenReturn((Optional.empty()));
-        when(developerConfiguration.getUserRolePermissions()).thenReturn(DEVELOPER_PERMISSIONS);
-
-        // Act
-        userStateService.checkForAuthorisedUser(BEARER_TOKEN);
-    }
-
-    @Test
-    void testCheckForAuthorisedUser_failure() {
-
-        // Arrange
-        when(userEntitlementService.getUserStateByUsername(any())).thenReturn(Optional.empty());
-        when(userService.getLimitedUserStateByUsername(any())).thenReturn((Optional.empty()));
-
-        // Act
-        AccessDeniedException ex = assertThrows(
-            AccessDeniedException.class,
-            () -> userStateService.checkForAuthorisedUser(BEARER_TOKEN)
-        );
-
-        // Assert
-        assertNotNull(ex);
-        assertEquals("No authorised user with username 'null' found", ex.getMessage());
-
+        assertEquals("John Smith", result.getUsername());
     }
 }

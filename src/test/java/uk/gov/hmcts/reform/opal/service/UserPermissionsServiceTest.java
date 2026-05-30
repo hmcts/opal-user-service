@@ -13,26 +13,22 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.common.exceptions.standard.UnauthorizedException;
 import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
+import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authentication.service.TokenValidator;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
-import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
-import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserMapperImpl;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapperImplementation;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
-import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
 import java.math.BigInteger;
@@ -44,24 +40,20 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j(topic = "opal.UserPermissionsServiceTest")
 class UserPermissionsServiceTest {
 
-    @Mock
-    private UserEntitlementRepository userEntitlementRepository;
 
     @Mock
     private BusinessUnitUserRepository businessUnitUserRepository;
@@ -118,28 +110,25 @@ class UserPermissionsServiceTest {
     @DisplayName("getUserId(String) from Authentication object")
     void testGetUserId() {
         // Arrange
-        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
-        when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.of(userEntity));
-
+        OpalJwtAuthenticationToken authenticationToken = mock(OpalJwtAuthenticationToken.class);
+        when(authenticationToken.getUserId()).thenReturn(USER_ID);
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         // Act
-        long result = service.getUserId(jwtAuthToken);
+        long result = service.getAuthenticatedUserId();
 
         // Assert
         assertEquals(USER_ID, result);
-        verify(userRepository).findByTokenSubject(any());
     }
 
     @Test
     @DisplayName("getAuthenticatedUserId returns current authenticated user id")
     void testGetAuthenticatedUserId() {
-        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
-        SecurityContextHolder.getContext().setAuthentication(jwtAuthToken);
-        when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.of(userEntity));
-
+        OpalJwtAuthenticationToken authenticationToken = mock(OpalJwtAuthenticationToken.class);
+        when(authenticationToken.getUserId()).thenReturn(USER_ID);
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         long result = service.getAuthenticatedUserId();
 
         assertEquals(USER_ID, result);
-        verify(userRepository).findByTokenSubject(any());
     }
 
     @Test
@@ -147,37 +136,12 @@ class UserPermissionsServiceTest {
     void testGetAuthenticatedUserId_throwsWhenAuthenticationMissing() {
         SecurityContextHolder.clearContext();
 
-        AccessDeniedException ex = assertThrows(
-            AccessDeniedException.class,
+        UnauthorizedException ex = assertThrows(
+            UnauthorizedException.class,
             () -> service.getAuthenticatedUserId()
         );
 
-        assertEquals("No authenticated user found in the security context.", ex.getMessage());
-    }
-
-    @Test
-    void buildUserState_returnsEmptyPermissionsWhenEntitlementsMissing() {
-        BusinessUnitUserEntity firstBusinessUnitUser = BusinessUnitUserEntity.builder()
-            .businessUnitUserId("L081JG")
-            .businessUnit(BusinessUnitEntity.builder().businessUnitId((short) 67).build())
-            .build();
-        BusinessUnitUserEntity secondBusinessUnitUser = BusinessUnitUserEntity.builder()
-            .businessUnitUserId("L082JG")
-            .businessUnit(BusinessUnitEntity.builder().businessUnitId((short) 69).build())
-            .build();
-
-        when(userEntitlementRepository.findAllByUserIdWithFullJoins(USER_ID))
-            .thenReturn(java.util.Collections.emptySet());
-        when(businessUnitUserRepository.findAllByUser_UserId(USER_ID))
-            .thenReturn(List.of(firstBusinessUnitUser, secondBusinessUnitUser));
-
-        UserStateDto result = service.buildUserState(userEntity);
-
-        assertNotNull(result);
-        assertEquals(USER_ID, result.getUserId());
-        assertNotNull(result.getBusinessUnitUsers());
-        assertEquals(2, result.getBusinessUnitUsers().size());
-        assertTrue(result.getBusinessUnitUsers().stream().allMatch(buu -> buu.getPermissions().isEmpty()));
+        assertEquals("Current user is not authenticated with OpalJwtAuthenticationToken", ex.getMessage());
     }
 
     @Test
@@ -251,62 +215,9 @@ class UserPermissionsServiceTest {
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
     }
 
-    @Test
-    void testExtractClaimAsString_success() {
-        // Arrange
-        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
 
-        // Act & Assert
-        String claim = service.extractClaim(jwtAuthToken.getToken(), "preferred_username");
-        assertEquals("opal-user@hmcts.net", claim);
 
-        claim = service.extractClaim(jwtAuthToken.getToken(), "name");
-        assertEquals("John Smith", claim);
 
-        claim = service.extractClaim(jwtAuthToken.getToken(), "sub");
-        assertEquals("lkkljnwb7D1DFs", claim);
-
-        claim = service.extractSubject(jwtAuthToken.getToken());
-        assertEquals("lkkljnwb7D1DFs", claim);
-    }
-
-    @Test
-    void testExtractClaimAsString_fail_noClaimName() {
-        // Arrange
-        Jwt jwt = createJwtAuthenticatedToken().getToken();
-
-        // Act & Assert
-        ResponseStatusException ex = assertThrows(
-            ResponseStatusException.class,
-            () -> service.extractClaim(jwt, "")
-        );
-        assertEquals("401 UNAUTHORIZED \"Claim not found: \"", ex.getMessage());
-    }
-
-    @Test
-    void testExtractClaimAsString_fail_missingClaim() {
-        // Arrange
-        Jwt jwt = createJwtAuthenticatedToken().getToken();
-        // Act & Assert
-        ResponseStatusException ex = assertThrows(
-            ResponseStatusException.class,
-            () -> service.extractClaim(jwt, "not_a_claim")
-        );
-        assertEquals("401 UNAUTHORIZED \"Claim not found: not_a_claim\"", ex.getMessage());
-    }
-
-    @Test
-    void testgetJwtToken_fail_incorrectAuthenticationToken() {
-        // Arrange
-        TestingAuthenticationToken testToken = new TestingAuthenticationToken(null, null);
-
-        // Act & Assert
-        ResponseStatusException ex = assertThrows(
-            ResponseStatusException.class,
-            () -> service.getJwtToken(testToken)
-        );
-        assertEquals("401 UNAUTHORIZED \"Authentication Token not of type Jwt.\"", ex.getMessage());
-    }
 
     @AfterEach
     void tearDown() {

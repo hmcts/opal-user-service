@@ -13,7 +13,6 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
-import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,9 +49,6 @@ class SynchroniseBusinessUnitUsersServiceTest {
     @Mock
     private BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
 
-    @Mock
-    private UserEntitlementRepository userEntitlementRepository;
-
     @InjectMocks
     private SynchroniseBusinessUnitUsersService synchroniseBusinessUnitUsersService;
 
@@ -73,8 +69,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         verifyNoInteractions(
             businessUnitUserRepository,
             businessUnitRepository,
-            businessUnitUserRoleRepository,
-            userEntitlementRepository
+            businessUnitUserRoleRepository
         );
     }
 
@@ -98,8 +93,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         verifyNoInteractions(
             businessUnitUserRepository,
             businessUnitRepository,
-            businessUnitUserRoleRepository,
-            userEntitlementRepository
+            businessUnitUserRoleRepository
         );
     }
 
@@ -115,7 +109,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         )).thenReturn(List.of());
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
-                                                                                 BUSINESS_UNIT_ID);
+            BUSINESS_UNIT_ID);
 
         // Act
         synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, List.of(legacyBusinessUnitUser));
@@ -128,7 +122,6 @@ class SynchroniseBusinessUnitUsersServiceTest {
         assertEquals(BUSINESS_UNIT_USER_ID, savedBusinessUnitUser.getBusinessUnitUserId());
         assertEquals(BUSINESS_UNIT_ID, savedBusinessUnitUser.getBusinessUnitId());
         assertEquals(USER_ID, savedBusinessUnitUser.getUser().getUserId());
-        verify(userEntitlementRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
         verify(businessUnitUserRoleRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
     }
 
@@ -147,7 +140,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         )).thenReturn(List.of());
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
-                                                                                 BUSINESS_UNIT_ID);
+            BUSINESS_UNIT_ID);
 
         // Act
         synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, List.of(legacyBusinessUnitUser));
@@ -156,7 +149,6 @@ class SynchroniseBusinessUnitUsersServiceTest {
         assertEquals(BUSINESS_UNIT_ID, existingBusinessUnitUser.getBusinessUnitId());
         assertEquals(USER_ID, existingBusinessUnitUser.getUser().getUserId());
         verify(businessUnitUserRepository, never()).save(any(BusinessUnitUserEntity.class));
-        verify(userEntitlementRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
         verify(businessUnitUserRoleRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
     }
 
@@ -166,21 +158,20 @@ class SynchroniseBusinessUnitUsersServiceTest {
         // Arrange
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
-                                                                                 BUSINESS_UNIT_ID);
+            BUSINESS_UNIT_ID);
         when(businessUnitRepository.findById(BUSINESS_UNIT_ID)).thenReturn(Optional.empty());
 
         // Act
         SynchronisePermissionsException exception = assertThrows(
             SynchronisePermissionsException.class,
             () -> synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user,
-                                                                                    List.of(legacyBusinessUnitUser))
+                List.of(legacyBusinessUnitUser))
         );
 
         // Assert
         assertEquals(errorMessage(USER_ID, "legacy business unit not found: " + BUSINESS_UNIT_ID),
-                     exception.getMessage());
+            exception.getMessage());
         verify(businessUnitUserRepository, never()).save(any(BusinessUnitUserEntity.class));
-        verify(userEntitlementRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
         verify(businessUnitUserRoleRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
     }
 
@@ -195,7 +186,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         SynchronisePermissionsException exception = assertThrows(
             SynchronisePermissionsException.class,
             () -> synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user,
-                                                                                    List.of(legacyBusinessUnitUser))
+                List.of(legacyBusinessUnitUser))
         );
 
         // Assert
@@ -203,8 +194,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         verifyNoInteractions(
             businessUnitRepository,
             businessUnitUserRepository,
-            businessUnitUserRoleRepository,
-            userEntitlementRepository
+            businessUnitUserRoleRepository
         );
     }
 
@@ -222,7 +212,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         SynchronisePermissionsException exception = assertThrows(
             SynchronisePermissionsException.class,
             () -> synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user,
-                                                                                    List.of(legacyBusinessUnitUser))
+                List.of(legacyBusinessUnitUser))
         );
 
         // Assert
@@ -230,8 +220,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         verifyNoInteractions(
             businessUnitRepository,
             businessUnitUserRepository,
-            businessUnitUserRoleRepository,
-            userEntitlementRepository
+            businessUnitUserRoleRepository
         );
     }
 
@@ -241,10 +230,10 @@ class SynchroniseBusinessUnitUsersServiceTest {
         // Arrange
         BusinessUnitEntity businessUnit = businessUnit(BUSINESS_UNIT_ID);
         BusinessUnitUserEntity currentBusinessUnitUser = businessUnitUser(BUSINESS_UNIT_USER_ID,
-                                                                          BUSINESS_UNIT_ID, USER_ID);
+            BUSINESS_UNIT_ID, USER_ID);
         BusinessUnitUserEntity staleBusinessUnitUser = businessUnitUser(STALE_BUSINESS_UNIT_USER_ID,
-                                                                        DIFFERENT_BUSINESS_UNIT_ID,
-                                                                        USER_ID);
+            DIFFERENT_BUSINESS_UNIT_ID,
+            USER_ID);
         when(businessUnitRepository.findById(BUSINESS_UNIT_ID)).thenReturn(Optional.of(businessUnit));
         when(businessUnitUserRepository.findById(BUSINESS_UNIT_USER_ID))
             .thenReturn(Optional.of(currentBusinessUnitUser));
@@ -253,14 +242,13 @@ class SynchroniseBusinessUnitUsersServiceTest {
         )).thenReturn(List.of(staleBusinessUnitUser));
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
-                                                                                 BUSINESS_UNIT_ID);
+            BUSINESS_UNIT_ID);
 
         // Act
         synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, List.of(legacyBusinessUnitUser));
 
         // Assert
         List<String> staleBusinessUnitUserIds = List.of(STALE_BUSINESS_UNIT_USER_ID);
-        verify(userEntitlementRepository).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
         verify(businessUnitUserRoleRepository)
             .deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
         verify(businessUnitUserRepository).deleteAllById(staleBusinessUnitUserIds);
@@ -273,7 +261,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         UserEntity user = user(USER_ID);
         RuntimeException runtimeException = new RuntimeException("db boom");
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
-                                                                                 BUSINESS_UNIT_ID);
+            BUSINESS_UNIT_ID);
         when(businessUnitRepository.findById(BUSINESS_UNIT_ID)).thenThrow(runtimeException);
 
         // Act

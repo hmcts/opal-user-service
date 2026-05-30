@@ -12,7 +12,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
@@ -30,7 +29,6 @@ import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,12 +38,11 @@ import java.util.function.Function;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -125,41 +122,6 @@ class UserServiceTest {
 
         // Assert
         assertEquals(List.of(userEntity), result);
-
-    }
-
-    @Test
-    void testGetUserStateByUsername() {
-        // Arrange
-        UserEntity userEntity = UserEntity.builder().userId(123L).username("John Smith").build();
-        when(userRepository.findByUsername(any())).thenReturn(userEntity);
-        when(businessUnitUserService.getAuthorisationBusinessUnitPermissionsByUserId(any()))
-            .thenReturn(Collections.emptySet());
-
-        // Act
-        UserState result = userService.getUserStateByUsername("");
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(123L, result.getUserId());
-        assertEquals("John Smith", result.getUserName());
-
-    }
-
-    @Test
-    void testGetLimitedUserStateByUsername() {
-        // Arrange
-        UserEntity userEntity = UserEntity.builder().userId(123L).username("John Smith").build();
-        when(userRepository.findByUsername(any())).thenReturn(userEntity);
-
-        // Act
-        Optional<UserState> result = userService.getLimitedUserStateByUsername("");
-
-        // Assert
-        assertNotNull(result);
-        assertTrue(result.isPresent());
-        assertEquals(123L, result.get().getUserId());
-        assertEquals("John Smith", result.get().getUserName());
 
     }
 

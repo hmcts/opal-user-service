@@ -46,12 +46,6 @@ public interface TestRepository extends JpaRepository<BusinessUnitUserEntity, St
 
     long countByBusinessUnitUserId(String businessUnitUserId);
 
-    @Query("""
-        select count(ue)
-        from UserEntitlementEntity ue
-        where ue.businessUnitUser.businessUnitUserId = :businessUnitUserId
-        """)
-    long countUserEntitlementsByBusinessUnitUserId(@Param("businessUnitUserId") String businessUnitUserId);
 
     @Query("""
         select count(buur)

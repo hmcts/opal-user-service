@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.opal.common.dto.Versioned;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
 
 
 @Entity
@@ -93,21 +94,21 @@ public class UserEntity implements Versioned {
         return Optional.ofNullable(versionNumber).map(BigInteger::valueOf).orElse(BigInteger.ZERO);
     }
 
-    public Status getStatusFromTime(LocalDateTime now) {
+    public UserStatus getStatusFromTime(LocalDateTime now) {
 
         if (isDeactivated(now)) {
-            return Status.DEACTIVATED;
+            return UserStatus.DEACTIVATED;
         }
 
         if (isSuspended(now)) {
-            return Status.SUSPENDED;
+            return UserStatus.SUSPENDED;
         }
 
         if (isPending(now)) {
-            return Status.PENDING;
+            return UserStatus.PENDING;
         }
 
-        return Status.ACTIVE;
+        return UserStatus.ACTIVE;
     }
 
     private boolean isDeactivated(LocalDateTime nowUtc) {
@@ -122,12 +123,5 @@ public class UserEntity implements Versioned {
 
     private boolean isPending(LocalDateTime nowUtc) {
         return activationDate == null || activationDate.isAfter(nowUtc);
-    }
-
-    public enum Status {
-        ACTIVE,
-        PENDING,
-        SUSPENDED,
-        DEACTIVATED
     }
 }

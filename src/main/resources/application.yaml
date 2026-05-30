@@ -107,7 +107,7 @@ launchdarkly:
   env: ${LAUNCH_DARKLY_ENV:default}
   enabled: ${LAUNCH_DARKLY_ENABLED:true}
   default-flag-values:
-    release-1a: ${RELEASE_1A_ENABLED:false}
+    release-1a: ${RELEASE_1A_ENABLED:true}
 
 opal:
   feature-flags:

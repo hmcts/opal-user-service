@@ -2,19 +2,16 @@ package uk.gov.hmcts.reform.opal.service.synchronise;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
-import uk.gov.hmcts.reform.opal.entity.ApplicationFunctionEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
-import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
@@ -22,7 +19,6 @@ import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
 import uk.gov.hmcts.reform.opal.repository.RoleRepository;
 import uk.gov.hmcts.reform.opal.repository.TestRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
-import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -43,11 +39,9 @@ public class TestHelperService {
     private final BusinessUnitRepository businessUnitRepository;
     private final BusinessUnitUserRepository businessUnitUserRepository;
     private final BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
-    private final UserEntitlementRepository userEntitlementRepository;
     private final RoleRepository roleRepository;
     private final TestRepository testRepository;
     private final StringRedisTemplate redisTemplate;
-    private final EntityManager entityManager;
     private final ObjectMapper objectMapper;
 
     public long countRoleAssignments(long userId) {
@@ -65,14 +59,6 @@ public class TestHelperService {
             .user(getRequiredUser(userId))
             .build();
         businessUnitUserRepository.saveAndFlush(businessUnitUser);
-    }
-
-    public void insertUserEntitlement(String businessUnitUserId, long applicationFunctionId) {
-        UserEntitlementEntity userEntitlement = UserEntitlementEntity.builder()
-            .businessUnitUser(getRequiredBusinessUnitUser(businessUnitUserId))
-            .applicationFunction(entityManager.getReference(ApplicationFunctionEntity.class, applicationFunctionId))
-            .build();
-        userEntitlementRepository.saveAndFlush(userEntitlement);
     }
 
     public void insertBusinessUnitUserRole(String businessUnitUserId, long roleId) {
@@ -130,10 +116,6 @@ public class TestHelperService {
 
     public boolean businessUnitUserExists(String businessUnitUserId) {
         return testRepository.countByBusinessUnitUserId(businessUnitUserId) > 0;
-    }
-
-    public long userEntitlementCount(String businessUnitUserId) {
-        return testRepository.countUserEntitlementsByBusinessUnitUserId(businessUnitUserId);
     }
 
     public long userRoleMappingCount(String businessUnitUserId) {

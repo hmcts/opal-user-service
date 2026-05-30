@@ -81,7 +81,6 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         testHelperService.insertBusinessUnitUser("L091JG", (short) 67, user.getUserId());
         testHelperService.insertBusinessUnitUser("L092JG", (short) 69, user.getUserId());
-        testHelperService.insertUserEntitlement("L092JG", 41L);
         testHelperService.insertBusinessUnitUserRole("L092JG", 2L);
 
         refreshBusinessUnitUsersService.synchroniseBusinessUnitsUsers(
@@ -91,7 +90,6 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
 
         assertThat(testHelperService.businessUnitUserExists("L091JG")).isTrue();
         assertThat(testHelperService.businessUnitUserExists("L092JG")).isFalse();
-        assertThat(testHelperService.userEntitlementCount("L092JG")).isZero();
         assertThat(testHelperService.userRoleMappingCount("L092JG")).isZero();
     }
 

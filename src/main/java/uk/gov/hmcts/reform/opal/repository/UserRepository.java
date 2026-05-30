@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.opal.repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
@@ -14,9 +14,16 @@ public interface UserRepository extends JpaRepository<UserEntity, Long>,
     JpaSpecificationExecutor<UserEntity>,
     UserRepositoryCustom {
 
-    UserEntity findByUsername(String username);
-
+    @EntityGraph(attributePaths = {
+        "businessUnitUsers",
+        "businessUnitUsers.businessUnit",
+        "businessUnitUsers.businessUnit.domain",
+        "businessUnitUsers.businessUnitUserRoleList",
+        "businessUnitUsers.businessUnitUserRoleList.role"
+    })
     Optional<UserEntity> findByTokenSubject(String tokenSubject);
+
+    Optional<UserEntity> findByUserId(long userId);
 
     Optional<UserEntity> findByUsernameIgnoreCase(String tokenPreferredUsername);
 

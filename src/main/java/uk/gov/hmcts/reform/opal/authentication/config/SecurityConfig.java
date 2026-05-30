@@ -1,9 +1,5 @@
 package uk.gov.hmcts.reform.opal.authentication.config;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
@@ -22,18 +18,18 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerAuthenticationManagerResolver;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.filter.OncePerRequestFilter;
-import uk.gov.hmcts.opal.common.exception.OpalApiException;
-import uk.gov.hmcts.opal.common.user.authentication.exception.AuthenticationError;
+import uk.gov.hmcts.opal.common.config.OpalCommonConfiguration;
 import uk.gov.hmcts.opal.common.user.authentication.exception.CustomAuthenticationExceptions;
+import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthConfigurationProperties;
-import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthConfigurationPropertiesStrategy;
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthProviderConfigurationProperties;
+import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
+import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
-import java.io.IOException;
+import java.time.Clock;
 import java.util.Map;
 
 @Slf4j(topic = "opal.SecurityConfig")
@@ -44,11 +40,6 @@ import java.util.Map;
 @Profile("!integration")
 public class SecurityConfig {
 
-    private final AuthStrategySelector locator;
-
-    private final InternalAuthConfigurationPropertiesStrategy fallbackConfiguration;
-    private final InternalAuthConfigurationProperties internalAuthConfigurationProperties;
-    private final InternalAuthProviderConfigurationProperties internalAuthProviderConfigurationProperties;
     private final CustomAuthenticationExceptions userCustomAuthenticationExceptions;
 
     private static final String[] AUTH_WHITELIST = {
@@ -67,35 +58,37 @@ public class SecurityConfig {
         "/internal-user/handle-oauth-code",
         "/testing-support/**",
         "/s2s/**",
-        "/**",
         "/"
     };
 
     @Bean
     @SuppressWarnings({"PMD.SignatureDeclareThrowsException", "squid:S4502"})
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(
+        HttpSecurity http,
+        JwtIssuerAuthenticationManagerResolver jwtIssuerAuthenticationManagerResolver
+    ) {
         log.info(":filterChain: http security: {}", http);
         applyCommonConfig(http)
             .authorizeHttpRequests(authorize ->
-                                       authorize.requestMatchers(PathRequest.toStaticResources().atCommonLocations())
-                                           .permitAll()
-                                           .requestMatchers(AUTH_WHITELIST)
-                                           .permitAll()
-                                           .anyRequest().authenticated()
+                authorize.requestMatchers(PathRequest.toStaticResources().atCommonLocations())
+                    .permitAll()
+                    .requestMatchers(AUTH_WHITELIST)
+                    .permitAll()
+                    .anyRequest().authenticated()
             )
             .exceptionHandling(exceptionHandling ->
-                                   exceptionHandling
-                                       .authenticationEntryPoint(userCustomAuthenticationExceptions)
-                                       .accessDeniedHandler(userCustomAuthenticationExceptions)
+                exceptionHandling
+                    .authenticationEntryPoint(userCustomAuthenticationExceptions)
+                    .accessDeniedHandler(userCustomAuthenticationExceptions)
             )
             .oauth2ResourceServer(oauth2 ->
-                                      oauth2.authenticationManagerResolver(jwtIssuerAuthenticationManagerResolver())
+                oauth2.authenticationManagerResolver(jwtIssuerAuthenticationManagerResolver)
             );
 
         return http.build();
     }
 
-    private HttpSecurity applyCommonConfig(HttpSecurity http) throws Exception {
+    private HttpSecurity applyCommonConfig(HttpSecurity http) {
         return http
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .csrf(AbstractHttpConfigurer::disable)
@@ -103,47 +96,55 @@ public class SecurityConfig {
             .logout(LogoutConfigurer::disable);
     }
 
-    private JwtIssuerAuthenticationManagerResolver jwtIssuerAuthenticationManagerResolver() {
-        Map<String, AuthenticationManager> authenticationManagers = Map.ofEntries(
-            createAuthenticationEntry(
-                internalAuthConfigurationProperties.getIssuerUri(),
-                internalAuthProviderConfigurationProperties.getJwkSetUri()
-            )
-        );
-        return new JwtIssuerAuthenticationManagerResolver(authenticationManagers::get);
+    @Bean
+    JwtIssuerAuthenticationManagerResolver jwtIssuerAuthenticationManagerResolver(
+        InternalAuthConfigurationProperties internalAuthConfigurationProperties,
+        UserOpalJwtAuthenticationProvider userOpalJwtAuthenticationProvider
+    ) {
+        AuthenticationManager manager = userOpalJwtAuthenticationProvider::authenticate;
+        Map<String, AuthenticationManager> managers =
+            Map.of(internalAuthConfigurationProperties.getIssuerUri(), manager);
+        return new JwtIssuerAuthenticationManagerResolver(managers::get);
     }
 
-    private Map.Entry<String, AuthenticationManager> createAuthenticationEntry(String issuer,
-                                                                               String jwkSetUri) {
-        var jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+    @Bean
+    UserOpalJwtAuthenticationProvider userOpalJwtAuthenticationProvider(
+        NimbusJwtDecoder internalJwtDecoder,
+        UserRepository userRepository,
+        UserStateMapper userStateMapper,
+        Clock clock,
+        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter,
+        OpalCommonConfiguration commonConfiguration) {
+
+        Domain domain = Domain.findByDisplayName(commonConfiguration.getDomain());
+
+        return new UserOpalJwtAuthenticationProvider(
+            internalJwtDecoder,
+            userRepository,
+            userStateMapper,
+            clock,
+            jwtGrantedAuthoritiesConverter,
+            domain
+        );
+    }
+
+    @Bean
+    NimbusJwtDecoder internalJwtDecoder(
+        InternalAuthProviderConfigurationProperties providerProps,
+        InternalAuthConfigurationProperties authProps) {
+
+        var jwtDecoder = NimbusJwtDecoder.withJwkSetUri(providerProps.getJwkSetUri())
             .jwsAlgorithm(SignatureAlgorithm.RS256)
             .build();
 
-        OAuth2TokenValidator<Jwt> jwtValidator = JwtValidators.createDefaultWithIssuer(issuer);
+        OAuth2TokenValidator<Jwt> jwtValidator =
+            JwtValidators.createDefaultWithIssuer(authProps.getIssuerUri());
         jwtDecoder.setJwtValidator(jwtValidator);
-
-        var authenticationProvider = new JwtAuthenticationProvider(jwtDecoder);
-
-        return Map.entry(issuer, authenticationProvider::authenticate);
+        return jwtDecoder;
     }
 
-    private class AuthorisationTokenExistenceFilter extends OncePerRequestFilter {
-
-        @Override
-        protected void doFilterInternal(HttpServletRequest request,
-                                        HttpServletResponse response,
-                                        FilterChain filterChain
-        ) throws ServletException, IOException {
-
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader != null && authHeader.startsWith("Bearer")) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            log.warn(".AuthorisationTokenExistenceFilter:doFilterInternal: No Bearer Token.");
-            throw new OpalApiException(AuthenticationError.FAILED_TO_OBTAIN_ACCESS_TOKEN);
-        }
+    @Bean
+    JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter() {
+        return new JwtGrantedAuthoritiesConverter();
     }
-
 }

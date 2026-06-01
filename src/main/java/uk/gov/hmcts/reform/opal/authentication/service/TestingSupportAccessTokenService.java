@@ -38,9 +38,6 @@ public class TestingSupportAccessTokenService {
             .username(userName)
             .password(password)
             .build();
-        System.out.println("TMP: " + "'" + userName + "'");
-        System.out.println("TMP: " + "'" + password + "'");
-
         return azureTokenClient.getAccessToken(
             tokenRequest
         );

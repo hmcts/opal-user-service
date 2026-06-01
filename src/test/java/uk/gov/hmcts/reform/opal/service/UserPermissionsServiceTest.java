@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -280,8 +281,21 @@ class UserPermissionsServiceTest {
 
     @Test
     void testgetJwtToken_fail_incorrectAuthenticationToken() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new TestingAuthenticationToken("principal", "credentials"));
 
         // Act & Assert
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> service.getJwtToken()
+        );
+        assertEquals("401 UNAUTHORIZED \"Authentication Token not of type Jwt.\"", ex.getMessage());
+    }
+
+    @Test
+    void testgetJwtToken_fail_authenticationMissing() {
+        SecurityContextHolder.clearContext();
+
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
             () -> service.getJwtToken()

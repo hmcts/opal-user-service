@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -51,22 +50,6 @@ import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsService;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
-import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
-import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
-
-
 @Service
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.UserPermissionsService")
@@ -90,15 +73,6 @@ public class UserPermissionsService {
     private final SynchronisePermissionsService synchronisePermissionsService;
     private final AppModeConfiguration appModeConfiguration;
     private final UserService userService;
-
-    @Transactional(readOnly = true)
-    public Long getAuthenticatedUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            throw new AccessDeniedException("No authenticated user found in the security context.");
-        }
-        return getUserId(authentication);
-    }
 
     @Transactional
     public UserStateV2Dto getUserStateV2(Long userId, Boolean newLogin) {
@@ -126,8 +100,7 @@ public class UserPermissionsService {
         if (Optional.ofNullable(newLogin).orElse(false)) {
             Long authenticationEventUserId = user.getUserId();
             if (userId != 0) {
-                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                authenticationEventUserId = getUserId(authentication);
+                authenticationEventUserId = getAuthenticatedUserId();
             }
             logUserAuthenticationEvent(authenticationEventUserId);
             updateLastLogin(user);
@@ -139,8 +112,7 @@ public class UserPermissionsService {
     }
 
     private UserEntity getAndValidateAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Jwt jwt = getJwtToken(authentication);
+        Jwt jwt = getJwtToken();
         String subject = extractSubject(jwt);
 
         UserEntity user = userRepository.findByTokenSubject(subject)
@@ -154,8 +126,8 @@ public class UserPermissionsService {
     }
 
     @Transactional(readOnly = true)
-    public Long getUserId(Authentication authentication) {
-        Jwt jwt = getJwtToken(authentication);
+    public Long getAuthenticatedUserId() {
+        Jwt jwt = getJwtToken();
         String subject = extractSubject(jwt);
         UserEntity user = getUser(subject);
         return user.getUserId();
@@ -308,7 +280,12 @@ public class UserPermissionsService {
         return userMapper.toUserDto(updatedUser, clock);
     }
 
-    public Jwt getJwtToken(Authentication authentication) {
+    public Jwt getJwtToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            log.warn(":getJwtToken: Authentication is null.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication not found.");
+        }
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
             return jwtAuth.getToken();
         } else {

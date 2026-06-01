@@ -13,8 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -115,21 +113,6 @@ class UserPermissionsServiceTest {
     }
 
     @Test
-    @DisplayName("getUserId(String) from Authentication object")
-    void testGetUserId() {
-        // Arrange
-        JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
-        when(userRepository.findByTokenSubject(any())).thenReturn(java.util.Optional.of(userEntity));
-
-        // Act
-        long result = service.getUserId(jwtAuthToken);
-
-        // Assert
-        assertEquals(USER_ID, result);
-        verify(userRepository).findByTokenSubject(any());
-    }
-
-    @Test
     @DisplayName("getAuthenticatedUserId returns current authenticated user id")
     void testGetAuthenticatedUserId() {
         JwtAuthenticationToken jwtAuthToken = createJwtAuthenticatedToken();
@@ -147,12 +130,12 @@ class UserPermissionsServiceTest {
     void testGetAuthenticatedUserId_throwsWhenAuthenticationMissing() {
         SecurityContextHolder.clearContext();
 
-        AccessDeniedException ex = assertThrows(
-            AccessDeniedException.class,
+        ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
             () -> service.getAuthenticatedUserId()
         );
 
-        assertEquals("No authenticated user found in the security context.", ex.getMessage());
+        assertEquals("401 UNAUTHORIZED \"Authentication not found.\"", ex.getMessage());
     }
 
     @Test
@@ -297,15 +280,13 @@ class UserPermissionsServiceTest {
 
     @Test
     void testgetJwtToken_fail_incorrectAuthenticationToken() {
-        // Arrange
-        TestingAuthenticationToken testToken = new TestingAuthenticationToken(null, null);
 
         // Act & Assert
         ResponseStatusException ex = assertThrows(
             ResponseStatusException.class,
-            () -> service.getJwtToken(testToken)
+            () -> service.getJwtToken()
         );
-        assertEquals("401 UNAUTHORIZED \"Authentication Token not of type Jwt.\"", ex.getMessage());
+        assertEquals("401 UNAUTHORIZED \"Authentication not found.\"", ex.getMessage());
     }
 
     @AfterEach

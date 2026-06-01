@@ -414,7 +414,7 @@ dependencies {
 
   implementation 'org.mapstruct:mapstruct:1.6.3'
   annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
-  implementation 'com.networknt:json-schema-validator:1.5.9'
+  implementation 'com.networknt:json-schema-validator:3.0.3'
   implementation 'com.jayway.jsonpath:json-path:3.0.0'
   testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
   testImplementation 'org.springframework.security:spring-security-test'
@@ -445,10 +445,6 @@ dependencies {
   openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.43"
   openapiImplementation "io.swagger.core.v3:swagger-models:2.2.50"
   openapiImplementation "io.swagger.core.v3:swagger-core:2.2.50"
-  openapiImplementation platform("com.fasterxml.jackson:jackson-bom:2.21.4")
-  openapiImplementation "com.fasterxml.jackson.core:jackson-databind"
-  openapiImplementation "com.fasterxml.jackson.core:jackson-core"
-  openapiImplementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml"
 
 
   //Added to override dependency version to resolve vulnerability

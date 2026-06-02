@@ -21,10 +21,17 @@ public final class TestHelperUtil {
         throw new IllegalStateException("Utility class");
     }
 
-    public static UserStateV2 buildUserStateV2() {
-        return UserStateV2.builder()
+    private static UserEntity getDefaultUser() {
+        return UserEntity.builder()
             .userId(500000000L)
             .username("username")
+            .build();
+    }
+
+    public static UserStateV2 buildUserStateV2(UserEntity user) {
+        return UserStateV2.builder()
+            .userId(user.getUserId())
+            .username(user.getUsername())
             .build();
     }
 
@@ -51,7 +58,7 @@ public final class TestHelperUtil {
                 "name", user.getTokenName()
             )
         );
-        SecurityContextHolder.getContext().setAuthentication(buildOpalJwtAuthenticationToken(jwt));
+        SecurityContextHolder.getContext().setAuthentication(buildOpalJwtAuthenticationToken(jwt, user));
     }
 
     public static OpalJwtAuthenticationToken createJwtPrincipal(String sub, String preferred, String name) {
@@ -65,11 +72,11 @@ public final class TestHelperUtil {
                 "name", name
             )
         );
-        return buildOpalJwtAuthenticationToken(jwt);
+        return buildOpalJwtAuthenticationToken(jwt, getDefaultUser());
     }
 
-    public static OpalJwtAuthenticationToken buildOpalJwtAuthenticationToken(Jwt jwt) {
-        UserStateV2 userStateV2 = buildUserStateV2();
+    public static OpalJwtAuthenticationToken buildOpalJwtAuthenticationToken(Jwt jwt, UserEntity user) {
+        UserStateV2 userStateV2 = buildUserStateV2(user);
         return new OpalJwtAuthenticationToken(userStateV2,
             Domain.USER,
             jwt,

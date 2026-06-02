@@ -30,7 +30,6 @@ import uk.gov.hmcts.reform.opal.util.JwtUtil;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
@@ -70,7 +69,7 @@ public class UserPermissionsService {
     public UserStateV2Dto getUserStateV2(boolean newLogin) {
         log.debug(":getUserState");
 
-        UserEntity user = getAndValidateAuthenticatedUser();
+        UserEntity user = getUserFromAuthentication();
         Long userId = user.getUserId();
 
         if (appModeConfiguration.getAppMode().equalsIgnoreCase("legacy")) {

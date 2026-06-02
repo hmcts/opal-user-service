@@ -9,19 +9,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
+import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
 
-import java.time.Instant;
-import java.util.Map;
-
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @ActiveProfiles("integration")
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
@@ -36,7 +31,7 @@ class UserServiceNormalModeIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("AC2: should load APIs normally when AutomatedTask is absent")
     void shouldLoadApiNormally() throws Exception {
 
-        Authentication auth = createJwtPrincipal("k9LpT2xVqR8m","opal-test@HMCTS.NET", "Pablo");
+        Authentication auth = TestHelperUtil.createJwtPrincipal("k9LpT2xVqR8m","opal-test@HMCTS.NET", "Pablo");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         MockHttpServletRequestBuilder builder = get(URL_BASE + "/0/state");
@@ -45,20 +40,5 @@ class UserServiceNormalModeIntegrationTest extends AbstractIntegrationTest {
             .andExpect(content().contentType(APPLICATION_JSON))
             .andExpect(jsonPath("$.user_id").value(500000000))
             .andExpect(jsonPath("$.username").value("opal-test@HMCTS.NET"));
-    }
-
-    private JwtAuthenticationToken createJwtPrincipal(String sub, String preferred, String name) {
-        Jwt jwt = new Jwt(
-            "mock-token-value",
-            Instant.now(),
-            Instant.now().plusSeconds(3600),
-            Map.of("alg", "none"),
-            Map.of("sub", sub,
-                   "preferred_username", preferred,
-                   "name", name
-            )
-        );
-
-        return new JwtAuthenticationToken(jwt);
     }
 }

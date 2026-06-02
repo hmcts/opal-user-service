@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
@@ -59,7 +60,7 @@ class UserStateMapperTest {
         when(user.getTokenName()).thenReturn("token");
         when(user.getUsername()).thenReturn("username");
         when(user.getVersion()).thenReturn(BigInteger.valueOf(321L));
-        when(user.getStatusFromTime(nowUtc)).thenReturn(UserEntity.Status.ACTIVE);
+        when(user.getStatusFromTime(nowUtc)).thenReturn(UserStatus.ACTIVE);
     }
 
     @Test

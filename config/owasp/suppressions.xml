@@ -14,7 +14,15 @@
     <!-- We do not use the mail api-->
     <cve>CVE-2025-7962</cve>
   </suppress>
-
+ <suppress until="2026-06-10">
+    <notes><![CDATA[
+    Reviewed 2026-06-01.
+    CVE-2026-33117 applies to key vault vulnerabilities in the Azure Storage SDK.
+    We don't uses the key vault vuncinality within our codebase instead platform injects them into our PODs via environment variables.
+    We should none the less reguallrly review this one such that once a fix is avaialble we apply it
+    ]]></notes>
+    <cve>CVE-2026-33117</cve>
+ </suppress>
   <suppress until="2026-08-31Z">
     <notes><![CDATA[
     Reviewed 2026-04-01.

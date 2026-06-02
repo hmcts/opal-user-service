@@ -9,15 +9,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.hmcts.opal.common.user.authentication.exception.MissingRequestHeaderException;
-import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
-import uk.gov.hmcts.opal.common.user.authorisation.model.Permission;
-import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
+import uk.gov.hmcts.common.exceptions.standard.UnauthorizedException;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.authorisation.model.LogActions;
 import uk.gov.hmcts.reform.opal.dto.AddLogAuditDetailDto;
 import uk.gov.hmcts.reform.opal.service.opal.LogAuditDetailService;
-
-import java.util.Set;
+import uk.gov.hmcts.reform.opal.service.opal.UserStateService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.any;
@@ -28,25 +25,15 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class LogAuditDetailsAspectTest {
 
-    private static final UserState USER_STATE = UserState.builder()
-        .userName("name")
+    private static final UserStateV2 USER_STATE = UserStateV2.builder()
+        .username("name")
         .userId(123L)
-        .businessUnitUser(Set.of(BusinessUnitUser.builder()
-                          .businessUnitId((short) 123)
-                          .businessUnitUserId("BU123")
-                          .permissions(Set.of(
-                              Permission.builder()
-                                  .permissionId(1L)
-                                  .permissionName("Notes")
-                                  .build()))
-                          .build()))
         .build();
 
     @Mock
-    private UserStateAspectService userStateAspectService;
-
-    @Mock
     private LogAuditDetailService logAuditDetailService;
+    @Mock
+    private UserStateService userStateService;
 
     @InjectMocks
     private LogAuditDetailsAspect logAuditDetailsAspect;
@@ -64,7 +51,7 @@ class LogAuditDetailsAspectTest {
         @Test
         void writeLogAuditDetail_shouldProceedAndLogAuditDetails() throws Throwable {
 
-            when(userStateAspectService.getUserState(any())).thenReturn(USER_STATE);
+            when(userStateService.getUserStateUsingAuthToken()).thenReturn(USER_STATE);
             when(logAuditDetail.action()).thenReturn(LogActions.LOG_IN);
             when(logAuditDetail.defaultJsonRequest()).thenReturn("{}");
 
@@ -79,8 +66,8 @@ class LogAuditDetailsAspectTest {
 
         @Test
         void writeLogAuditDetail_shouldHandleMissingRequestHeaderExceptionGracefully() throws Throwable {
-            when(userStateAspectService.getUserState(any()))
-                .thenThrow(new MissingRequestHeaderException("Authorization"));
+            when(userStateService.getUserStateUsingAuthToken())
+                .thenThrow(new UnauthorizedException("test","Authorization"));
             when(logAuditDetail.action()).thenReturn(LogActions.LOG_IN);
 
             Object expectedReturnValue = new Object();
@@ -95,7 +82,7 @@ class LogAuditDetailsAspectTest {
 
         @Test
         void writeLogAuditDetail_shouldHandleGeneralExceptionGracefully() throws Throwable {
-            when(userStateAspectService.getUserState(joinPoint)).thenThrow(new RuntimeException("Test Exception"));
+            when(userStateService.getUserStateUsingAuthToken()).thenThrow(new RuntimeException("Test Exception"));
             when(logAuditDetail.action()).thenReturn(LogActions.LOG_OUT);
 
             Object expectedReturnValue = new Object();
@@ -117,11 +104,11 @@ class LogAuditDetailsAspectTest {
         @Test
         void writeAuditLog_shouldWriteAuditLog() {
 
-            when(userStateAspectService.getUserState(joinPoint)).thenReturn(USER_STATE);
+            when(userStateService.getUserStateUsingAuthToken()).thenReturn(USER_STATE);
             when(logAuditDetail.action()).thenReturn(LogActions.LOG_IN);
             when(logAuditDetail.defaultJsonRequest()).thenReturn("{}");
 
-            logAuditDetailsAspect.writeAuditLog(joinPoint, logAuditDetail);
+            logAuditDetailsAspect.writeAuditLog(logAuditDetail);
 
             ArgumentCaptor<AddLogAuditDetailDto> captor = ArgumentCaptor.forClass(AddLogAuditDetailDto.class);
             verify(logAuditDetailService).writeLogAuditDetail(captor.capture());
@@ -134,21 +121,21 @@ class LogAuditDetailsAspectTest {
 
         @Test
         void writeAuditLog_shouldHandleMissingRequestHeaderExceptionGracefully() {
-            when(userStateAspectService.getUserState(joinPoint))
-                .thenThrow(new MissingRequestHeaderException("Authorization"));
+            when(userStateService.getUserStateUsingAuthToken())
+                .thenThrow(new UnauthorizedException("Test","Authorization"));
             when(logAuditDetail.action()).thenReturn(LogActions.LOG_IN);
 
-            logAuditDetailsAspect.writeAuditLog(joinPoint, logAuditDetail);
+            logAuditDetailsAspect.writeAuditLog(logAuditDetail);
 
             verify(logAuditDetailService, never()).writeLogAuditDetail(any(AddLogAuditDetailDto.class));
         }
 
         @Test
         void writeAuditLog_shouldHandleGeneralExceptionGracefully() {
-            when(userStateAspectService.getUserState(joinPoint)).thenThrow(new RuntimeException("Test Exception"));
+            when(userStateService.getUserStateUsingAuthToken()).thenThrow(new RuntimeException("Test Exception"));
             when(logAuditDetail.action()).thenReturn(LogActions.LOG_IN);
 
-            logAuditDetailsAspect.writeAuditLog(joinPoint, logAuditDetail);
+            logAuditDetailsAspect.writeAuditLog(logAuditDetail);
 
             verify(logAuditDetailService, never()).writeLogAuditDetail(any(AddLogAuditDetailDto.class));
         }

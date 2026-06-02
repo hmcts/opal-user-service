@@ -16,8 +16,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
@@ -25,12 +23,12 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import uk.gov.hmcts.opal.common.logging.EventLoggingService;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
+import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -71,7 +69,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @DisplayName("V2 with ID Should return 200 and full V2 user state for a user with permissions")
     void getV2UserStateWithId_returnsFullState(boolean newLogin) throws Exception {
         String subject = "k9LpT2xVqR8m";
-        Authentication auth = createJwtPrincipal(subject,"opal-test@HMCTS.NET", "Pablo");
+        Authentication auth = TestHelperUtil.createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
         SecurityContextHolder.getContext().setAuthentication(auth);
         // clear any existing user state in the cache
         String cacheKey = "USER_STATE_" + subject;
@@ -99,9 +97,9 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
                 eq("Authentication"),
                 any(),
                 argThat(data ->
-                            data != null
-                                && data.size() == 1
-                                && Long.valueOf(500000000L).equals(data.get("UserIdentifier"))
+                    data != null
+                        && data.size() == 1
+                        && Long.valueOf(500000000L).equals(data.get("UserIdentifier"))
                 ));
         } else {
             verifyNoInteractions(eventLoggingService);
@@ -123,7 +121,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         LocalDateTime existingLastLoginDate = LocalDateTime.parse("2026-04-10T09:00:00");
 
         String subject = "k9LpT2xVqR8m";
-        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
+        Authentication auth = TestHelperUtil.createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         updateLastLoginDate(userIdWithPermissions, existingLastLoginDate);
@@ -152,7 +150,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     void getV2UserStateViaPrincipal_refreshesTtlOfRedisEntry() throws Exception {
         String subject = "k9LpT2xVqR8m";
         String cacheKey = "USER_STATE_" + subject;
-        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
+        Authentication auth = TestHelperUtil.createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         //call once, check we have the initial TTL
@@ -186,7 +184,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     void getV2UserState_cachedStateExpiresAfterTtl() throws Exception {
         String subject = "k9LpT2xVqR8m";
         String cacheKey = "USER_STATE_" + subject;
-        Authentication auth = createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
+        Authentication auth = TestHelperUtil.createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         // Populate cache by calling the API with valid data.
@@ -243,85 +241,70 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
 
     public static final String EXPECTED_V2_USER_STATE =
         """
-        {
-          "user_id" : 500000000,
-          "username" : "opal-test@HMCTS.NET",
-          "name" : "Pablo",
-          "status" : "PENDING",
-          "version" : 0,
-          "cache_name" : "USER_STATE_k9LpT2xVqR8m",
-          "domains" : {
-            "fines" : {
-              "business_unit_users" : [ {
-                "business_unit_user_id" : "L065JG",
-                "business_unit_id" : 70,
-                "permissions" : [ {
-                  "permission_id" : 1,
-                  "permission_name" : "Create and Manage Draft Accounts"
-                }, {
-                  "permission_id" : 3,
-                  "permission_name" : "Account Enquiry"
-                }, {
-                  "permission_id" : 4,
-                  "permission_name" : "Collection Order"
-                }, {
-                  "permission_id" : 5,
-                  "permission_name" : "Check and Validate Draft Accounts"
-                }, {
-                  "permission_id" : 6,
-                  "permission_name" : "Search and view accounts"
-                }, {
-                   "permission_id": 7,
-                   "permission_name": "Account Maintenance"
-                 } ]
-              }, {
-                "business_unit_user_id" : "L066JG",
-                "business_unit_id" : 68,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L067JG",
-                "business_unit_id" : 73,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L073JG",
-                "business_unit_id" : 71,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L077JG",
-                "business_unit_id" : 67,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L078JG",
-                "business_unit_id" : 69,
-                "permissions" : [ ]
-              }, {
-                "business_unit_user_id" : "L080JG",
-                "business_unit_id" : 61,
-                "permissions" : [ ]
-              } ]
-            }
-          }
-        }""";
+            {
+              "user_id" : 500000000,
+              "username" : "opal-test@HMCTS.NET",
+              "name" : "Pablo",
+              "status" : "PENDING",
+              "version" : 0,
+              "cache_name" : "USER_STATE_k9LpT2xVqR8m",
+              "domains" : {
+                "fines" : {
+                  "business_unit_users" : [ {
+                    "business_unit_user_id" : "L065JG",
+                    "business_unit_id" : 70,
+                    "permissions" : [ {
+                      "permission_id" : 1,
+                      "permission_name" : "Create and Manage Draft Accounts"
+                    }, {
+                      "permission_id" : 3,
+                      "permission_name" : "Account Enquiry"
+                    }, {
+                      "permission_id" : 4,
+                      "permission_name" : "Collection Order"
+                    }, {
+                      "permission_id" : 5,
+                      "permission_name" : "Check and Validate Draft Accounts"
+                    }, {
+                      "permission_id" : 6,
+                      "permission_name" : "Search and view accounts"
+                    }, {
+                       "permission_id": 7,
+                       "permission_name": "Account Maintenance"
+                     } ]
+                  }, {
+                    "business_unit_user_id" : "L066JG",
+                    "business_unit_id" : 68,
+                    "permissions" : [ ]
+                  }, {
+                    "business_unit_user_id" : "L067JG",
+                    "business_unit_id" : 73,
+                    "permissions" : [ ]
+                  }, {
+                    "business_unit_user_id" : "L073JG",
+                    "business_unit_id" : 71,
+                    "permissions" : [ ]
+                  }, {
+                    "business_unit_user_id" : "L077JG",
+                    "business_unit_id" : 67,
+                    "permissions" : [ ]
+                  }, {
+                    "business_unit_user_id" : "L078JG",
+                    "business_unit_id" : 69,
+                    "permissions" : [ ]
+                  }, {
+                    "business_unit_user_id" : "L080JG",
+                    "business_unit_id" : 61,
+                    "permissions" : [ ]
+                  } ]
+                }
+              }
+            }""";
 
     private JsonNode expectedV2UserState(boolean newLogin) throws Exception {
         ObjectNode expectedNode = (ObjectNode) objectMapper.readTree(EXPECTED_V2_USER_STATE);
         expectedNode.put("version", newLogin ? 1 : 0);
         return expectedNode;
-    }
-
-    private JwtAuthenticationToken createJwtPrincipal(String sub, String preferred, String name) {
-        Jwt jwt = new Jwt(
-            "mock-token-value",
-            Instant.now(),
-            Instant.now().plusSeconds(3600),
-            Map.of("alg", "none"),
-            Map.of("sub", sub,
-                   "preferred_username", preferred,
-                   "name", name
-            )
-        );
-
-        return new JwtAuthenticationToken(jwt);
     }
 
     private void addLoginHeader(Boolean newLogin, MockHttpServletRequestBuilder builder) {

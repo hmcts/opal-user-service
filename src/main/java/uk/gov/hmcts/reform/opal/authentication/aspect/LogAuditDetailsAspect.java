@@ -6,10 +6,11 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.opal.common.user.authentication.exception.MissingRequestHeaderException;
-import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
+import uk.gov.hmcts.common.exceptions.standard.UnauthorizedException;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.dto.AddLogAuditDetailDto;
 import uk.gov.hmcts.reform.opal.service.opal.LogAuditDetailService;
+import uk.gov.hmcts.reform.opal.service.opal.UserStateService;
 
 @Aspect
 @Component
@@ -17,20 +18,20 @@ import uk.gov.hmcts.reform.opal.service.opal.LogAuditDetailService;
 @RequiredArgsConstructor
 public class LogAuditDetailsAspect {
 
-    private final UserStateAspectService userStateAspectService;
+    private final UserStateService userStateService;
     private final LogAuditDetailService logAuditDetailService;
 
     @Around("@annotation(logAuditDetail)")
     public Object writeLogAuditDetail(ProceedingJoinPoint joinPoint,
                                       LogAuditDetail logAuditDetail
     ) throws Throwable {
-        writeAuditLog(joinPoint, logAuditDetail);
+        writeAuditLog(logAuditDetail);
         return joinPoint.proceed();
     }
 
-    public void writeAuditLog(ProceedingJoinPoint joinPoint, LogAuditDetail logAuditDetail) {
+    public void writeAuditLog(LogAuditDetail logAuditDetail) {
         try {
-            UserState userState = userStateAspectService.getUserState(joinPoint);
+            UserStateV2 userState = userStateService.getUserStateUsingAuthToken();
 
             AddLogAuditDetailDto logAuditDetailDto = AddLogAuditDetailDto.builder()
                 .logAction(logAuditDetail.action())
@@ -40,8 +41,8 @@ public class LogAuditDetailsAspect {
 
             logAuditDetailService.writeLogAuditDetail(logAuditDetailDto);
             log.info("LogAuditDetails logged action {} for user id {}", logAuditDetail.action(), userState.getUserId());
-        } catch (MissingRequestHeaderException exception) {
-            log.warn("Can't log action {} details as missing JWT access token in parameters", logAuditDetail.action());
+        } catch (UnauthorizedException exception) {
+            log.warn("Can't log action {} details as missing JWT access token", logAuditDetail.action());
         } catch (Exception exception) {
             log.error("Error writing audit log action:: {}", logAuditDetail.action(), exception);
         }

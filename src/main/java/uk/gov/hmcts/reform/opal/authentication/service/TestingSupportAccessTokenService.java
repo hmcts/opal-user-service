@@ -38,7 +38,6 @@ public class TestingSupportAccessTokenService {
             .username(userName)
             .password(password)
             .build();
-
         return azureTokenClient.getAccessToken(
             tokenRequest
         );

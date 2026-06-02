@@ -11,7 +11,6 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
-import uk.gov.hmcts.reform.opal.repository.UserEntitlementRepository;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -32,7 +31,6 @@ public class SynchroniseBusinessUnitUsersService {
     private final BusinessUnitUserRepository businessUnitUserRepository;
     private final BusinessUnitRepository businessUnitRepository;
     private final BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
-    private final UserEntitlementRepository userEntitlementRepository;
 
     @Transactional
     public void synchroniseBusinessUnitsUsers(UserEntity user, List<LegacyBusinessUnitUserId> legacyBusinessUnitUsers) {
@@ -40,7 +38,7 @@ public class SynchroniseBusinessUnitUsersService {
             if (legacyBusinessUnitUsers == null) {
                 log.error("Legacy business unit user payload is null for user {}", user.getUserId());
                 throw new SynchronisePermissionsException(user, SYNC_STAGE,
-                                                          "legacy business unit user payload is missing");
+                    "legacy business unit user payload is missing");
             }
 
             Set<String> legacyBusinessUnitUserIds = new LinkedHashSet<>();
@@ -48,13 +46,13 @@ public class SynchroniseBusinessUnitUsersService {
             for (LegacyBusinessUnitUserId legacyBusinessUnitUser : legacyBusinessUnitUsers) {
                 if (legacyBusinessUnitUser == null) {
                     log.error("Legacy business unit user payload contains null entry for user {}",
-                              user.getUserId());
+                        user.getUserId());
                     throw new SynchronisePermissionsException(user, SYNC_STAGE,
-                                                              "legacy business unit user entry is missing");
+                        "legacy business unit user entry is missing");
                 }
 
                 String businessUnitUserId = parseBusinessUnitUserId(user,
-                                                                    legacyBusinessUnitUser.getBusinessUnitUserId());
+                    legacyBusinessUnitUser.getBusinessUnitUserId());
                 Short businessUnitId = parseBusinessUnitId(user, legacyBusinessUnitUser.getBusinessUnitId());
                 processBusinessUnitUser(user, businessUnitUserId, businessUnitId);
                 legacyBusinessUnitUserIds.add(businessUnitUserId);
@@ -78,7 +76,7 @@ public class SynchroniseBusinessUnitUsersService {
         } else {
             log.error("legacyBusinessUnitUser not found for businessUnit {}", businessUnitId);
             throw new SynchronisePermissionsException(user, SYNC_STAGE,
-                                                      "legacy business unit not found: " + businessUnitId);
+                "legacy business unit not found: " + businessUnitId);
         }
 
         Optional<BusinessUnitUserEntity> maybeBuu = businessUnitUserRepository.findById(businessUnitUserId);
@@ -108,7 +106,7 @@ public class SynchroniseBusinessUnitUsersService {
             || legacyBusinessUnitUserId.length() > BUSINESS_UNIT_USER_ID_MAX_LENGTH) {
             log.error("Invalid businessUnitUserId {}", legacyBusinessUnitUserId);
             throw new SynchronisePermissionsException(user, SYNC_STAGE,
-                                                      "invalid business unit user id: " + legacyBusinessUnitUserId);
+                "invalid business unit user id: " + legacyBusinessUnitUserId);
         }
         return legacyBusinessUnitUserId;
     }
@@ -119,7 +117,7 @@ public class SynchroniseBusinessUnitUsersService {
         } catch (NumberFormatException e) {
             log.error("Invalid businessUnitId {}", legacyBusinessUnitId, e);
             throw new SynchronisePermissionsException(user, SYNC_STAGE,
-                                                      "invalid business unit id: " + legacyBusinessUnitId, e);
+                "invalid business unit id: " + legacyBusinessUnitId, e);
         }
     }
 
@@ -139,7 +137,6 @@ public class SynchroniseBusinessUnitUsersService {
             return;
         }
 
-        userEntitlementRepository.deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
         businessUnitUserRoleRepository.deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
         businessUnitUserRepository.deleteAllById(staleBusinessUnitUserIds);
     }

@@ -4,13 +4,13 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
+import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
+import uk.gov.hmcts.opal.common.util.SecurityUtil;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
@@ -33,7 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,8 +44,6 @@ import java.util.stream.Collectors;
 public class UserService implements UserServiceInterface, UserServiceProxy {
 
     private final UserRepository userRepository;
-
-    private final BusinessUnitUserService businessUnitUserService;
 
     private final RoleService roleService;
 
@@ -76,33 +73,6 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
             ffq -> ffq.page(Pageable.unpaged()));
 
         return page.getContent();
-    }
-
-    /**
-     * Retrieves a UserState object by starting with multiple queries against 3 different repositories.
-     * During some limited developer testing, this method was less performant than the similar method
-     * in the UserEntitlementService, but will still return a UserState even if no Entitlements exist for that user,
-     * but the User <i>does</i> exist in the table.
-     */
-    @Cacheable(cacheNames = "users", key = "#username")
-    public UserState getUserStateByUsername(String username) {
-        UserEntity user = userRepository.findByUsername(username);
-        return UserState.builder().userId(user.getUserId()).userName(user.getUsername()).businessUnitUser(
-            businessUnitUserService.getAuthorisationBusinessUnitPermissionsByUserId(user.getUserId())).build();
-    }
-
-    /**
-     * Return a 'cut down' UserState object that that only tries to populate Business Unit Users but not Permissions.
-     * The assumption is that previous code has attempted to retrieve a UserState object via a query against
-     * the UserEntitlementService, but failed. This could be because of a lack of Entitlements associated with
-     * a BusinessUnitUnit, or a lack of BusinessUnitUsers associated with this user. So assuming there
-     * is a valid User for the given username, then this method will return a non-null object.
-     */
-    public Optional<UserState> getLimitedUserStateByUsername(String username) {
-        Optional<UserEntity> userEntity = Optional.ofNullable(userRepository.findByUsername(username));
-
-        return userEntity.map(u -> UserState.builder().userId(u.getUserId()).userName(u.getUsername()).businessUnitUser(
-            businessUnitUserService.getLimitedBusinessUnitPermissionsByUserId(u.getUserId())).build());
     }
 
     @Transactional
@@ -172,7 +142,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     private Set<String> getBusinessUnitUserIds(List<BusinessUnitUserEntity> businessUnitUsers) {
         return businessUnitUsers.stream().map(BusinessUnitUserEntity::getBusinessUnitUserId)
             .collect(Collectors.toCollection(
-            LinkedHashSet::new));
+                LinkedHashSet::new));
     }
 
     private Map<String, BusinessUnitUserEntity> mapBusinessUnitUsersById(
@@ -186,11 +156,11 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     }
 
     private void logBusinessEvent(List<BusinessUnitUserRoleEntity> existingAssignments, UserEntity user,
-        RoleEntity role, Set<Short> businessUnitIds) {
+                                  RoleEntity role, Set<Short> businessUnitIds) {
 
         Set<Short> existingBusinessUnitIds = existingAssignments.stream()
             .map(assignment -> assignment.getBusinessUnitUser().getBusinessUnitId()).collect(
-            Collectors.toCollection(LinkedHashSet::new));
+                Collectors.toCollection(LinkedHashSet::new));
 
         Set<Short> addedBusinessUnitIds = new LinkedHashSet<>(businessUnitIds);
         addedBusinessUnitIds.removeAll(existingBusinessUnitIds);
@@ -242,5 +212,13 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     @Transactional
     public void refreshUser(UserEntity user) {
         userRepository.refresh(user);
+    }
+
+    public UserEntity getAuthenticatedUser() {
+        OpalJwtAuthenticationToken authenticationToken =
+            SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser();
+        return userRepository.findByUserId(authenticationToken.getUserId())
+            .orElseThrow(
+                () -> new EntityNotFoundException("User not found with id: " + authenticationToken.getUserId()));
     }
 }

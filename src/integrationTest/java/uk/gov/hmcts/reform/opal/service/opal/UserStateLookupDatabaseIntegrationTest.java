@@ -1,20 +1,25 @@
 package uk.gov.hmcts.reform.opal.service.opal;
 
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import uk.gov.hmcts.common.exceptions.standard.UnauthorizedException;
+import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
 import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
-import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
+import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
+import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
+import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
@@ -30,63 +35,52 @@ class UserStateLookupDatabaseIntegrationTest extends AbstractIntegrationTest {
     private UserService userService;
 
     @Autowired
-    private UserEntitlementService userEntitlementService;
-
-    @Autowired
     private UserStateService userStateService;
 
     @Test
+    @SneakyThrows
     @DisplayName("UserService should return all business unit users including those without permissions")
     void userService_getUserStateByUsername_returnsAllBusinessUnitUsers() {
-        UserState result = userService.getUserStateByUsername("opal-test@HMCTS.NET");
+        OpalJwtAuthenticationToken authenticationToken = TestHelperUtil
+            .createJwtPrincipal("k9LpT2xVqR8m", "opal-test@HMCTS.NET", "Pablo");
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+        UserStateV2 result = userStateService.getUserStateUsingAuthToken();
 
         assertEquals(500000000L, result.getUserId());
-        assertEquals("opal-test@HMCTS.NET", result.getUserName());
-        assertEquals(7, result.getBusinessUnitUser().size());
+        assertEquals("opal-test@HMCTS.NET", result.getUsername());
+        DomainBusinessUnitUsers domainBusinessUnitUsers = result.getDomainBusinessUnitUsers(Domain.FINES);
+        assertEquals(7, domainBusinessUnitUsers.getBusinessUnitUsers().size());
 
-        Optional<BusinessUnitUser> businessUnit70 = result.getBusinessUnitUserForBusinessUnit((short) 70);
-        Optional<BusinessUnitUser> businessUnit73 = result.getBusinessUnitUserForBusinessUnit((short) 73);
+        assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 70).isPresent());
+        assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 68).isPresent());
+        assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 73).isPresent());
+        assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 71).isPresent());
+        assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 67).isPresent());
+        assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 69).isPresent());
+        assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 61).isPresent());
+
+        Optional<BusinessUnitUser> businessUnit70 =
+            domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 70);
+        Optional<BusinessUnitUser> businessUnit73 =
+            domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 73);
 
         assertTrue(businessUnit70.isPresent());
-        assertEquals(2, businessUnit70.get().getPermissions().size());
+        //BU 70 has two roles with 6 unqiue perms between them
+        assertEquals(6, businessUnit70.get().getPermissions().size());
         assertTrue(businessUnit73.isPresent());
         assertTrue(businessUnit73.get().getPermissions().isEmpty());
     }
 
-    @Test
-    @DisplayName("UserEntitlementService should return only business unit users that have entitlements")
-    void userEntitlementService_getUserStateByUsername_returnsOnlyEntitledBusinessUnits() {
-        UserState result = userEntitlementService.getUserStateByUsername("opal-test@HMCTS.NET").orElseThrow();
-
-        assertEquals(500000000L, result.getUserId());
-        assertEquals("opal-test@HMCTS.NET", result.getUserName());
-        assertEquals(3, result.getBusinessUnitUser().size());
-        assertTrue(result.getBusinessUnitUserForBusinessUnit((short) 70).isPresent());
-        assertTrue(result.getBusinessUnitUserForBusinessUnit((short) 68).isPresent());
-        assertTrue(result.getBusinessUnitUserForBusinessUnit((short) 61).isPresent());
-        assertFalse(result.getBusinessUnitUserForBusinessUnit((short) 73).isPresent());
-    }
-
-    @Test
-    @DisplayName("UserStateService should fall back to limited business unit users when entitlements are absent")
-    void userStateService_getUserStateByUsername_fallsBackToLimitedBusinessUnits() {
-        UserState result = userStateService.getUserStateByUsername("no-go-user@HMCTS.NET");
-
-        assertEquals(500000006L, result.getUserId());
-        assertEquals("no-go-user@HMCTS.NET", result.getUserName());
-        assertEquals(2, result.getBusinessUnitUser().size());
-        assertTrue(result.getBusinessUnitUser().stream().allMatch(businessUnitUser ->
-            businessUnitUser.getPermissions().isEmpty()));
-    }
 
     @Test
     @DisplayName("UserStateService should reject unknown usernames when developer mode is disabled")
     void userStateService_getUserStateByUsername_whenUserMissing_throwsAccessDenied() {
-        AccessDeniedException exception = assertThrows(
-            AccessDeniedException.class,
-            () -> userStateService.getUserStateByUsername("missing-user@HMCTS.NET")
+        SecurityContextHolder.getContext().setAuthentication(null);
+        UnauthorizedException exception = assertThrows(
+            UnauthorizedException.class,
+            () -> userStateService.getUserStateUsingAuthToken()
         );
-
-        assertEquals("No authorised user with username 'missing-user@HMCTS.NET' found", exception.getMessage());
+        assertEquals("Current user is not authenticated with OpalJwtAuthenticationToken", exception.getMessage());
     }
 }

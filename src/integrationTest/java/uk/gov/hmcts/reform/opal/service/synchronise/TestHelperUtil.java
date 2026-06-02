@@ -2,13 +2,16 @@ package uk.gov.hmcts.reform.opal.service.synchronise;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
+import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,6 +19,20 @@ public final class TestHelperUtil {
 
     private TestHelperUtil() {
         throw new IllegalStateException("Utility class");
+    }
+
+    private static UserEntity getDefaultUser() {
+        return UserEntity.builder()
+            .userId(500000000L)
+            .username("username")
+            .build();
+    }
+
+    public static UserStateV2 buildUserStateV2(UserEntity user) {
+        return UserStateV2.builder()
+            .userId(user.getUserId())
+            .username(user.getUsername())
+            .build();
     }
 
     public static LegacyBusinessUnitUserId legacyBusinessUnitUser(String businessUnitUserId, String businessUnitId) {
@@ -41,8 +58,32 @@ public final class TestHelperUtil {
                 "name", user.getTokenName()
             )
         );
-        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt));
+        SecurityContextHolder.getContext().setAuthentication(buildOpalJwtAuthenticationToken(jwt, user));
     }
+
+    public static OpalJwtAuthenticationToken createJwtPrincipal(String sub, String preferred, String name) {
+        Jwt jwt = new Jwt(
+            "mock-token-value",
+            Instant.now(),
+            Instant.now().plusSeconds(3600),
+            Map.of("alg", "none"),
+            Map.of("sub", sub,
+                "preferred_username", preferred,
+                "name", name
+            )
+        );
+        return buildOpalJwtAuthenticationToken(jwt, getDefaultUser());
+    }
+
+    public static OpalJwtAuthenticationToken buildOpalJwtAuthenticationToken(Jwt jwt, UserEntity user) {
+        UserStateV2 userStateV2 = buildUserStateV2(user);
+        return new OpalJwtAuthenticationToken(userStateV2,
+            Domain.USER,
+            jwt,
+            List.of(),
+            null);
+    }
+
 
     public static UserEntity buildUser(long userId, String tokenSubject) {
         return UserEntity.builder()

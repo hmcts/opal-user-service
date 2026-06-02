@@ -2,53 +2,23 @@ package uk.gov.hmcts.reform.opal.service.opal;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
-import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
-import uk.gov.hmcts.reform.opal.config.properties.BeDeveloperConfiguration;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 
-import static uk.gov.hmcts.reform.opal.util.HttpUtil.extractPreferredUsername;
+import java.time.Clock;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.UserStateService")
 public class UserStateService {
-
-    protected static final String DEVELOPER_PERMISSIONS = "Dev-Role-Permissions";
-
-    private final AccessTokenService tokenService;
-
     private final UserService userService;
+    private final Clock clock;
+    private final UserStateMapper userStateMapper;
 
-    private final UserEntitlementService userEntitlementService;
-
-    private final BeDeveloperConfiguration developerConfiguration;
-
-    public UserState getUserStateUsingAuthToken(String authorization) {
-        return getUserStateByUsername(getPreferredUsername(authorization));
+    public UserStateV2 getUserStateUsingAuthToken() {
+        UserEntity userEntity = userService.getAuthenticatedUser();
+        return userStateMapper.toUserStateV2(userEntity, clock);
     }
-
-    public UserState checkForAuthorisedUser(String authorization) {
-        return getUserStateByUsername(getPreferredUsername(authorization));
-    }
-
-    public String getPreferredUsername(String authorization) {
-        return extractPreferredUsername(authorization, tokenService);
-    }
-
-    public UserState getUserStateByUsername(String username) {
-        return userEntitlementService.getUserStateByUsername(username)
-            .orElseGet(() -> userService.getLimitedUserStateByUsername(username)
-                .orElseGet(() -> getDeveloperUserStateOrError(username)));
-    }
-
-    private UserState getDeveloperUserStateOrError(String username) {
-        if (DEVELOPER_PERMISSIONS.equals(developerConfiguration.getUserRolePermissions())) {
-            return new UserState.DeveloperUserState();
-        } else {
-            throw new AccessDeniedException("No authorised user with username '" + username + "' found");
-        }
-    }
-
 }

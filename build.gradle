@@ -357,7 +357,7 @@ dependencies {
     }
   }
 
-  implementation 'uk.gov.hmcts:opal-common-lib:0.3.13'
+  implementation 'uk.gov.hmcts:opal-common-lib:0.3.14'
   implementation('uk.gov.hmcts:spring-exception-handler:1.0.1') {
     exclude group: 'com.microsoft.azure', module: 'applicationinsights-spring-boot-starter'
   }
@@ -390,7 +390,6 @@ dependencies {
 
   implementation "org.apache.logging.log4j:log4j-api:${log4JVersion}"
   implementation "org.apache.logging.log4j:log4j-to-slf4j:${log4JVersion}"
-  implementation 'com.google.guava:guava:33.6.0-jre'
 
   implementation 'com.azure:azure-storage-blob:12.34.0'
   implementation 'org.apache.commons:commons-csv:1.14.1'

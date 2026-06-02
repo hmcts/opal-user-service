@@ -33,13 +33,6 @@ VALUES (61, 'Test BU 61', 'T61', 'Accounting Division', 1),
        (73, 'Test BU 73', 'T73', 'Accounting Division', 1);
 
 
--- Insert application functions (permissions) from Flyway script V20240730_006
-INSERT INTO application_functions (application_function_id, function_name)
-VALUES (35, 'Manual Account Creation'),
-       (41, 'Account Enquiry - Account Notes'),
-       (54, 'Account Enquiry'),
-       (500, 'Collection Order');
-
 -- Link User 500000000 to Business Units from Flyway script V20240730_005
 INSERT INTO business_unit_users (business_unit_user_id, business_unit_id, user_id)
 VALUES ('L065JG', 70, 500000000),
@@ -54,11 +47,6 @@ VALUES ('L065JG', 70, 500000000),
 
 -- Grant permissions to User 500000000 from Flyway script V20240730_007
 -- Granting a subset for a focused test
-INSERT INTO user_entitlements (user_entitlement_id, business_unit_user_id, application_function_id)
-VALUES (112687, 'L065JG', 41), -- BU 70 gets 'Account Enquiry - Account Notes'
-       (112683, 'L065JG', 54), -- BU 70 gets 'Account Enquiry'
-       (112921, 'L066JG', 41), -- BU 68 gets 'Account Enquiry - Account Notes'
-       (500001, 'L080JG', 500); -- BU 61 gets 'Collection Order'
 
 INSERT INTO roles (role_id, version_number, opal_domain_id, role_name, application_function_list)
 VALUES (1,1, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry - Account Notes','Account Maintenance']),

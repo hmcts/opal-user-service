@@ -99,7 +99,6 @@ class UserOpalJwtAuthenticationProviderTest {
 
     @Test
     void authenticate_shouldFail_whenUserStateCanNotBeLocated() {
-        //Mock
         final String token = "test-token";
         final BearerTokenAuthenticationToken authenticationToken = mock(BearerTokenAuthenticationToken.class);
         final Jwt jwt = mock(Jwt.class);
@@ -107,12 +106,11 @@ class UserOpalJwtAuthenticationProviderTest {
             mock(GrantedAuthority.class), mock(GrantedAuthority.class), mock(GrantedAuthority.class)
         );
 
-        //Setup
         when(authenticationToken.getToken()).thenReturn(token);
         when(jwtDecoder.decode(token)).thenReturn(jwt);
         when(jwtGrantedAuthoritiesConverter.convert(jwt)).thenReturn(authorityCollection);
         doReturn(Optional.empty()).when(userOpalJwtAuthenticationProvider).getUserState(jwt);
-        //Act
+
         InvalidBearerTokenException actualException = assertThrows(InvalidBearerTokenException.class,
             () -> userOpalJwtAuthenticationProvider.authenticate(authenticationToken));
 

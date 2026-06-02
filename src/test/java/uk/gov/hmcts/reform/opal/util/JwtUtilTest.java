@@ -10,7 +10,7 @@ import java.time.Instant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class JwtUtilTest {
+class JwtUtilTest {
 
     @Test
     void testExtractClaimAsString_success() {

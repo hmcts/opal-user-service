@@ -1,13 +1,16 @@
 package uk.gov.hmcts.reform.opal.util;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JwtUtil {
-
 
     public static String extractSubject(final Jwt jwt) {
         String subject = jwt.getSubject();
@@ -25,7 +28,7 @@ public class JwtUtil {
             return claimValue;
         } else {
             log.debug(":ClaimAction.extract: claim not found: {}", claimName);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Claim not found: " + claimName);
+            throw new BadCredentialsException(String.format("Claim not found: '%s'", claimName));
         }
     }
 }

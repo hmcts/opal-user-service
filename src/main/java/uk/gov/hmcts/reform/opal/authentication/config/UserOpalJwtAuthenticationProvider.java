@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.opal.authentication.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
@@ -9,7 +10,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -60,7 +60,8 @@ public class UserOpalJwtAuthenticationProvider implements AuthenticationProvider
      * @throws AuthenticationException if authentication failed for some reason
      */
     @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+    public OpalJwtAuthenticationToken authenticate(
+        @NonNull Authentication authentication) throws AuthenticationException {
 
         BearerTokenAuthenticationToken bearer = (BearerTokenAuthenticationToken) authentication;
         Jwt jwt;
@@ -69,7 +70,7 @@ public class UserOpalJwtAuthenticationProvider implements AuthenticationProvider
         } catch (BadJwtException failed) {
             log.debug("Failed to authenticate since the JWT was invalid");
             throw new InvalidBearerTokenException(failed.getMessage(), failed);
-        } catch (JwtException failed) {
+        } catch (Exception failed) {
             throw new AuthenticationServiceException(failed.getMessage(), failed);
         }
         Collection<GrantedAuthority> authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
@@ -81,11 +82,11 @@ public class UserOpalJwtAuthenticationProvider implements AuthenticationProvider
     }
 
     @Override
-    public boolean supports(Class<?> authentication) {
+    public boolean supports(@NonNull Class<?> authentication) {
         return BearerTokenAuthenticationToken.class.isAssignableFrom(authentication);
     }
 
-    private Optional<UserStateV2> getUserState(Jwt jwt) {
+    Optional<UserStateV2> getUserState(Jwt jwt) {
         String subject = JwtUtil.extractSubject(jwt);
         return userRepository.findByTokenSubject(subject)
             .map(userEntity -> userStateMapper.toUserStateV2(userEntity, clock));

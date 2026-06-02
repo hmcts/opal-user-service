@@ -1,9 +1,9 @@
 package uk.gov.hmcts.reform.opal.util;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 
@@ -37,11 +37,11 @@ public class JwtUtilTest {
         Jwt jwt = createJwtAuthenticatedToken().getToken();
 
         // Act & Assert
-        ResponseStatusException ex = assertThrows(
-            ResponseStatusException.class,
+        BadCredentialsException ex = assertThrows(
+            BadCredentialsException.class,
             () -> JwtUtil.extractClaim(jwt, "")
         );
-        assertEquals("401 UNAUTHORIZED \"Claim not found: \"", ex.getMessage());
+        assertEquals("Claim not found: ''", ex.getMessage());
     }
 
     @Test
@@ -49,11 +49,11 @@ public class JwtUtilTest {
         // Arrange
         Jwt jwt = createJwtAuthenticatedToken().getToken();
         // Act & Assert
-        ResponseStatusException ex = assertThrows(
-            ResponseStatusException.class,
+        BadCredentialsException ex = assertThrows(
+            BadCredentialsException.class,
             () -> JwtUtil.extractClaim(jwt, "not_a_claim")
         );
-        assertEquals("401 UNAUTHORIZED \"Claim not found: not_a_claim\"", ex.getMessage());
+        assertEquals("Claim not found: 'not_a_claim'", ex.getMessage());
     }
 
     private JwtAuthenticationToken createJwtAuthenticatedToken() {

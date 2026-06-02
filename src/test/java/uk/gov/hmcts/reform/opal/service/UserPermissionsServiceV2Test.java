@@ -11,12 +11,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.common.exceptions.standard.UnauthorizedException;
 import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
@@ -322,12 +321,11 @@ class UserPermissionsServiceV2Test {
         when(userService.getAuthenticatedUser()).thenReturn(userEntity);
 
         // Act & Assert
-        ResponseStatusException ex = assertThrows(
-            ResponseStatusException.class,
+        BadCredentialsException ex = assertThrows(
+            BadCredentialsException.class,
             () -> service.getUserStateV2(0L, true)
         );
-        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertEquals("401 UNAUTHORIZED \"Claim not found: preferred_username\"", ex.getMessage());
+        assertEquals("Claim not found: 'preferred_username'", ex.getMessage());
     }
 
     @Test
@@ -339,12 +337,11 @@ class UserPermissionsServiceV2Test {
         when(userService.getAuthenticatedUser()).thenReturn(userEntity);
 
         // Act & Assert
-        ResponseStatusException ex = assertThrows(
-            ResponseStatusException.class,
+        BadCredentialsException ex = assertThrows(
+            BadCredentialsException.class,
             () -> service.getUserStateV2(0L, true)
         );
-        assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertEquals("401 UNAUTHORIZED \"Claim not found: name\"", ex.getMessage());
+        assertEquals("Claim not found: 'name'", ex.getMessage());
     }
 
     @Test

@@ -137,7 +137,7 @@ class UserPermissionsServiceV2Test {
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(0L, true);
+        UserStateV2Dto result = service.getUserStateV2(true);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -169,7 +169,7 @@ class UserPermissionsServiceV2Test {
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(0L, false);
+        UserStateV2Dto result = service.getUserStateV2(false);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -191,7 +191,7 @@ class UserPermissionsServiceV2Test {
             .set(eq("USER_STATE_" + TOKEN_SUBJECT), anyString(), eq(CACHE_TIMEOUT_MINUTES), eq(TimeUnit.MINUTES));
 
         // act & assert
-        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(0L, false));
+        UserStateV2Dto result = assertDoesNotThrow(() -> service.getUserStateV2(false));
 
         assertThat(result).isEqualTo(dto);
         assertThat(result.getCacheName()).isEqualTo("USER_STATE_" + TOKEN_SUBJECT);
@@ -209,7 +209,7 @@ class UserPermissionsServiceV2Test {
         when(userService.getAuthenticatedUser()).thenReturn(userEntity);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(0L, false);
+        UserStateV2Dto result = service.getUserStateV2(false);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -231,7 +231,7 @@ class UserPermissionsServiceV2Test {
         // Act
         RuntimeException thrown = assertThrows(
             RuntimeException.class,
-            () -> service.getUserStateV2(0L, false)
+            () -> service.getUserStateV2(false)
         );
 
         // Assert
@@ -250,7 +250,7 @@ class UserPermissionsServiceV2Test {
         when(userService.getAuthenticatedUser()).thenReturn(userEntity);
 
         // Act
-        UserStateV2Dto result = service.getUserStateV2(0L, false);
+        UserStateV2Dto result = service.getUserStateV2(false);
 
         // Assert
         assertThat(result).isEqualTo(dto);
@@ -270,7 +270,7 @@ class UserPermissionsServiceV2Test {
         // Act & Assert
         UnauthorizedException ex = assertThrows(
             UnauthorizedException.class,
-            () -> service.getUserStateV2(0L, true)
+            () -> service.getUserStateV2(true)
         );
         assertEquals("Current user is not authenticated with OpalJwtAuthenticationToken", ex.getMessage());
     }
@@ -284,7 +284,7 @@ class UserPermissionsServiceV2Test {
         // Act
         EntityNotFoundException ex = assertThrows(
             EntityNotFoundException.class,
-            () -> service.getUserStateV2(0L, false)
+            () -> service.getUserStateV2(false)
         );
 
         // Assert
@@ -304,7 +304,7 @@ class UserPermissionsServiceV2Test {
         // Act
         EntityNotFoundException ex = assertThrows(
             EntityNotFoundException.class,
-            () -> service.getUserStateV2(0L, false)
+            () -> service.getUserStateV2(false)
         );
 
         // Assert
@@ -323,7 +323,7 @@ class UserPermissionsServiceV2Test {
         // Act & Assert
         BadCredentialsException ex = assertThrows(
             BadCredentialsException.class,
-            () -> service.getUserStateV2(0L, true)
+            () -> service.getUserStateV2(true)
         );
         assertEquals("Claim not found: 'preferred_username'", ex.getMessage());
     }
@@ -339,7 +339,7 @@ class UserPermissionsServiceV2Test {
         // Act & Assert
         BadCredentialsException ex = assertThrows(
             BadCredentialsException.class,
-            () -> service.getUserStateV2(0L, true)
+            () -> service.getUserStateV2(true)
         );
         assertEquals("Claim not found: 'name'", ex.getMessage());
     }
@@ -354,7 +354,7 @@ class UserPermissionsServiceV2Test {
         // Act
         ResourceConflictException ex = assertThrows(
             ResourceConflictException.class,
-            () -> service.getUserStateV2(0L, false)
+            () -> service.getUserStateV2(false)
         );
 
         // Assert

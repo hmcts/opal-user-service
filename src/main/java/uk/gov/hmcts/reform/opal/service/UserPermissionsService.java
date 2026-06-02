@@ -67,17 +67,11 @@ public class UserPermissionsService {
     }
 
     @Transactional
-    public UserStateV2Dto getUserStateV2(Long userId, Boolean newLogin) {
-        log.debug(":getUserState: userId: {}", userId);
+    public UserStateV2Dto getUserStateV2(boolean newLogin) {
+        log.debug(":getUserState");
 
-        UserEntity user;
-        if (userId == 0) {
-            user = getAndValidateAuthenticatedUser();
-        } else {
-            user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
-        }
-        final long effectiveUserId = user.getUserId();
+        UserEntity user = getAndValidateAuthenticatedUser();
+        Long userId = user.getUserId();
 
         if (appModeConfiguration.getAppMode().equalsIgnoreCase("legacy")) {
             synchronisePermissionsService.synchronise(user);
@@ -87,15 +81,11 @@ public class UserPermissionsService {
 
         // NB. When legacy refresh gets deleted we will need to update the first fetch to include all roles
         // and remove this second fetch
-        user = userRepository.findIdWithPermissions(user.getUserId())
-            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + effectiveUserId));
+        user = userRepository.findIdWithPermissions(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
-        if (Optional.ofNullable(newLogin).orElse(false)) {
-            Long authenticationEventUserId = user.getUserId();
-            if (userId != 0) {
-                authenticationEventUserId = SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().getUserId();
-            }
-            logUserAuthenticationEvent(authenticationEventUserId);
+        if (newLogin) {
+            logUserAuthenticationEvent(userId);
             updateLastLogin(user);
         }
         UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
@@ -103,14 +93,18 @@ public class UserPermissionsService {
         return dto;
     }
 
-    private UserEntity getAndValidateAuthenticatedUser() {
+    private UserEntity getUserFromAuthentication() {
+        Jwt jwt = SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().getToken();
         UserEntity user = userService.getAuthenticatedUser();
-        Jwt token = SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().getToken();
-        String username = JwtUtil.extractClaim(token, PREFERRED_USERNAME_CLAIM);
-        compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
-        String name = JwtUtil.extractClaim(token, NAME_CLAIM);
-        compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
+        validateAuthenticatedUser(user, jwt);
         return user;
+    }
+
+    private void validateAuthenticatedUser(UserEntity user, Jwt jwt) {
+        String username = JwtUtil.extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
+        compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
+        String name = JwtUtil.extractClaim(jwt, NAME_CLAIM);
+        compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
     }
 
 

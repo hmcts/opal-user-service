@@ -8,8 +8,8 @@ paths:
       operationId: getUserStateV2
       summary: Get User State (v2)
       description: >
-        Returns the user state for a given user ID (v2).
-        If the ID is `0`, returns the authenticated user's state.
+        Returns the authenticated user's state (v2).
+        The path ID must be `0`; any non-zero value is rejected.
         V2 payload includes `domains`, optional `fines`, and `business_unit_users`.
       tags:
         - Users State
@@ -17,10 +17,12 @@ paths:
         - name: id
           in: path
           required: true
-          description: User identifier. Use `0` to return the authenticated user.
+          description: User identifier. Must be `0` for the authenticated user.
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 0
         - name: X-New-Login
           in: header
           required: true
@@ -38,7 +40,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserStateResponseV2'
         '400':
-          description: Invalid request
+          description: Invalid request (for example, non-zero user id)
           content:
             application/json+problem:
               schema:

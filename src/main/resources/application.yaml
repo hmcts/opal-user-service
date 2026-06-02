@@ -136,8 +136,8 @@ opal:
     blob:
       storage:
         connection-string: ${AZURE_STORAGE_CONNECTION_STRING:UseDevelopmentStorage=true}
-        container: ${ROLE_MAPPING_STORAGE_CONTAINER_NAME:roleMapping}
-        blob-name: ${ROLE_MAPPING_FILE_NAME:roleMapping.csv}
+        container-name: ${ROLE_MAPPING_STORAGE_CONTAINER_NAME:role-mapping}
+        blob-name: ${ROLE_MAPPING_FILE_NAME:role-mapping.csv}
 
 be-developer-config:
   user-role-permissions: ${BE_DEV_ROLE_PERMISSIONS:}

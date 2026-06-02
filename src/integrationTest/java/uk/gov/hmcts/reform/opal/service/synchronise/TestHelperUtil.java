@@ -39,13 +39,17 @@ public final class TestHelperUtil {
         return legacyBusinessUnitUser(businessUnitUserId, Short.toString(businessUnitId));
     }
 
-    public static void setAuthenticatedUser(String tokenSubject) {
+    public static void setAuthenticatedUser(UserEntity user) {
         Jwt jwt = new Jwt(
             "integration-test-token",
             Instant.now(),
             Instant.now().plusSeconds(3600),
             Map.of("alg", "none"),
-            Map.of("sub", tokenSubject)
+            Map.of(
+                "sub", user.getTokenSubject(),
+                "preferred_username", user.getUsername(),
+                "name", user.getTokenName()
+            )
         );
         SecurityContextHolder.getContext().setAuthentication(buildOpalJwtAuthenticationToken(jwt));
     }

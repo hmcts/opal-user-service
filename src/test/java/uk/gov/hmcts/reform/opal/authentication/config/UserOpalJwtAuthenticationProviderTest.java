@@ -99,6 +99,7 @@ class UserOpalJwtAuthenticationProviderTest {
 
     @Test
     void authenticate_shouldFail_whenUserStateCanNotBeLocated() {
+        //Arrange
         final String token = "test-token";
         final BearerTokenAuthenticationToken authenticationToken = mock(BearerTokenAuthenticationToken.class);
         final Jwt jwt = mock(Jwt.class);
@@ -111,15 +112,17 @@ class UserOpalJwtAuthenticationProviderTest {
         when(jwtGrantedAuthoritiesConverter.convert(jwt)).thenReturn(authorityCollection);
         doReturn(Optional.empty()).when(userOpalJwtAuthenticationProvider).getUserState(jwt);
 
+        //Act
         InvalidBearerTokenException actualException = assertThrows(InvalidBearerTokenException.class,
             () -> userOpalJwtAuthenticationProvider.authenticate(authenticationToken));
 
+        //Assert
         assertEquals("User state not found for authenticated user", actualException.getMessage());
     }
 
     @Test
     void authenticate_shouldReturnValidAuthToken_whenValidUserAndJwtProvided() {
-        //Mock
+        //Arrange
         final String token = "test-token";
         final BearerTokenAuthenticationToken authenticationToken = mock(BearerTokenAuthenticationToken.class);
         final Object someDetailsObject = mock(Object.class);
@@ -143,8 +146,7 @@ class UserOpalJwtAuthenticationProviderTest {
         //Act
         OpalJwtAuthenticationToken result = userOpalJwtAuthenticationProvider.authenticate(authenticationToken);
 
-        //Validate
-
+        //Assert
         assertThat(result.getUserState())
             .isEqualTo(userState);
         assertThat(result.getToken())

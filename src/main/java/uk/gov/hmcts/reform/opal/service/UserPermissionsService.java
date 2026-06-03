@@ -47,7 +47,6 @@ public class UserPermissionsService {
 
     //The claim used to map the authorised user to the user entity.
     private static final String PREFERRED_USERNAME_CLAIM = "preferred_username";
-    private final BusinessUnitUserRepository businessUnitUserRepository;
     private final UserRepository userRepository;
     private final UserStateMapper userStateMapper;
     private final UserMapper userMapper;

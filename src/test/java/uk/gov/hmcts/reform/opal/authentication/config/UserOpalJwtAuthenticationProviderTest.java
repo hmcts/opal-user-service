@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.opal.authentication.config;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,6 +35,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
@@ -118,6 +121,9 @@ class UserOpalJwtAuthenticationProviderTest {
 
         //Assert
         assertEquals("User state not found for authenticated user", actualException.getMessage());
+        assertNotNull(actualException.getCause());
+        assertInstanceOf(EntityNotFoundException.class, actualException.getCause());
+        assertEquals("User state not found for authenticated user",actualException.getCause().getMessage());
     }
 
     @Test

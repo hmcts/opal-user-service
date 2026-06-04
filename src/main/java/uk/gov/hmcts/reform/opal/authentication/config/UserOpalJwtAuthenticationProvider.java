@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.opal.authentication.config;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -74,10 +75,11 @@ public class UserOpalJwtAuthenticationProvider implements AuthenticationProvider
             throw new AuthenticationServiceException(failed.getMessage(), failed);
         }
         Collection<GrantedAuthority> authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
-
         UserStateV2 userState = getUserState(jwt)
-            .orElseThrow(() -> new InvalidBearerTokenException("User state not found for authenticated user"));
-
+            .orElseThrow(() -> new InvalidBearerTokenException(
+                "User state not found for authenticated user",
+                new EntityNotFoundException("User state not found for authenticated user")
+            ));
         return new OpalJwtAuthenticationToken(userState, domain, jwt, authorities, bearer.getDetails());
     }
 

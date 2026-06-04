@@ -1,12 +1,15 @@
 package uk.gov.hmcts.reform.opal.authentication.config;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -18,9 +21,11 @@ import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerAuthenticationManagerResolver;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.util.AntPathMatcher;
 import uk.gov.hmcts.opal.common.config.OpalCommonConfiguration;
 import uk.gov.hmcts.opal.common.user.authentication.exception.CustomAuthenticationExceptions;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
@@ -58,11 +63,18 @@ public class SecurityConfig {
         "/"
     };
 
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+
+    private static final EndpointMethod[] JWT_VALIDATION_ONLY_ENDPOINTS = {
+        new EndpointMethod("/users", HttpMethod.POST)
+    };
+
     @Bean
     @SuppressWarnings({"PMD.SignatureDeclareThrowsException", "squid:S4502"})
     public SecurityFilterChain filterChain(
         HttpSecurity http,
-        JwtIssuerAuthenticationManagerResolver jwtIssuerAuthenticationManagerResolver
+        JwtIssuerAuthenticationManagerResolver opalUserJwtIssuerAuthenticationManagerResolver,
+        JwtIssuerAuthenticationManagerResolver standardJwtIssuerAuthenticationManagerResolver
     ) {
         log.info(":filterChain: http security: {}", http);
         applyCommonConfig(http)
@@ -79,10 +91,46 @@ public class SecurityConfig {
                     .accessDeniedHandler(userCustomAuthenticationExceptions)
             )
             .oauth2ResourceServer(oauth2 ->
-                oauth2.authenticationManagerResolver(jwtIssuerAuthenticationManagerResolver)
+                oauth2.authenticationManagerResolver(request ->
+                    selectAuthenticationManager(
+                        request,
+                        opalUserJwtIssuerAuthenticationManagerResolver,
+                        standardJwtIssuerAuthenticationManagerResolver
+                    )
+                )
+                    .authenticationEntryPoint(userCustomAuthenticationExceptions)
+                    .accessDeniedHandler(userCustomAuthenticationExceptions)
             );
 
         return http.build();
+    }
+
+    AuthenticationManager selectAuthenticationManager(
+        HttpServletRequest request,
+        JwtIssuerAuthenticationManagerResolver opalUserJwtIssuerAuthenticationManagerResolver,
+        JwtIssuerAuthenticationManagerResolver standardJwtIssuerAuthenticationManagerResolver
+    ) {
+        if (isJwtValidationOnlyEndpoint(request)) {
+            return standardJwtIssuerAuthenticationManagerResolver.resolve(request);
+        }
+        return opalUserJwtIssuerAuthenticationManagerResolver.resolve(request);
+    }
+
+    boolean isJwtValidationOnlyEndpoint(HttpServletRequest request) {
+        return isJwtValidationOnlyEndpoint(request.getServletPath(), request.getMethod());
+    }
+
+    boolean isJwtValidationOnlyEndpoint(String servletPath, String method) {
+        for (EndpointMethod endpoint : JWT_VALIDATION_ONLY_ENDPOINTS) {
+            if (endpoint.method().name().equalsIgnoreCase(method)
+                && PATH_MATCHER.match(endpoint.path(), servletPath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private record EndpointMethod(String path, HttpMethod method) {
     }
 
     private HttpSecurity applyCommonConfig(HttpSecurity http) {
@@ -94,14 +142,40 @@ public class SecurityConfig {
     }
 
     @Bean
-    JwtIssuerAuthenticationManagerResolver jwtIssuerAuthenticationManagerResolver(
+    JwtIssuerAuthenticationManagerResolver opalUserJwtIssuerAuthenticationManagerResolver(
         InternalAuthConfigurationProperties internalAuthConfigurationProperties,
         UserOpalJwtAuthenticationProvider userOpalJwtAuthenticationProvider
     ) {
-        AuthenticationManager manager = userOpalJwtAuthenticationProvider::authenticate;
+        return jwtIssuerAuthenticationManagerResolver(
+            internalAuthConfigurationProperties,
+            userOpalJwtAuthenticationProvider);
+    }
+
+    @Bean
+    JwtIssuerAuthenticationManagerResolver standardJwtIssuerAuthenticationManagerResolver(
+        InternalAuthConfigurationProperties internalAuthConfigurationProperties,
+        JwtAuthenticationProvider standardOpalJwtAuthenticationProvider
+    ) {
+        return jwtIssuerAuthenticationManagerResolver(
+            internalAuthConfigurationProperties,
+            standardOpalJwtAuthenticationProvider);
+    }
+
+
+    private JwtIssuerAuthenticationManagerResolver jwtIssuerAuthenticationManagerResolver(
+        InternalAuthConfigurationProperties internalAuthConfigurationProperties,
+        AuthenticationProvider authenticationProvider
+    ) {
+        AuthenticationManager manager = authenticationProvider::authenticate;
         Map<String, AuthenticationManager> managers =
             Map.of(internalAuthConfigurationProperties.getIssuerUri(), manager);
         return new JwtIssuerAuthenticationManagerResolver(managers::get);
+    }
+
+    @Bean
+    JwtAuthenticationProvider standardOpalJwtAuthenticationProvider(
+        NimbusJwtDecoder internalJwtDecoder) {
+        return new JwtAuthenticationProvider(internalJwtDecoder);
     }
 
     @Bean

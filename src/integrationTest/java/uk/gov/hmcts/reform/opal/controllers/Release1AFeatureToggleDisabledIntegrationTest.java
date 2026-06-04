@@ -43,10 +43,10 @@ import uk.gov.hmcts.reform.opal.service.opal.UserService;
 @ContextConfiguration(classes = {
     TestingSupportController.class, UserPermissionsController.class, UserPermissionsV2Controller.class,
     FeatureToggleAspect.class,
-    OpalGlobalExceptionHandler.class, Release1AFeatureToggleIntegrationTest.TestAopConfiguration.class})
-@Import(Release1AFeatureToggleIntegrationTest.TestAopConfiguration.class)
+    OpalGlobalExceptionHandler.class, Release1AFeatureToggleDisabledIntegrationTest.TestAopConfiguration.class})
+@Import(Release1AFeatureToggleDisabledIntegrationTest.TestAopConfiguration.class)
 @DisplayName("Release 1A gated endpoints return 405 when disabled")
-class Release1AFeatureToggleIntegrationTest {
+class Release1AFeatureToggleDisabledIntegrationTest {
 
     private static final String AUTHORIZATION = "Authorization";
     private static final String AUTHORIZATION_VALUE = "Bearer test";
@@ -102,7 +102,7 @@ class Release1AFeatureToggleIntegrationTest {
             args("PUT /users/{userId}", put("/users/500000002")
                 .header(AUTHORIZATION, AUTHORIZATION_VALUE)
                 .header(IF_MATCH, IF_MATCH_VALUE)),
-            args("GET /v2/users/{userId}/state", get("/v2/users/500000003/state"))
+            args("GET /v2/users/{userId}/state", get("/v2/users/0/state"))
         );
     }
 

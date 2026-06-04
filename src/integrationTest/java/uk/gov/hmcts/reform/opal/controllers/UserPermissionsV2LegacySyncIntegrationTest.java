@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,6 +61,9 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     @Autowired
     private UserRoleMappingCacheService userRoleMappingCacheService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void initialiseEachTest() throws Exception {
         helper.resetBusinessEventsTable();
@@ -76,8 +82,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         helper.setRoleMappingCache(
             user,
             Map.of(ROLE_ID, Set.of(LEGACY_BUSINESS_UNIT_ID)),
-            ROLE_MAPPING_USER_PREFIX
-        );
+            ROLE_MAPPING_USER_PREFIX);
 
         assertThat(roleCountBefore).isGreaterThan(0L);
 
@@ -95,8 +100,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
         TestHelperUtil.setAuthenticatedUser(user);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
-            List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
-        );
+            List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID)));
         helper.setRoleMappingCache(user, Map.of(1L, Set.of(BUSINESS_UNIT_ID)), ROLE_MAPPING_USER_PREFIX);
 
         assertThat(helper.businessUnitUserExists(BUSINESS_UNIT_USER_ID)).isFalse();
@@ -106,8 +110,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         helper.assertBusinessUnitUserRow(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
             ROLE_ASSIGNED_TO_USER,
-            ACCOUNT_ACTIVATION_INITIATED
-        );
+            ACCOUNT_ACTIVATION_INITIATED);
     }
 
     @Test
@@ -146,8 +149,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
         TestHelperUtil.setAuthenticatedUser(user);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
-            List.of(TestHelperUtil.legacyBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID))
-        );
+            List.of(TestHelperUtil.legacyBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID)));
         helper.setRoleMappingCache(user, Map.of(1L, Set.of(LEGACY_BUSINESS_UNIT_ID)), ROLE_MAPPING_USER_PREFIX);
 
         helper.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, DIFFERENT_USER_ID);
@@ -158,8 +160,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         helper.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
             ROLE_ASSIGNED_TO_USER,
-            ACCOUNT_ACTIVATION_INITIATED
-        );
+            ACCOUNT_ACTIVATION_INITIATED);
     }
 
     @Test
@@ -169,8 +170,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         TestHelperUtil.setAuthenticatedUser(user);
         helper.updateBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
-            List.of(TestHelperUtil.legacyBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
-        );
+            List.of(TestHelperUtil.legacyBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID)));
         helper.setRoleMappingCache(user, Map.of(1L, Set.of(BUSINESS_UNIT_ID)), ROLE_MAPPING_USER_PREFIX);
 
         helper.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID);
@@ -181,8 +181,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         helper.assertBusinessUnitUserRow(EXISTING_BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
             ROLE_ASSIGNED_TO_USER,
-            ACCOUNT_ACTIVATION_INITIATED
-        );
+            ACCOUNT_ACTIVATION_INITIATED);
     }
 
     @Test
@@ -193,8 +192,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
         helper.updateBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID, USER_ID);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
-            List.of(TestHelperUtil.legacyBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID))
-        );
+            List.of(TestHelperUtil.legacyBusinessUnitUser(EXISTING_BUSINESS_UNIT_USER_ID, LEGACY_BUSINESS_UNIT_ID)));
         helper.insertBusinessUnitUserRole(EXISTING_BUSINESS_UNIT_USER_ID, ROLE_ID);
         long roleCountBefore = helper.countRoleAssignments(user.getUserId());
 
@@ -206,6 +204,47 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         assertThat(helper.countRoleAssignments(user.getUserId())).isEqualTo(0L);
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(ROLE_UNASSIGNED_FROM_USER);
+    }
+
+    @Test
+    @DisplayName("PO-6466: first returned user state should reflect complete role replacement")
+    void getUserStateV2_whenRolesAreFullyReplaced_returnsOnlyReplacementRolePermissions() throws Exception {
+        final long userId = DIFFERENT_USER_ID;
+        final long oldRoleId = 1L;
+        final long replacementRoleId = 2L;
+        final short firstBusinessUnitId = 67;
+        final short secondBusinessUnitId = 69;
+        final String firstBusinessUnitUserId = "L081JG";
+        final String secondBusinessUnitUserId = "L082JG";
+
+        UserEntity user = userRepository.findById(userId).orElseThrow();
+        TestHelperUtil.setAuthenticatedUser(user);
+        helper.insertBusinessUnitUserRole(firstBusinessUnitUserId, oldRoleId);
+        helper.insertBusinessUnitUserRole(secondBusinessUnitUserId, oldRoleId);
+        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(List.of(
+            TestHelperUtil.legacyBusinessUnitUser(firstBusinessUnitUserId, firstBusinessUnitId),
+            TestHelperUtil.legacyBusinessUnitUser(secondBusinessUnitUserId, secondBusinessUnitId)));
+        helper.setRoleMappingCache(
+            user,
+            Map.of(replacementRoleId, Set.of(firstBusinessUnitId, secondBusinessUnitId)),
+            ROLE_MAPPING_USER_PREFIX);
+
+        String responseBody = mockMvc.perform(get(CURRENT_USER_STATE_URI))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.domains.fines.business_unit_users.length()").value(2))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertThat(permissionNamesForBusinessUnit(responseBody, firstBusinessUnitId))
+            .contains("Collection Order", "Check and Validate Draft Accounts", "Search and view accounts")
+            .doesNotContain("Create and Manage Draft Accounts", "Account Enquiry - Account Notes");
+        assertThat(permissionNamesForBusinessUnit(responseBody, secondBusinessUnitId))
+            .contains("Collection Order", "Check and Validate Draft Accounts", "Search and view accounts")
+            .doesNotContain("Create and Manage Draft Accounts", "Account Enquiry - Account Notes");
+
+        assertThat(helper.countRoleAssignmentsForUserRole(userId, oldRoleId)).isZero();
+        assertThat(helper.countRoleAssignmentsForUserRole(userId, replacementRoleId)).isEqualTo(2L);
     }
 
     @Test
@@ -225,13 +264,11 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         helper.insertBusinessUnitUserRole(buuId2, ROLE_ID);
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(List.of(
             TestHelperUtil.legacyBusinessUnitUser(buuId1, buId1),
-            TestHelperUtil.legacyBusinessUnitUser(buuId2, buId2)
-        ));
+            TestHelperUtil.legacyBusinessUnitUser(buuId2, buId2)));
         helper.setRoleMappingCache(
             user,
             Map.of(ROLE_ID, Set.of(buId1, buId2, buId3NotReturnedByLegacy)),
-            ROLE_MAPPING_USER_PREFIX
-        );
+            ROLE_MAPPING_USER_PREFIX);
 
         mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
@@ -246,8 +283,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         )).isEqualTo(0L);
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
             BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
-            ACCOUNT_ACTIVATION_INITIATED
-        );
+            ACCOUNT_ACTIVATION_INITIATED);
     }
 
     //AC7/AC9/AC14 is the happy path
@@ -293,8 +329,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         assertThat(activationDateAfter.toLocalDate()).isEqualTo(LocalDate.now());
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
             BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
-            ACCOUNT_ACTIVATION_INITIATED
-        );
+            ACCOUNT_ACTIVATION_INITIATED);
         helper.assertRoleMappingCache(user, roleMappingCache, ROLE_MAPPING_USER_PREFIX);
     }
 
@@ -322,8 +357,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         helper.setRoleMappingCache(
             user,
             Map.of(ROLE_ID, Set.of(buId1, buId2, buId3)),
-            ROLE_MAPPING_USER_PREFIX
-        );
+            ROLE_MAPPING_USER_PREFIX);
 
         mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
@@ -336,8 +370,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
             ROLE_ASSIGNED_TO_USER,
             ROLE_UNASSIGNED_FROM_USER,
-            ACCOUNT_ACTIVATION_INITIATED
-        );
+            ACCOUNT_ACTIVATION_INITIATED);
     }
 
     @Test
@@ -418,8 +451,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
                 secondRoleId, Set.of(buId1, buId2, buId3),
                 thirdRoleId, Set.of(buId3, buId4)
             ),
-            ROLE_MAPPING_USER_PREFIX
-        );
+            ROLE_MAPPING_USER_PREFIX);
 
         mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
@@ -445,8 +477,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
             BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
             ROLE_ASSIGNED_TO_USER,
-            ACCOUNT_ACTIVATION_INITIATED
-        );
+            ACCOUNT_ACTIVATION_INITIATED);
     }
 
     // Causing the db exception that triggers the rollback:
@@ -458,8 +489,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         TestHelperUtil.setAuthenticatedUser(user);
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
-            List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
-        );
+            List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID)));
         helper.setRoleMappingCache(user, Map.of(ROLE_ID, Set.of(BUSINESS_UNIT_ID)), ROLE_MAPPING_USER_PREFIX);
         helper.insertBusinessEvent(1L, ROLE_ASSIGNED_TO_USER, USER_ID, USER_ID, "{}");
         assertThat(helper.businessUnitUserExists(BUSINESS_UNIT_USER_ID)).isFalse();
@@ -479,6 +509,25 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         assertThat(helper.countRoleAssignments(user.getUserId())).isEqualTo(roleCountBefore);
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(ROLE_ASSIGNED_TO_USER);
+    }
+
+    private Set<String> permissionNamesForBusinessUnit(String responseBody, short businessUnitId) throws Exception {
+        JsonNode businessUnitUsers = objectMapper.readTree(responseBody)
+            .path("domains")
+            .path("fines")
+            .path("business_unit_users");
+
+        for (JsonNode businessUnitUser : businessUnitUsers) {
+            if (businessUnitUser.path("business_unit_id").asInt() == businessUnitId) {
+                Set<String> permissionNames = new LinkedHashSet<>();
+                for (JsonNode permission : businessUnitUser.path("permissions")) {
+                    permissionNames.add(permission.path("permission_name").asText());
+                }
+                return permissionNames;
+            }
+        }
+
+        throw new IllegalStateException("Missing business unit in response: " + businessUnitId);
     }
 
 }

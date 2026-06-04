@@ -41,7 +41,8 @@ import uk.gov.hmcts.reform.opal.service.opal.UserService;
 @WebMvcTest
 @ActiveProfiles({"integration"})
 @ContextConfiguration(classes = {
-    TestingSupportController.class, UserPermissionsController.class, FeatureToggleAspect.class,
+    TestingSupportController.class, UserPermissionsController.class, UserPermissionsV2Controller.class,
+    FeatureToggleAspect.class,
     OpalGlobalExceptionHandler.class, Release1AFeatureToggleIntegrationTest.TestAopConfiguration.class})
 @Import(Release1AFeatureToggleIntegrationTest.TestAopConfiguration.class)
 @DisplayName("Release 1A gated endpoints return 405 when disabled")
@@ -100,7 +101,8 @@ class Release1AFeatureToggleIntegrationTest {
                 .header(IF_MATCH, IF_MATCH_VALUE)),
             args("PUT /users/{userId}", put("/users/500000002")
                 .header(AUTHORIZATION, AUTHORIZATION_VALUE)
-                .header(IF_MATCH, IF_MATCH_VALUE))
+                .header(IF_MATCH, IF_MATCH_VALUE)),
+            args("GET /v2/users/{userId}/state", get("/v2/users/500000003/state"))
         );
     }
 

@@ -107,7 +107,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     }
 
     @Test
-    @DisplayName("should not add new business events when the same user logs in again without permission changes")
+    @DisplayName("PO-6486 should not add new business events when the same user logs in again without permission changes")
     void getUserStateV2_whenPermissionsAreUnchangedOnSecondLogin_doesNotAddBusinessEvents() throws Exception {
         //Arrange
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();

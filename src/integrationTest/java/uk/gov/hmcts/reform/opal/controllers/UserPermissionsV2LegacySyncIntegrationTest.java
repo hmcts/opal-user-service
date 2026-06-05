@@ -117,6 +117,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         );
         helper.setRoleMappingCache(user, Map.of(ROLE_ID, Set.of(BUSINESS_UNIT_ID)), ROLE_MAPPING_USER_PREFIX);
 
+        //Act & Assert - first login, events should be created
         mockMvc.perform(get(CURRENT_USER_STATE_URI))
             .andExpect(status().isOk());
 
@@ -125,7 +126,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             ACCOUNT_ACTIVATION_INITIATED
         );
 
-        //Act & Assert
+        //Act & Assert - second login, no new events should be created as permissions are unchanged
         mockMvc.perform(get(CURRENT_USER_STATE_URI))
                 .andExpect(status().isOk());
 

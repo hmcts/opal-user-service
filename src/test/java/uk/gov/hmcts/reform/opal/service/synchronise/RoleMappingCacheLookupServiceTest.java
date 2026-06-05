@@ -10,7 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
-import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.service.opal.RoleService;
 import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingCacheService;
 
@@ -75,6 +74,8 @@ class RoleMappingCacheLookupServiceTest {
         );
         when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
+        when(roleService.roleExists(101L)).thenReturn(true);
+        when(roleService.roleExists(202L)).thenReturn(true);
 
         // Act
         Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(user());
@@ -173,6 +174,7 @@ class RoleMappingCacheLookupServiceTest {
         cacheMap.put("101", null);
         when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
+        when(roleService.roleExists(101L)).thenReturn(true);
 
         // Act
         Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(user());
@@ -193,9 +195,9 @@ class RoleMappingCacheLookupServiceTest {
         );
         when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
-        when(roleService.requireRole(101L)).thenReturn(RoleEntity.builder().roleId(101L).build());
-        when(roleService.requireRole(202L)).thenReturn(RoleEntity.builder().roleId(202L).build());
-        when(roleService.requireRole(999L)).thenThrow(new jakarta.persistence.EntityNotFoundException("missing"));
+        when(roleService.roleExists(101L)).thenReturn(true);
+        when(roleService.roleExists(202L)).thenReturn(true);
+        when(roleService.roleExists(999L)).thenReturn(false);
 
         // Act
         Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(user());
@@ -230,6 +232,7 @@ class RoleMappingCacheLookupServiceTest {
         Map<String, Set<String>> cacheMap = Map.of("101", Set.of("business-unit-7"));
         when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
+        when(roleService.roleExists(101L)).thenReturn(true);
 
         // Act / Assert
         assertThrows(

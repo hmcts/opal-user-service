@@ -10,6 +10,7 @@ import org.springframework.test.context.jdbc.Sql;
 import uk.gov.hmcts.reform.opal.AbstractLegacyWireMockIntegrationTest;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
+import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingCacheService;
 import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperService;
 import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
 
@@ -53,6 +54,9 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
     @Autowired
     private TestHelperService helper;
+
+    @Autowired
+    private UserRoleMappingCacheService userRoleMappingCacheService;
 
     @BeforeEach
     void initialiseEachTest() throws Exception {
@@ -100,6 +104,36 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
         mockMvc.perform(get(CURRENT_USER_STATE_URI));
 
         helper.assertBusinessUnitUserRow(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
+        assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
+            ROLE_ASSIGNED_TO_USER,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
+    }
+
+    @Test
+    @DisplayName("AC2b: should ignore invalid cached role ids and still return user state")
+    void getUserStateV2_ignoresInvalidCachedRoleIdsAndReturnsUserState() throws Exception {
+        UserEntity user = userRepository.findById(USER_ID).orElseThrow();
+        TestHelperUtil.setAuthenticatedUser(user);
+        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
+            List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
+        );
+        userRoleMappingCacheService.putUserMapping(
+            user.getTokenSubject(),
+            Map.of(
+                "1", Set.of("69"),
+                "999", Set.of("70")
+            )
+        );
+
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.domains.fines.business_unit_users[0].business_unit_id")
+                           .value((int) BUSINESS_UNIT_ID));
+
+        helper.assertBusinessUnitUserRow(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
+        assertThat(helper.countRoleAssignments(user.getUserId())).isEqualTo(1L);
         assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
             ROLE_ASSIGNED_TO_USER,
             ACCOUNT_ACTIVATION_INITIATED

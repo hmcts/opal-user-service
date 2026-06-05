@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.opal.service.synchronise;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -81,9 +80,7 @@ public class RoleMappingCacheLookupService {
         Map<Long, Set<Short>> converted = new HashMap<>();
         for (Map.Entry<String, Set<String>> entry : cacheMap.entrySet()) {
             Long roleId = parseRoleId(user, entry.getKey());
-            try {
-                roleService.requireRole(roleId);
-            }  catch (EntityNotFoundException exception) {
+            if (!roleService.roleExists(roleId)) {
                 log.warn("Cache roleId not found in database. user: {} roleId: {}", user.getTokenSubject(), roleId);
                 continue;
             }

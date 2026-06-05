@@ -107,6 +107,36 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     }
 
     @Test
+    @DisplayName("should not add new business events when the same user logs in again without permission changes")
+    void getUserStateV2_whenPermissionsAreUnchangedOnSecondLogin_doesNotAddBusinessEvents() throws Exception {
+        //Arrange
+        UserEntity user = userRepository.findById(USER_ID).orElseThrow();
+        TestHelperUtil.setAuthenticatedUser(user);
+        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(
+            List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
+        );
+        helper.setRoleMappingCache(user, Map.of(ROLE_ID, Set.of(BUSINESS_UNIT_ID)), ROLE_MAPPING_USER_PREFIX);
+
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
+            .andExpect(status().isOk());
+
+        assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
+            ROLE_ASSIGNED_TO_USER,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
+
+        //Act & Assert
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
+                .andExpect(status().isOk());
+
+        helper.assertBusinessUnitUserRow(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
+        assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
+            ROLE_ASSIGNED_TO_USER,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
+    }
+
+    @Test
     @DisplayName("AC3: should reassign existing BUU to the requested user and assign role from cache")
     void getUserStateV2_reassignsExistingBusinessUnitUserToRequestedUser() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
@@ -210,10 +240,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             buId3NotReturnedByLegacy,
             ROLE_ID
         )).isEqualTo(0L);
-        assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
-            BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
-            ACCOUNT_ACTIVATION_INITIATED
-        );
+        assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(ACCOUNT_ACTIVATION_INITIATED);
     }
 
     //AC7/AC9/AC14 is the happy path

@@ -196,6 +196,39 @@ class UserServiceTest {
     }
 
     @Test
+    void addOrReplaceRoleInformationOnUser_doesNotLogEventWhenAssignmentsAreUnchanged() {
+        //Arrange
+        UserEntity user = user(123L);
+        Set<Short> requestedBusinessUnitIds = Set.of((short) 11, (short) 12, (short) 13);
+        List<BusinessUnitUserEntity> alignedBusinessUnitUsers = List.of(
+            businessUnitUser("BU001", 123L, (short) 11),
+            businessUnitUser("BU002", 123L, (short) 12),
+            businessUnitUser("BU003", 123L, (short) 13)
+        );
+        List<BusinessUnitUserRoleEntity> existingAssignments = existingAssignments();
+        RoleEntity role = role(201L);
+
+        when(roleService.getAlignedBusinessUnitUsers(123L, requestedBusinessUnitIds))
+            .thenReturn(alignedBusinessUnitUsers);
+        when(roleService.requireRole(201L)).thenReturn(role);
+        when(roleService.getExistingAssignments(123L, 201L)).thenReturn(existingAssignments);
+
+        //Act
+        userService.addOrReplaceRoleInformationOnUser(user, 201L, requestedBusinessUnitIds);
+
+        //Assert
+        verify(roleService).removeObsoleteAssignments(eq(existingAssignments), eq(Set.of("BU001", "BU002", "BU003")));
+        verify(roleService).addMissingAssignments(
+            eq(existingAssignments),
+            argThat((Map<String, BusinessUnitUserEntity> businessUnitUsersById) ->
+                businessUnitUsersById.keySet().equals(Set.of("BU001", "BU002", "BU003"))),
+            eq(Set.of("BU001", "BU002", "BU003")),
+            eq(role)
+        );
+        verifyNoInteractions(businessEventService);
+    }
+
+    @Test
     void deleteRoleFromUser_removesAssignmentsAndLogsEvent() {
         final UserEntity user = user(123L);
         final List<BusinessUnitUserRoleEntity> existingAssignments = existingAssignments();

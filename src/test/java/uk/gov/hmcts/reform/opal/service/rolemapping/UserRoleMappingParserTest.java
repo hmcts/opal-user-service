@@ -142,6 +142,31 @@ class UserRoleMappingParserTest {
     }
 
     @Test
+    @DisplayName("Skips rows with extra columns instead of throwing")
+    void skipsRowsWithExtraColumns() throws Exception {
+
+        // ARRANGE
+        String csv = """
+                email_address,business_unit_id,role_id
+                user1@test.com,BU1,R2,,
+                user2@test.com,BU2,R2
+                """;
+
+        // ACT
+        MappingFileProcessingResult result = parser.parse(new StringReader(csv));
+
+        // ASSERT
+        assertEquals(1, result.validUsers().size());
+
+        ParsedUserMapping user2 = result.validUsers().get(0);
+
+        assertEquals("user2@test.com", user2.emailAddress());
+        assertEquals(Map.of(
+            "R2", Set.of("BU2")
+        ), user2.roleToBusinessUnits());
+    }
+
+    @Test
     @DisplayName("Ignores rows for email already marked invalid even if contiguous afterwards")
     void ignoresRowsForEmailAlreadyMarkedInvalidEvenIfContiguousAfterwards() throws Exception {
 

@@ -10,6 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.entity.RoleEntity;
+import uk.gov.hmcts.reform.opal.service.opal.RoleService;
 import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingCacheService;
 
 import java.lang.reflect.Type;
@@ -40,6 +42,9 @@ class RoleMappingCacheLookupServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private RoleService roleService;
 
     @InjectMocks
     private RoleMappingCacheLookupService roleMappingCacheLookupService;
@@ -174,6 +179,28 @@ class RoleMappingCacheLookupServiceTest {
 
         // Assert
         assertEquals(Map.of(101L, Set.of()), result);
+    }
+
+    @Test
+    void getRoleMappingByTokenSubject_skipsInvalidRolesAndKeepsValidRoles() throws Exception {
+
+        // Arrange
+        String cachePayload = "{\"101\":[\"7\"],\"999\":[\"8\"]}";
+        Map<String, Set<String>> cacheMap = Map.of(
+            "101", Set.of("7"),
+            "999", Set.of("8")
+        );
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
+        when(roleService.requireRole(101L)).thenReturn(RoleEntity.builder().roleId(101L).build());
+        when(roleService.requireRole(999L)).thenThrow(new jakarta.persistence.EntityNotFoundException("missing"));
+
+        // Act
+        Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(user());
+
+        // Assert
+        assertEquals(Map.of(101L, Set.of((short) 7)), result);
+        verify(userRoleMappingCacheService).getUserMapping(TOKEN_SUBJECT);
     }
 
     @Test

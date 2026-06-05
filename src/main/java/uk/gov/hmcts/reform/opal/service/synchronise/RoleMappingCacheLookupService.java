@@ -3,10 +3,12 @@ package uk.gov.hmcts.reform.opal.service.synchronise;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.service.opal.RoleService;
 import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingCacheService;
 
 import java.util.HashMap;
@@ -23,6 +25,7 @@ public class RoleMappingCacheLookupService {
     private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
     private final UserRoleMappingCacheService userRoleMappingCacheService;
+    private final RoleService roleService;
     private final ObjectMapper objectMapper;
 
     /**
@@ -77,6 +80,13 @@ public class RoleMappingCacheLookupService {
         Map<Long, Set<Short>> converted = new HashMap<>();
         for (Map.Entry<String, Set<String>> entry : cacheMap.entrySet()) {
             Long roleId = parseRoleId(user, entry.getKey());
+            try {
+                roleService.requireRole(roleId);
+            }  catch (EntityNotFoundException exception) {
+                log.warn("Cache roleId not found in database. user: {} roleId: {}", user.getTokenSubject(), roleId);
+                continue;
+            }
+
             if (entry.getValue() == null) {
                 log.warn("Role {} has null business unit ids in cache for user {}. Treating as empty set.",
                          entry.getKey(), user.getUserId());

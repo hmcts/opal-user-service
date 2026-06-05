@@ -66,7 +66,8 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
             TOKEN_SUBJECT,
             Map.of(
                 "2", Set.of("68"),
-                "999", Set.of("70")
+                "999", Set.of("70"),
+                "1", Set.of("69")
             )
         );
 
@@ -75,7 +76,7 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
                 TestHelperUtil.buildUser(USER_ID, TOKEN_SUBJECT)
             );
 
-            assertThat(result).isEqualTo(Map.of(2L, Set.of((short) 68)));
+            assertThat(result).isEqualTo(Map.of(2L, Set.of((short) 68),1L, Set.of((short) 69)));
         } finally {
             userRoleMappingCacheService.deleteUserMapping(TOKEN_SUBJECT);
         }

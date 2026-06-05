@@ -185,21 +185,23 @@ class RoleMappingCacheLookupServiceTest {
     void getRoleMappingByTokenSubject_skipsInvalidRolesAndKeepsValidRoles() throws Exception {
 
         // Arrange
-        String cachePayload = "{\"101\":[\"7\"],\"999\":[\"8\"]}";
+        String cachePayload = "{\"101\":[\"7\"],\"999\":[\"8\"],\"202\":[\"9\"]}";
         Map<String, Set<String>> cacheMap = Map.of(
             "101", Set.of("7"),
-            "999", Set.of("8")
+            "999", Set.of("8"),
+            "202", Set.of("9")
         );
         when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
         when(roleService.requireRole(101L)).thenReturn(RoleEntity.builder().roleId(101L).build());
+        when(roleService.requireRole(202L)).thenReturn(RoleEntity.builder().roleId(202L).build());
         when(roleService.requireRole(999L)).thenThrow(new jakarta.persistence.EntityNotFoundException("missing"));
 
         // Act
         Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(user());
 
         // Assert
-        assertEquals(Map.of(101L, Set.of((short) 7)), result);
+        assertEquals(Map.of(101L, Set.of((short) 7), 202L, Set.of((short) 9)), result);
         verify(userRoleMappingCacheService).getUserMapping(TOKEN_SUBJECT);
     }
 

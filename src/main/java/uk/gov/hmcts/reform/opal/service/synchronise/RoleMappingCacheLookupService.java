@@ -75,6 +75,7 @@ public class RoleMappingCacheLookupService {
      *                 {@link String}
      * @return map keyed by role id as {@link Long}, with values containing business unit ids as {@link Short}
      */
+    @SuppressWarnings("java:S135")
     private Map<Long, Set<Short>> convertCacheMap(UserEntity user, Map<String, Set<String>> cacheMap) {
 
         Map<Long, Set<Short>> converted = new HashMap<>();

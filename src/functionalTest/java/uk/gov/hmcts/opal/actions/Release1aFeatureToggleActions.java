@@ -94,7 +94,7 @@ public final class Release1aFeatureToggleActions {
      * @param baseUri base URL of the service under test.
      */
     public static void getCurrentUserState(String baseUri) {
-        record(TestHttpClient.get(baseUri + "/users/state", Map.of("Content-Type", JSON_CONTENT_TYPE)));
+        record(TestHttpClient.get(baseUri + "/v2/users/0/state", Map.of("Content-Type", JSON_CONTENT_TYPE)));
     }
 
     /**
@@ -105,7 +105,7 @@ public final class Release1aFeatureToggleActions {
      */
     public static void getUserStateById(String baseUri, long userId) {
         record(TestHttpClient.get(
-            baseUri + "/users/" + userId + "/state", Map.of("Content-Type", JSON_CONTENT_TYPE)));
+            baseUri + "/v2/users/" + userId + "/state", Map.of("Content-Type", JSON_CONTENT_TYPE)));
     }
 
     /**

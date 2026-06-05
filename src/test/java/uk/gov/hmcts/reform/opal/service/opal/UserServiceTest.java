@@ -198,7 +198,6 @@ class UserServiceTest {
     @Test
     void addOrReplaceRoleInformationOnUser_doesNotLogEventWhenAssignmentsAreUnchanged() {
         //Arrange
-        UserEntity user = user(123L);
         Set<Short> requestedBusinessUnitIds = Set.of((short) 11, (short) 12, (short) 13);
         List<BusinessUnitUserEntity> alignedBusinessUnitUsers = List.of(
             businessUnitUser("BU001", 123L, (short) 11),
@@ -212,6 +211,7 @@ class UserServiceTest {
             .thenReturn(alignedBusinessUnitUsers);
         when(roleService.requireRole(201L)).thenReturn(role);
         when(roleService.getExistingAssignments(123L, 201L)).thenReturn(existingAssignments);
+        UserEntity user = user(123L);
 
         //Act
         userService.addOrReplaceRoleInformationOnUser(user, 201L, requestedBusinessUnitIds);

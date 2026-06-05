@@ -40,8 +40,8 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
         userRoleMappingCacheService.putUserMapping(
             TOKEN_SUBJECT,
             Map.of(
-                "101", Set.of("7", "8"),
-                "202", Set.of("9")
+                "1", Set.of("7", "8"),
+                "2", Set.of("9")
             )
         );
 
@@ -51,9 +51,32 @@ class RoleMappingCacheLookupServiceIntegrationTest extends AbstractIntegrationTe
             );
 
             assertThat(result).isEqualTo(Map.of(
-                101L, Set.of((short) 7, (short) 8),
-                202L, Set.of((short) 9)
+                1L, Set.of((short) 7, (short) 8),
+                2L, Set.of((short) 9)
             ));
+        } finally {
+            userRoleMappingCacheService.deleteUserMapping(TOKEN_SUBJECT);
+        }
+    }
+
+    @Test
+    @DisplayName("Should skip invalid roles and keep valid roles when Redis contains mixed role ids")
+    void getRoleMappingByTokenSubject_skipsInvalidRoleIdsAndKeepsValidRoleIds() throws Exception {
+        userRoleMappingCacheService.putUserMapping(
+            TOKEN_SUBJECT,
+            Map.of(
+                "2", Set.of("68"),
+                "999", Set.of("70"),
+                "1", Set.of("69")
+            )
+        );
+
+        try {
+            Map<Long, Set<Short>> result = roleMappingCacheLookupService.getRoleMappingByTokenSubject(
+                TestHelperUtil.buildUser(USER_ID, TOKEN_SUBJECT)
+            );
+
+            assertThat(result).isEqualTo(Map.of(2L, Set.of((short) 68),1L, Set.of((short) 69)));
         } finally {
             userRoleMappingCacheService.deleteUserMapping(TOKEN_SUBJECT);
         }

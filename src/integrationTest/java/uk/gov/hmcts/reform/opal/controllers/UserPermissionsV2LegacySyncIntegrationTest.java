@@ -107,6 +107,40 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
     }
 
     @Test
+    @DisplayName("PO-6491: should discard legacy business units that are not present in the cached role mapping")
+    void getUserStateV2_doesNotPersistLegacyBusinessUnitsWithoutCachedRoleMappings() throws Exception {
+        final String mappedBusinessUnitUserId = "L109JG";
+        final String unmappedBusinessUnitUserId = "L110JG";
+        final short unmappedBusinessUnitId = 68;
+
+        // Arrange
+        UserEntity user = userRepository.findById(USER_ID).orElseThrow();
+        TestHelperUtil.setAuthenticatedUser(user);
+        legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(List.of(
+            TestHelperUtil.legacyBusinessUnitUser(mappedBusinessUnitUserId, BUSINESS_UNIT_ID),
+            TestHelperUtil.legacyBusinessUnitUser(unmappedBusinessUnitUserId, unmappedBusinessUnitId)
+        ));
+        helper.setRoleMappingCache(user, Map.of(ROLE_ID, Set.of(BUSINESS_UNIT_ID)), ROLE_MAPPING_USER_PREFIX);
+
+        // Act
+        mockMvc.perform(get(CURRENT_USER_STATE_URI))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath(
+                "$.domains.*.business_unit_users[*].business_unit_id",
+                containsInAnyOrder((int) BUSINESS_UNIT_ID)
+            ));
+
+        // Assert
+        helper.assertUserBusinessUnitIds(user.getUserId(), BUSINESS_UNIT_ID);
+        helper.assertBusinessUnitUserRow(mappedBusinessUnitUserId, BUSINESS_UNIT_ID, USER_ID, ROLE_ID, 1L);
+        assertThat(helper.businessUnitUserExists(unmappedBusinessUnitUserId)).isFalse();
+        assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(
+            ROLE_ASSIGNED_TO_USER,
+            ACCOUNT_ACTIVATION_INITIATED
+        );
+    }
+
+    @Test
     @DisplayName("AC3: should reassign existing BUU to the requested user and assign role from cache")
     void getUserStateV2_reassignsExistingBusinessUnitUserToRequestedUser() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();

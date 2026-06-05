@@ -8,8 +8,11 @@ import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
@@ -38,11 +41,22 @@ public class SynchronisePermissionsService {
             //1-2. Get the legacy business unit ids
             List<LegacyBusinessUnitUserId> legacyBuuList = legacyWrapperService.getBusinessUnitUserIds(user);
 
+            // Build the CSV-backed role/BU view first so the same validated BU set can drive
+            // both role assignment and post-sync BU cleanup.
+            Map<Long, Set<Short>> validatedRoleMap = synchroniseRolesService.getValidatedRoleMap(user, legacyBuuList);
+
             //3. Update any business_unit_users in the database that do not match the data returned from the legacy API
             synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, legacyBuuList);
 
             //4-6. Update the users roles
-            Set<Long> validatedRoleIds = synchroniseRolesService.synchroniseRoles(user, legacyBuuList);
+            Set<Long> validatedRoleIds = synchroniseRolesService.synchroniseRoles(user, validatedRoleMap);
+
+            // Legacy may return extra BU rows that are absent from the CSV mapping. Remove those
+            // after role sync so neither the DB nor user state retains empty BU entries.
+            synchroniseBusinessUnitUsersService.removeBusinessUnitUsersWithoutValidatedRoleMappings(
+                user.getUserId(),
+                getValidatedBusinessUnitIds(validatedRoleMap)
+            );
 
             //7. Call activateUser method if the user does not have an activation date
             if (!validatedRoleIds.isEmpty() && user.getActivationDate() == null) {
@@ -57,5 +71,11 @@ public class SynchronisePermissionsService {
                                                       UNEXPECTED_RUNTIME_EXCEPTION_REASON,
                                                       exception);
         }
+    }
+
+    private Set<Short> getValidatedBusinessUnitIds(Map<Long, Set<Short>> validatedRoleMap) {
+        return validatedRoleMap.values().stream()
+            .flatMap(Set::stream)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 }

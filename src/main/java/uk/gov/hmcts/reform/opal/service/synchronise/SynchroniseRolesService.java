@@ -11,13 +11,11 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.service.opal.BusinessUnitUserService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static java.util.Collections.emptySet;
 
 // Implements Steps 4-6 of https://tools.hmcts.net/jira/browse/PO-2831
 
@@ -37,30 +35,19 @@ public class SynchroniseRolesService {
 
     @Transactional
     public Set<Long> synchroniseRoles(UserEntity user, List<LegacyBusinessUnitUserId> legacyBuuList) {
+        return synchroniseRoles(user, getValidatedRoleMap(user, legacyBuuList));
+    }
+
+    @Transactional
+    public Set<Long> synchroniseRoles(UserEntity user, Map<Long, Set<Short>> validatedRoleMap) {
         try {
-            Set<Long> validatedRoleIds;
-            try {
-                // 4. Fetch data from the role mapping cache (
-                Map<Long, Set<Short>> roleMap = roleMappingCacheLookupService.getRoleMappingByTokenSubject(
-                    user
-                );
+            // This map  represents the CSV/legacy blend, so only
+            // validated BU ids are eligible for role assignment.
+            validatedRoleMap.keySet().forEach(roleId ->
+                userService.addOrReplaceRoleInformationOnUser(user, roleId, validatedRoleMap.get(roleId))
+            );
 
-                // 5. Compare the two results and capture the intercept
-                Set<Short> legacyBuuIds = new HashSet<>();
-                for (LegacyBusinessUnitUserId legacyUser : legacyBuuList) {
-                    legacyBuuIds.add(parseBusinessUnitId(user, legacyUser.getBusinessUnitId()));
-                }
-
-                Map<Long, Set<Short>> validatedRoleMap = pruneBusinessUnitsNotReturnedByLegacy(roleMap, legacyBuuIds);
-                validatedRoleMap.keySet().forEach(roleId ->
-                    userService.addOrReplaceRoleInformationOnUser(user, roleId, validatedRoleMap.get(roleId))
-                );
-                validatedRoleIds = validatedRoleMap.keySet();
-
-            } catch (UserMissingFromCacheException e) {
-                log.warn("Nothing in cache for : " + user.getTokenSubject());
-                validatedRoleIds = emptySet();
-            }
+            Set<Long> validatedRoleIds = new LinkedHashSet<>(validatedRoleMap.keySet());
 
             // 6. Remove any roles associated with user in db, but not present in validated role map
             Set<RoleEntity> usersCurrentRoles = businessUnitUserService.findAllRolesOfUser(user);
@@ -79,11 +66,43 @@ public class SynchroniseRolesService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public Map<Long, Set<Short>> getValidatedRoleMap(UserEntity user, List<LegacyBusinessUnitUserId> legacyBuuList) {
+        try {
+            try {
+                Map<Long, Set<Short>> roleMap = roleMappingCacheLookupService.getRoleMappingByTokenSubject(
+                    user
+                );
+
+                Set<Short> legacyBuuIds = new LinkedHashSet<>();
+                for (LegacyBusinessUnitUserId legacyUser : legacyBuuList) {
+                    legacyBuuIds.add(parseBusinessUnitId(user, legacyUser.getBusinessUnitId()));
+                }
+
+                // Keep only BU ids that appear in both sources:
+                // CSV cache says "user should have role on BU"
+                // legacy says "user currently has BU"
+                return pruneBusinessUnitsNotReturnedByLegacy(roleMap, legacyBuuIds);
+            } catch (UserMissingFromCacheException e) {
+                log.warn("Nothing in cache for : " + user.getTokenSubject());
+                return Map.of();
+            }
+        } catch (RuntimeException exception) {
+            if (exception instanceof SynchronisePermissionsException synchronisePermissionsException) {
+                throw synchronisePermissionsException;
+            }
+            throw new SynchronisePermissionsException(user, SYNC_STAGE,
+                                                      UNEXPECTED_RUNTIME_EXCEPTION_REASON, exception);
+        }
+    }
+
     private static @NonNull Map<Long, Set<Short>> pruneBusinessUnitsNotReturnedByLegacy(
         Map<Long, Set<Short>> typedRoleMap, Set<Short> legacyBuuIds) {
-        Map<Long, Set<Short>> prunedMap = new HashMap<>();
+        Map<Long, Set<Short>> prunedMap = new LinkedHashMap<>();
         for (Long roleId : typedRoleMap.keySet()) {
-            Set<Short> verifiedBuus = new HashSet<>();
+            // Core comparison: a BU survives only if it is present in the
+            // CSV-derived role map and in the legacy response for the current user.
+            Set<Short> verifiedBuus = new LinkedHashSet<>();
             for (Short buu : typedRoleMap.get(roleId)) {
                 if (legacyBuuIds.contains(buu)) {
                     verifiedBuus.add(buu);

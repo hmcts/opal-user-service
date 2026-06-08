@@ -64,6 +64,20 @@ class RoleServiceTest {
     }
 
     @Test
+    void roleExists_whenRoleExists_returnsTrue() {
+        when(roleRepository.existsById(101L)).thenReturn(true);
+
+        assertEquals(true, roleService.roleExists(101L));
+    }
+
+    @Test
+    void roleExists_whenRoleDoesNotExist_returnsFalse() {
+        when(roleRepository.existsById(101L)).thenReturn(false);
+
+        assertEquals(false, roleService.roleExists(101L));
+    }
+
+    @Test
     void getAlignedBusinessUnitUsers_whenAllBusinessUnitsAreAligned_returnsBusinessUnitUsers() {
         BusinessUnitUserEntity buu1 = businessUnitUser("BU001", 1L, (short) 11);
         BusinessUnitUserEntity buu2 = businessUnitUser("BU002", 1L, (short) 12);

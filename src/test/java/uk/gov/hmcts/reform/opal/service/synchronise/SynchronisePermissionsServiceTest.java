@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,10 +28,12 @@ class SynchronisePermissionsServiceTest {
     private static final long ROLE_ID = 101L;
     private static final String SYNC_STAGE = "synchronise user permissions";
     private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
+    private static final short BUSINESS_UNIT_ID = 66;
     private static final UserEntity DETACHED_USER = user(USER_ID, null);
     private static final UserEntity MANAGED_USER_WITH_NO_ACTIVATION = user(USER_ID, null);
     private static final UserEntity MANAGED_USER_WITH_EXISTING_ACTIVATION_DATE =
         user(USER_ID, LocalDateTime.parse("2025-01-02T03:04:05.678"));
+    private static final Map<Long, Set<Short>> VALIDATED_ROLE_MAP = Map.of(ROLE_ID, Set.of(BUSINESS_UNIT_ID));
 
     @Mock
     private LegacyWrapperService legacyWrapperService;
@@ -58,7 +61,9 @@ class SynchronisePermissionsServiceTest {
         when(userService.getUser(USER_ID)).thenReturn(MANAGED_USER_WITH_NO_ACTIVATION);
         when(legacyWrapperService.getBusinessUnitUserIds(MANAGED_USER_WITH_NO_ACTIVATION))
             .thenReturn(legacyBusinessUnitUsers);
-        when(synchroniseRolesService.synchroniseRoles(MANAGED_USER_WITH_NO_ACTIVATION, legacyBusinessUnitUsers))
+        when(synchroniseRolesService.getValidatedRoleMap(MANAGED_USER_WITH_NO_ACTIVATION, legacyBusinessUnitUsers))
+            .thenReturn(VALIDATED_ROLE_MAP);
+        when(synchroniseRolesService.synchroniseRoles(MANAGED_USER_WITH_NO_ACTIVATION, VALIDATED_ROLE_MAP))
             .thenReturn(Set.of(ROLE_ID));
 
         // Act
@@ -78,7 +83,9 @@ class SynchronisePermissionsServiceTest {
         when(userService.getUser(USER_ID)).thenReturn(MANAGED_USER_WITH_NO_ACTIVATION);
         when(legacyWrapperService.getBusinessUnitUserIds(MANAGED_USER_WITH_NO_ACTIVATION))
             .thenReturn(legacyBusinessUnitUsers);
-        when(synchroniseRolesService.synchroniseRoles(MANAGED_USER_WITH_NO_ACTIVATION, legacyBusinessUnitUsers))
+        when(synchroniseRolesService.getValidatedRoleMap(MANAGED_USER_WITH_NO_ACTIVATION, legacyBusinessUnitUsers))
+            .thenReturn(VALIDATED_ROLE_MAP);
+        when(synchroniseRolesService.synchroniseRoles(MANAGED_USER_WITH_NO_ACTIVATION, VALIDATED_ROLE_MAP))
             .thenReturn(Set.of());
 
         // Act
@@ -91,7 +98,12 @@ class SynchronisePermissionsServiceTest {
             MANAGED_USER_WITH_NO_ACTIVATION,
             legacyBusinessUnitUsers
         );
-        verify(synchroniseRolesService).synchroniseRoles(MANAGED_USER_WITH_NO_ACTIVATION, legacyBusinessUnitUsers);
+        verify(synchroniseRolesService).getValidatedRoleMap(MANAGED_USER_WITH_NO_ACTIVATION, legacyBusinessUnitUsers);
+        verify(synchroniseRolesService).synchroniseRoles(MANAGED_USER_WITH_NO_ACTIVATION, VALIDATED_ROLE_MAP);
+        verify(synchroniseBusinessUnitUsersService).removeBusinessUnitUsersWithoutValidatedRoleMappings(
+            USER_ID,
+            Set.of(BUSINESS_UNIT_ID)
+        );
         verify(userService, never()).activateUser(MANAGED_USER_WITH_NO_ACTIVATION);
     }
 
@@ -105,9 +117,13 @@ class SynchronisePermissionsServiceTest {
         when(userService.getUser(USER_ID)).thenReturn(MANAGED_USER_WITH_EXISTING_ACTIVATION_DATE);
         when(legacyWrapperService.getBusinessUnitUserIds(MANAGED_USER_WITH_EXISTING_ACTIVATION_DATE))
             .thenReturn(legacyBusinessUnitUsers);
-        when(synchroniseRolesService.synchroniseRoles(
+        when(synchroniseRolesService.getValidatedRoleMap(
             MANAGED_USER_WITH_EXISTING_ACTIVATION_DATE,
             legacyBusinessUnitUsers
+        )).thenReturn(VALIDATED_ROLE_MAP);
+        when(synchroniseRolesService.synchroniseRoles(
+            MANAGED_USER_WITH_EXISTING_ACTIVATION_DATE,
+            VALIDATED_ROLE_MAP
         )).thenReturn(Set.of(ROLE_ID));
 
         // Act

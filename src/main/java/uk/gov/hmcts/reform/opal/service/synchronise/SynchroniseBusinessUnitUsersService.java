@@ -67,6 +67,18 @@ public class SynchroniseBusinessUnitUsersService {
         }
     }
 
+    @Transactional
+    public void removeBusinessUnitUsersWithoutValidatedRoleMappings(Long userId, Set<Short> validatedBusinessUnitIds) {
+        List<String> staleBusinessUnitUserIds = businessUnitUserRepository.findAllByUser_UserId(userId).stream()
+            .filter(businessUnitUser -> !validatedBusinessUnitIds.contains(businessUnitUser
+                    .getBusinessUnitId()))
+            .map(BusinessUnitUserEntity::getBusinessUnitUserId)
+            .toList();
+
+        log.info("Deleting legacy business units not in cache for user:{} BUUs:{}", userId, staleBusinessUnitUserIds);
+        deleteBusinessUnitUsers(staleBusinessUnitUserIds);
+    }
+
     private void processBusinessUnitUser(UserEntity user, String businessUnitUserId, Short businessUnitId) {
         Optional<BusinessUnitEntity> maybeBusinessUnitEntity = businessUnitRepository.findById(businessUnitId);
 
@@ -133,12 +145,16 @@ public class SynchroniseBusinessUnitUsersService {
             .map(BusinessUnitUserEntity::getBusinessUnitUserId)
             .toList();
 
-        if (staleBusinessUnitUserIds.isEmpty()) {
+        deleteBusinessUnitUsers(staleBusinessUnitUserIds);
+    }
+
+    private void deleteBusinessUnitUsers(List<String> businessUnitUserIds) {
+        if (businessUnitUserIds.isEmpty()) {
             return;
         }
 
-        businessUnitUserRoleRepository.deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
-        businessUnitUserRepository.deleteAllById(staleBusinessUnitUserIds);
+        businessUnitUserRoleRepository.deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(businessUnitUserIds);
+        businessUnitUserRepository.deleteAllById(businessUnitUserIds);
     }
 
 }

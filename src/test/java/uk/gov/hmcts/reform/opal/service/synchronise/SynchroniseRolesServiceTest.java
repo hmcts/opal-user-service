@@ -12,6 +12,7 @@ import uk.gov.hmcts.reform.opal.service.opal.BusinessUnitUserService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,6 +69,91 @@ class SynchroniseRolesServiceTest {
         // Assert
         verify(userService, never()).deleteRoleFromUser(user, 101L);
         verify(userService).deleteRoleFromUser(user, 202L);
+    }
+
+    @Test
+    void getValidatedRoleMap_prunesBusinessUnitsNotReturnedByLegacy() throws Exception {
+
+        // Arrange
+        UserEntity user = UserEntity.builder().userId(USER_ID).tokenSubject(TOKEN_SUBJECT).build();
+        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(user))
+            .thenReturn(Map.of(
+                101L, Set.of((short) 7, (short) 8),
+                202L, Set.of((short) 8, (short) 9)
+            ));
+
+        List<LegacyBusinessUnitUserId> legacyBusinessUnitUsers = List.of(
+            LegacyBusinessUnitUserId.builder().businessUnitId("7").build(),
+            LegacyBusinessUnitUserId.builder().businessUnitId("9").build()
+        );
+
+        // Act
+        Map<Long, Set<Short>> validatedRoleMap =
+            synchroniseRolesService.getValidatedRoleMap(user, legacyBusinessUnitUsers);
+
+        // Assert
+        assertEquals(
+            Map.of(
+                101L, Set.of((short) 7),
+                202L, Set.of((short) 9)
+            ),
+            validatedRoleMap
+        );
+        verify(roleMappingCacheLookupService).getRoleMappingByTokenSubject(user);
+        verify(userService, never()).addOrReplaceRoleInformationOnUser(any(), anyLong(), anySet());
+        verify(userService, never()).deleteRoleFromUser(any(), anyLong());
+        verify(businessUnitUserService, never()).findAllRolesOfUser(any());
+    }
+
+    @Test
+    void getValidatedRoleMap_rethrowsSynchronisePermissionsException_whenLookupThrowsIt() throws Exception {
+
+        // Arrange
+        UserEntity user = UserEntity.builder().userId(USER_ID).tokenSubject(TOKEN_SUBJECT).build();
+        SynchronisePermissionsException synchronisePermissionsException =
+            new SynchronisePermissionsException(user, SYNC_STAGE, "lookup failed");
+        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(user))
+            .thenThrow(synchronisePermissionsException);
+
+        // Act
+        SynchronisePermissionsException exception = assertThrows(
+            SynchronisePermissionsException.class,
+            () -> synchroniseRolesService.getValidatedRoleMap(user, List.of())
+        );
+
+        // Assert
+        assertEquals(synchronisePermissionsException, exception);
+        verify(roleMappingCacheLookupService).getRoleMappingByTokenSubject(user);
+        verify(userService, never()).addOrReplaceRoleInformationOnUser(any(), anyLong(), anySet());
+        verify(userService, never()).deleteRoleFromUser(any(), anyLong());
+        verify(businessUnitUserService, never()).findAllRolesOfUser(any());
+    }
+
+    @Test
+    void getValidatedRoleMap_wrapsUnexpectedRuntimeException_whenLookupThrowsIt() throws Exception {
+
+        // Arrange
+        UserEntity user = UserEntity.builder().userId(USER_ID).tokenSubject(TOKEN_SUBJECT).build();
+        RuntimeException runtimeException = new RuntimeException("lookup boom");
+        when(roleMappingCacheLookupService.getRoleMappingByTokenSubject(user))
+            .thenThrow(runtimeException);
+
+        // Act
+        SynchronisePermissionsException exception = assertThrows(
+            SynchronisePermissionsException.class,
+            () -> synchroniseRolesService.getValidatedRoleMap(user, List.of())
+        );
+
+        // Assert
+        assertEquals(
+            errorMessage(SYNC_STAGE, UNEXPECTED_RUNTIME_EXCEPTION_REASON),
+            exception.getMessage()
+        );
+        assertEquals(runtimeException, exception.getCause());
+        verify(roleMappingCacheLookupService).getRoleMappingByTokenSubject(user);
+        verify(userService, never()).addOrReplaceRoleInformationOnUser(any(), anyLong(), anySet());
+        verify(userService, never()).deleteRoleFromUser(any(), anyLong());
+        verify(businessUnitUserService, never()).findAllRolesOfUser(any());
     }
 
     @Test

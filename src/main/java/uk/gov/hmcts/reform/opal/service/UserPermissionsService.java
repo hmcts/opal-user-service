@@ -58,7 +58,6 @@ public class UserPermissionsService {
     private final AppModeConfiguration appModeConfiguration;
     private final UserService userService;
 
-    @Transactional(readOnly = true)
     public Long getAuthenticatedUserId() {
         return SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().getUserId();
     }
@@ -92,7 +91,7 @@ public class UserPermissionsService {
 
     private UserEntity getUserFromAuthentication() {
         Jwt jwt = SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().getToken();
-        UserEntity user = userService.getAuthenticatedUser();
+        UserEntity user = userService.getUser(getAuthenticatedUserId());
         validateAuthenticatedUser(user, jwt);
         return user;
     }

@@ -132,7 +132,7 @@ class UserPermissionsServiceV2Test {
         when(clock.getZone()).thenReturn(fixedZone);
 
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
@@ -164,7 +164,7 @@ class UserPermissionsServiceV2Test {
 
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
@@ -182,7 +182,7 @@ class UserPermissionsServiceV2Test {
 
         // arrange
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
@@ -206,7 +206,7 @@ class UserPermissionsServiceV2Test {
         when(appModeConfiguration.getAppMode()).thenReturn("legacy");
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
 
         // Act
         UserStateV2Dto result = service.getUserStateV2(false);
@@ -219,6 +219,33 @@ class UserPermissionsServiceV2Test {
     }
 
     @Test
+    void getUserStateV2_whenLegacySynchronisationReloadsUserState_mapsReloadedUser() {
+
+        // Arrange
+        setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
+        when(appModeConfiguration.getAppMode()).thenReturn("legacy");
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
+        UserEntity synchronisedUser = UserEntity.builder()
+            .userId(USER_ID)
+            .username(TOKEN_PREFERRED_USERNAME)
+            .tokenName(TOKEN_NAME)
+            .tokenSubject(TOKEN_SUBJECT)
+            .versionNumber(5L)
+            .build();
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(synchronisedUser));
+        when(userStateMapper.toUserStateV2Dto(synchronisedUser, clock)).thenReturn(dto);
+
+        // Act
+        UserStateV2Dto result = service.getUserStateV2(false);
+
+        // Assert
+        assertThat(result).isEqualTo(dto);
+        verify(synchronisePermissionsService).synchronise(userEntity);
+        verify(userService).refreshUser(userEntity);
+        verify(userStateMapper).toUserStateV2Dto(synchronisedUser, clock);
+    }
+
+    @Test
     void getUserStateV2_whenLegacySynchronisationThrowsRuntime_propagatesRuntimeException() {
 
         // Arrange
@@ -226,7 +253,7 @@ class UserPermissionsServiceV2Test {
         RuntimeException runtimeException = new RuntimeException("sync failed");
         when(appModeConfiguration.getAppMode()).thenReturn("legacy");
         doThrow(runtimeException).when(synchronisePermissionsService).synchronise(userEntity);
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
 
         // Act
         RuntimeException thrown = assertThrows(
@@ -247,7 +274,7 @@ class UserPermissionsServiceV2Test {
         when(appModeConfiguration.getAppMode()).thenReturn("opal");
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
 
         // Act
         UserStateV2Dto result = service.getUserStateV2(false);
@@ -280,7 +307,7 @@ class UserPermissionsServiceV2Test {
 
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
-        when(userService.getAuthenticatedUser()).thenThrow(new EntityNotFoundException("User not found with id: 123"));
+        when(userService.getUser(USER_ID)).thenThrow(new EntityNotFoundException("User not found with id: 123"));
         // Act
         EntityNotFoundException ex = assertThrows(
             EntityNotFoundException.class,
@@ -298,7 +325,7 @@ class UserPermissionsServiceV2Test {
 
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.empty());
 
         // Act
@@ -318,7 +345,7 @@ class UserPermissionsServiceV2Test {
 
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, null, TOKEN_NAME);
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
 
         // Act & Assert
         BadCredentialsException ex = assertThrows(
@@ -333,8 +360,7 @@ class UserPermissionsServiceV2Test {
 
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, null);
-        userService.getAuthenticatedUser();
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
 
         // Act & Assert
         BadCredentialsException ex = assertThrows(
@@ -349,7 +375,7 @@ class UserPermissionsServiceV2Test {
 
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, "different-user@hmcts.net", TOKEN_NAME);
-        when(userService.getAuthenticatedUser()).thenReturn(userEntity);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
 
         // Act
         ResourceConflictException ex = assertThrows(
@@ -368,6 +394,7 @@ class UserPermissionsServiceV2Test {
         Jwt jwt = createJwt(subject, preferredUsername, name);
         lenient().when(authentication.getToken()).thenReturn(jwt);
         lenient().when(authentication.getUsername()).thenReturn(preferredUsername);
+        lenient().when(authentication.getUserId()).thenReturn(USER_ID);
 
         lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);

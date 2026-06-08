@@ -270,6 +270,46 @@ class UserServiceTest {
     }
 
     @Test
+    void logRoleUnassignmentEvents_aggregatesBusinessUnitIdsByRole() {
+
+        // Arrange
+        UserEntity user = user(123L);
+        BusinessUnitUserEntity staleUserOne = businessUnitUser("BU001", 123L, (short) 11);
+        BusinessUnitUserEntity staleUserTwo = businessUnitUser("BU002", 123L, (short) 12);
+
+        staleUserOne.setBusinessUnitUserRoleList(Set.of(
+            assignment("BU001", 123L, (short) 11, 201L, 4L),
+            assignment("BU001", 123L, (short) 11, 202L, 6L)
+        ));
+        staleUserTwo.setBusinessUnitUserRoleList(Set.of(
+            assignment("BU002", 123L, (short) 12, 201L, 4L)
+        ));
+
+        // Act
+        userService.logRoleUnassignmentEvents(user, List.of(staleUserOne, staleUserTwo));
+
+        // Assert
+        verify(businessEventService).logBusinessEvent(
+            eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
+            eq(123L),
+            argThat((RoleUnassignedFromUserEvent event) ->
+                event.roleId().equals(201L)
+                    && event.businessUnitIds().equals(Set.of((short) 11, (short) 12))
+                    && event.roleVersion().equals(4L)),
+            eq(businessEventService)
+        );
+        verify(businessEventService).logBusinessEvent(
+            eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
+            eq(123L),
+            argThat((RoleUnassignedFromUserEvent event) ->
+                event.roleId().equals(202L)
+                    && event.businessUnitIds().equals(Set.of((short) 11))
+                    && event.roleVersion().equals(6L)),
+            eq(businessEventService)
+        );
+    }
+
+    @Test
     void activateUser_withoutDate_usesClockTime_andLogsEvent() {
         // Arrange
         OffsetDateTime fixedDateTime = OffsetDateTime.parse("2026-04-27T10:15:30+01:00");
@@ -339,6 +379,14 @@ class UserServiceTest {
         return BusinessUnitUserRoleEntity.builder()
             .businessUnitUser(businessUnitUser(businessUnitUserId, userId, businessUnitId))
             .role(RoleEntity.builder().roleId(roleId).build())
+            .build();
+    }
+
+    private BusinessUnitUserRoleEntity assignment(
+        String businessUnitUserId, Long userId, Short businessUnitId, Long roleId, Long versionNumber) {
+        return BusinessUnitUserRoleEntity.builder()
+            .businessUnitUser(businessUnitUser(businessUnitUserId, userId, businessUnitId))
+            .role(RoleEntity.builder().roleId(roleId).versionNumber(versionNumber).build())
             .build();
     }
 

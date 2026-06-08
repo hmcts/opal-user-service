@@ -26,6 +26,7 @@ import uk.gov.hmcts.reform.opal.repository.jpa.UserSpecs;
 import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 import uk.gov.hmcts.reform.opal.service.UserServiceInterface;
 import uk.gov.hmcts.reform.opal.service.UserServiceProxy;
+import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsException;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
@@ -34,6 +35,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,6 +57,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     private final UserSpecs specs = new UserSpecs();
 
     private final Clock clock;
+
+    private static final String SYNC_STAGE = "synchronise business unit users";
 
     @Override
     public UserEntity getUser(String userId) {
@@ -222,5 +227,36 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
         return userRepository.findByUserId(authenticationToken.getUserId())
             .orElseThrow(
                 () -> new EntityNotFoundException("User not found with id: " + authenticationToken.getUserId()));
+    }
+
+    public void logRoleUnassignmentEvents(UserEntity user, List<BusinessUnitUserEntity> staleBusinessUnitUsers) {
+        Map<Long, Set<Short>> removedBusinessUnitIdsByRole = new TreeMap<>();
+        Map<Long, Long> roleVersionsByRole = new LinkedHashMap<>();
+
+        for (BusinessUnitUserEntity staleBusinessUnitUser : staleBusinessUnitUsers) {
+            Short businessUnitId = staleBusinessUnitUser.getBusinessUnitId();
+            for (BusinessUnitUserRoleEntity assignment : staleBusinessUnitUser.getBusinessUnitUserRoleList()) {
+                RoleEntity role = assignment.getRole();
+                if (role == null || role.getRoleId() == null || role.getVersionNumber() == null) {
+                    throw new SynchronisePermissionsException(user, SYNC_STAGE,
+                                                              "stale business unit user role is missing role details");
+                }
+
+                removedBusinessUnitIdsByRole
+                    .computeIfAbsent(role.getRoleId(), ignored -> new TreeSet<>())
+                    .add(businessUnitId);
+                roleVersionsByRole.putIfAbsent(role.getRoleId(), role.getVersionNumber());
+            }
+        }
+
+        for (Map.Entry<Long, Set<Short>> entry : removedBusinessUnitIdsByRole.entrySet()) {
+            Long roleId = entry.getKey();
+            businessEventService.logBusinessEvent(
+                BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER,
+                user.getUserId(),
+                new RoleUnassignedFromUserEvent(roleId, entry.getValue(), roleVersionsByRole.get(roleId)),
+                businessEventService
+            );
+        }
     }
 }

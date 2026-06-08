@@ -7,7 +7,7 @@ VALUES (500000000, 'opal-test@HMCTS.NET', 'k9LpT2xVqR8m','Pablo', 'password', 'U
 
 INSERT INTO users (user_id, token_preferred_username, token_subject, description, token_name, version_number,
                    created_date, activation_date)
-VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', 'User with no business units', NULL, 0,
+VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', 'User with no business units', 'token name', 0,
         CURRENT_TIMESTAMP, NULL),
        (500000002, 'update-user@HMCTS.NET', 'BmMfmuTT9pEdG', 'User for testing \`update\`', NULL, 0,
         CURRENT_TIMESTAMP, to_date('2026-04-13', 'YYYY-MM-DD')),

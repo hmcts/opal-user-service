@@ -91,7 +91,8 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
         assertThat(helper.countRoleAssignments(user.getUserId())).isEqualTo(0L);
         assertThat(helper.getActivationDate(user.getUserId())).isNull();
-        assertThat(helper.getLoggedBusinessEventTypes()).isEmpty();
+        assertThat(helper.getLoggedBusinessEventTypes()).containsExactly(ROLE_UNASSIGNED_FROM_USER,
+                                                                         ROLE_UNASSIGNED_FROM_USER);
     }
 
     @Test
@@ -146,7 +147,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             ACCOUNT_ACTIVATION_INITIATED
         );
     }
-  
+
     @Test
     @DisplayName("AC2b: should ignore invalid cached role ids and still return user state")
     void getUserStateV2_ignoresInvalidCachedRoleIdsAndReturnsUserState() throws Exception {
@@ -541,7 +542,8 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
             BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
             ROLE_ASSIGNED_TO_USER,
-            ACCOUNT_ACTIVATION_INITIATED);
+            ACCOUNT_ACTIVATION_INITIATED,
+            ROLE_UNASSIGNED_FROM_USER);
     }
 
     // Causing the db exception that triggers the rollback:

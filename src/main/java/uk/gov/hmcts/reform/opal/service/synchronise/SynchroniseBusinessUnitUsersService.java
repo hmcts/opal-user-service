@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
+import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,6 +29,7 @@ public class SynchroniseBusinessUnitUsersService {
     private static final String SYNC_STAGE = "synchronise business unit users";
     private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
+    private final UserService userService;
     private final BusinessUnitUserRepository businessUnitUserRepository;
     private final BusinessUnitRepository businessUnitRepository;
     private final BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
@@ -58,7 +60,7 @@ public class SynchroniseBusinessUnitUsersService {
                 legacyBusinessUnitUserIds.add(businessUnitUserId);
             }
 
-            removeStaleBusinessUnitUsers(user.getUserId(), legacyBusinessUnitUserIds);
+            removeStaleBusinessUnitUsers(user, legacyBusinessUnitUserIds);
         } catch (RuntimeException exception) {
             if (exception instanceof SynchronisePermissionsException synchronisePermissionsException) {
                 throw synchronisePermissionsException;
@@ -68,14 +70,26 @@ public class SynchroniseBusinessUnitUsersService {
     }
 
     @Transactional
-    public void removeBusinessUnitUsersWithoutValidatedRoleMappings(Long userId, Set<Short> validatedBusinessUnitIds) {
-        List<String> staleBusinessUnitUserIds = businessUnitUserRepository.findAllByUser_UserId(userId).stream()
+    public void removeBusinessUnitUsersWithoutValidatedRoleMappings(UserEntity user,
+                                                                    Set<Short> validatedBusinessUnitIds) {
+
+        List<String> staleBusinessUnitUserIds = businessUnitUserRepository
+            .findAllByUser_UserId(user.getUserId()).stream()
             .filter(businessUnitUser -> !validatedBusinessUnitIds.contains(businessUnitUser
                     .getBusinessUnitId()))
             .map(BusinessUnitUserEntity::getBusinessUnitUserId)
             .toList();
 
-        log.info("Deleting legacy business units not in cache for user:{} BUUs:{}", userId, staleBusinessUnitUserIds);
+        List<BusinessUnitUserEntity> staleBusinessUnitUser = businessUnitUserRepository
+            .findAllByUser_UserId(user.getUserId()).stream()
+            .filter(businessUnitUser -> !validatedBusinessUnitIds.contains(businessUnitUser
+                                                                               .getBusinessUnitId()))
+            .toList();
+
+        userService.logRoleUnassignmentEvents(user, staleBusinessUnitUser);
+
+        log.info("Deleting legacy business units not in cache for user:{} BUUs:{}", user.getUserId(),
+                 staleBusinessUnitUserIds);
         deleteBusinessUnitUsers(staleBusinessUnitUserIds);
     }
 
@@ -133,17 +147,19 @@ public class SynchroniseBusinessUnitUsersService {
         }
     }
 
-    private void removeStaleBusinessUnitUsers(Long userId, Set<String> legacyBusinessUnitUserIds) {
+    private void removeStaleBusinessUnitUsers(UserEntity user, Set<String> legacyBusinessUnitUserIds) {
         List<BusinessUnitUserEntity> staleBusinessUnitUsers = legacyBusinessUnitUserIds.isEmpty()
-            ? businessUnitUserRepository.findAllByUser_UserId(userId)
+            ? businessUnitUserRepository.findAllByUser_UserId(user.getUserId())
             : businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
-                userId,
+                user.getUserId(),
                 legacyBusinessUnitUserIds
             );
 
         List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
             .map(BusinessUnitUserEntity::getBusinessUnitUserId)
             .toList();
+
+        userService.logRoleUnassignmentEvents(user, staleBusinessUnitUsers);
 
         deleteBusinessUnitUsers(staleBusinessUnitUserIds);
     }
@@ -156,5 +172,4 @@ public class SynchroniseBusinessUnitUsersService {
         businessUnitUserRoleRepository.deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(businessUnitUserIds);
         businessUnitUserRepository.deleteAllById(businessUnitUserIds);
     }
-
 }

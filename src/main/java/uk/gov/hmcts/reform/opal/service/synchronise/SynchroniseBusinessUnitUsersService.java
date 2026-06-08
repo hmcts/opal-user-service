@@ -70,20 +70,17 @@ public class SynchroniseBusinessUnitUsersService {
     @Transactional
     public void removeBusinessUnitUsersWithoutValidatedRoleMappings(UserEntity user,
                                                                     Set<Short> validatedBusinessUnitIds) {
-
-        List<String> staleBusinessUnitUserIds = businessUnitUserRepository
-            .findAllByUser_UserId(user.getUserId()).stream()
-            .filter(buUser -> !validatedBusinessUnitIds.contains(buUser.getBusinessUnitId()))
-            .map(BusinessUnitUserEntity::getBusinessUnitUserId)
-            .toList();
-
         List<BusinessUnitUserEntity> staleBusinessUnitUsers = businessUnitUserRepository
             .findAllByUser_UserId(user.getUserId()).stream()
             .filter(buUser -> !validatedBusinessUnitIds.contains(buUser.getBusinessUnitId()))
             .toList();
 
+        List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
+            .map(BusinessUnitUserEntity::getBusinessUnitUserId)
+            .toList();
         log.info("Deleting legacy business units not in cache for user:{} BUUs:{}", user.getUserId(),
                  staleBusinessUnitUserIds);
+
         userService.deleteBusinessUnitUsers(user, staleBusinessUnitUsers);
     }
 

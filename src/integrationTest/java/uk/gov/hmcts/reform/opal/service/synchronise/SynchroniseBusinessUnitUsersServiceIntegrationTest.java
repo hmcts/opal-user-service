@@ -43,6 +43,8 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should update existing business unit user when business unit and user differ")
     void synchroniseBusinessUnitUsers_updatesExistingBusinessUnitUser() {
         UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
+        TestHelperUtil.setAuthenticatedUser(user);
+
         BusinessUnitUserSnapshot rowBefore = testHelperService.getBusinessUnitUserSnapshot("L081JG");
         assertThat(rowBefore.businessUnitId()).isEqualTo((short) 67);
         assertThat(rowBefore.userId()).isEqualTo(500000006L);
@@ -78,6 +80,7 @@ class SynchroniseBusinessUnitUsersServiceIntegrationTest extends AbstractIntegra
     @DisplayName("Should delete business unit users no longer returned by legacy")
     void synchroniseBusinessUnitUsers_deletesBusinessUnitsUserMissingFromLegacy() {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
+        TestHelperUtil.setAuthenticatedUser(user);
 
         testHelperService.insertBusinessUnitUser("L091JG", (short) 67, user.getUserId());
         testHelperService.insertBusinessUnitUser("L092JG", (short) 69, user.getUserId());

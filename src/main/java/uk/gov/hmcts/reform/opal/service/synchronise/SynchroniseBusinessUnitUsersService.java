@@ -4,27 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
-import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
-import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
-import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
-import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
-import uk.gov.hmcts.reform.opal.service.BusinessEventService;
-
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
 // Implements Step 3 of https://tools.hmcts.net/jira/browse/PO-2831
 
@@ -39,8 +29,7 @@ public class SynchroniseBusinessUnitUsersService {
 
     private final BusinessUnitUserRepository businessUnitUserRepository;
     private final BusinessUnitRepository businessUnitRepository;
-    private final BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
-    private final BusinessEventService businessEventService;
+    private final UserService userService;
 
     @Transactional
     public void synchroniseBusinessUnitsUsers(UserEntity user, List<LegacyBusinessUnitUserId> legacyBusinessUnitUsers) {
@@ -68,7 +57,7 @@ public class SynchroniseBusinessUnitUsersService {
                 legacyBusinessUnitUserIds.add(businessUnitUserId);
             }
 
-            removeStaleBusinessUnitUsers(user, legacyBusinessUnitUserIds);
+            userService.removeStaleBusinessUnitUsers(user, legacyBusinessUnitUserIds);
         } catch (RuntimeException exception) {
             if (exception instanceof SynchronisePermissionsException synchronisePermissionsException) {
                 throw synchronisePermissionsException;
@@ -128,59 +117,6 @@ public class SynchroniseBusinessUnitUsersService {
             log.error("Invalid businessUnitId {}", legacyBusinessUnitId, e);
             throw new SynchronisePermissionsException(user, SYNC_STAGE,
                 "invalid business unit id: " + legacyBusinessUnitId, e);
-        }
-    }
-
-    private void removeStaleBusinessUnitUsers(UserEntity user, Set<String> legacyBusinessUnitUserIds) {
-        List<BusinessUnitUserEntity> staleBusinessUnitUsers = legacyBusinessUnitUserIds.isEmpty()
-            ? businessUnitUserRepository.findAllByUser_UserId(user.getUserId())
-            : businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
-                user.getUserId(),
-                legacyBusinessUnitUserIds
-            );
-
-        List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
-            .map(BusinessUnitUserEntity::getBusinessUnitUserId)
-            .toList();
-
-        if (staleBusinessUnitUserIds.isEmpty()) {
-            return;
-        }
-
-        logRoleUnassignmentEvents(user, staleBusinessUnitUsers);
-
-        businessUnitUserRoleRepository.deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
-        businessUnitUserRepository.deleteAllById(staleBusinessUnitUserIds);
-    }
-
-    private void logRoleUnassignmentEvents(UserEntity user, List<BusinessUnitUserEntity> staleBusinessUnitUsers) {
-        Map<Long, Set<Short>> removedBusinessUnitIdsByRole = new TreeMap<>();
-        Map<Long, Long> roleVersionsByRole = new LinkedHashMap<>();
-
-        for (BusinessUnitUserEntity staleBusinessUnitUser : staleBusinessUnitUsers) {
-            Short businessUnitId = staleBusinessUnitUser.getBusinessUnitId();
-            for (BusinessUnitUserRoleEntity assignment : staleBusinessUnitUser.getBusinessUnitUserRoleList()) {
-                RoleEntity role = assignment.getRole();
-                if (role == null || role.getRoleId() == null || role.getVersionNumber() == null) {
-                    throw new SynchronisePermissionsException(user, SYNC_STAGE,
-                        "stale business unit user role is missing role details");
-                }
-
-                removedBusinessUnitIdsByRole
-                    .computeIfAbsent(role.getRoleId(), ignored -> new TreeSet<>())
-                    .add(businessUnitId);
-                roleVersionsByRole.putIfAbsent(role.getRoleId(), role.getVersionNumber());
-            }
-        }
-
-        for (Map.Entry<Long, Set<Short>> entry : removedBusinessUnitIdsByRole.entrySet()) {
-            Long roleId = entry.getKey();
-            businessEventService.logBusinessEvent(
-                BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER,
-                user.getUserId(),
-                new RoleUnassignedFromUserEvent(roleId, entry.getValue(), roleVersionsByRole.get(roleId)),
-                businessEventService
-            );
         }
     }
 

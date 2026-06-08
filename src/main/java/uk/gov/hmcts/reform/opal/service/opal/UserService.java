@@ -21,11 +21,14 @@ import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.repository.jpa.UserSpecs;
 import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 import uk.gov.hmcts.reform.opal.service.UserServiceInterface;
 import uk.gov.hmcts.reform.opal.service.UserServiceProxy;
+import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsException;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
@@ -34,6 +37,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,7 +48,11 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class UserService implements UserServiceInterface, UserServiceProxy {
 
+    private static final String SYNC_STAGE = "synchronise business unit users";
+
     private final UserRepository userRepository;
+    private final BusinessUnitUserRepository businessUnitUserRepository;
+    private final BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
 
     private final RoleService roleService;
 
@@ -139,6 +148,29 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
         );
     }
 
+    @Transactional
+    public void removeStaleBusinessUnitUsers(UserEntity user, Set<String> legacyBusinessUnitUserIds) {
+        List<BusinessUnitUserEntity> staleBusinessUnitUsers = legacyBusinessUnitUserIds.isEmpty()
+            ? businessUnitUserRepository.findAllByUser_UserId(user.getUserId())
+            : businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
+                user.getUserId(),
+                legacyBusinessUnitUserIds
+            );
+
+        List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
+            .map(BusinessUnitUserEntity::getBusinessUnitUserId)
+            .toList();
+
+        if (staleBusinessUnitUserIds.isEmpty()) {
+            return;
+        }
+
+        logRoleUnassignmentEvents(user, staleBusinessUnitUsers);
+
+        businessUnitUserRoleRepository.deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
+        businessUnitUserRepository.deleteAllById(staleBusinessUnitUserIds);
+    }
+
     private Set<String> getBusinessUnitUserIds(List<BusinessUnitUserEntity> businessUnitUsers) {
         return businessUnitUsers.stream().map(BusinessUnitUserEntity::getBusinessUnitUserId)
             .collect(Collectors.toCollection(
@@ -185,6 +217,37 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
                 new UnitsAssociatedToRoleAmendedEvent(
                     role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds, removedBusinessUnitIds),
                 businessEventService);
+        }
+    }
+
+    private void logRoleUnassignmentEvents(UserEntity user, List<BusinessUnitUserEntity> staleBusinessUnitUsers) {
+        Map<Long, Set<Short>> removedBusinessUnitIdsByRole = new TreeMap<>();
+        Map<Long, Long> roleVersionsByRole = new LinkedHashMap<>();
+
+        for (BusinessUnitUserEntity staleBusinessUnitUser : staleBusinessUnitUsers) {
+            Short businessUnitId = staleBusinessUnitUser.getBusinessUnitId();
+            for (BusinessUnitUserRoleEntity assignment : staleBusinessUnitUser.getBusinessUnitUserRoleList()) {
+                RoleEntity role = assignment.getRole();
+                if (role == null || role.getRoleId() == null || role.getVersionNumber() == null) {
+                    throw new SynchronisePermissionsException(user, SYNC_STAGE,
+                        "stale business unit user role is missing role details");
+                }
+
+                removedBusinessUnitIdsByRole
+                    .computeIfAbsent(role.getRoleId(), ignored -> new TreeSet<>())
+                    .add(businessUnitId);
+                roleVersionsByRole.putIfAbsent(role.getRoleId(), role.getVersionNumber());
+            }
+        }
+
+        for (Map.Entry<Long, Set<Short>> entry : removedBusinessUnitIdsByRole.entrySet()) {
+            Long roleId = entry.getKey();
+            businessEventService.logBusinessEvent(
+                BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER,
+                user.getUserId(),
+                new RoleUnassignedFromUserEvent(roleId, entry.getValue(), roleVersionsByRole.get(roleId)),
+                businessEventService
+            );
         }
     }
 

@@ -6,29 +6,21 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
-import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
-import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
-import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
-import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
-import uk.gov.hmcts.reform.opal.service.BusinessEventService;
+import uk.gov.hmcts.reform.opal.service.opal.UserService;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -55,10 +47,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
     private BusinessUnitRepository businessUnitRepository;
 
     @Mock
-    private BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
-
-    @Mock
-    private BusinessEventService businessEventService;
+    private UserService userService;
 
     @InjectMocks
     private SynchroniseBusinessUnitUsersService synchroniseBusinessUnitUsersService;
@@ -80,7 +69,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         verifyNoInteractions(
             businessUnitUserRepository,
             businessUnitRepository,
-            businessUnitUserRoleRepository
+            userService
         );
     }
 
@@ -104,7 +93,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         verifyNoInteractions(
             businessUnitUserRepository,
             businessUnitRepository,
-            businessUnitUserRoleRepository
+            userService
         );
     }
 
@@ -115,9 +104,6 @@ class SynchroniseBusinessUnitUsersServiceTest {
         BusinessUnitEntity businessUnit = businessUnit(BUSINESS_UNIT_ID);
         when(businessUnitRepository.findById(BUSINESS_UNIT_ID)).thenReturn(Optional.of(businessUnit));
         when(businessUnitUserRepository.findById(BUSINESS_UNIT_USER_ID)).thenReturn(Optional.empty());
-        when(businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
-            USER_ID, java.util.Set.of(BUSINESS_UNIT_USER_ID)
-        )).thenReturn(List.of());
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
             BUSINESS_UNIT_ID);
@@ -133,7 +119,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         assertEquals(BUSINESS_UNIT_USER_ID, savedBusinessUnitUser.getBusinessUnitUserId());
         assertEquals(BUSINESS_UNIT_ID, savedBusinessUnitUser.getBusinessUnitId());
         assertEquals(USER_ID, savedBusinessUnitUser.getUser().getUserId());
-        verify(businessUnitUserRoleRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
+        verify(userService).removeStaleBusinessUnitUsers(user, java.util.Set.of(BUSINESS_UNIT_USER_ID));
     }
 
     @Test
@@ -146,9 +132,6 @@ class SynchroniseBusinessUnitUsersServiceTest {
         when(businessUnitRepository.findById(BUSINESS_UNIT_ID)).thenReturn(Optional.of(businessUnit));
         when(businessUnitUserRepository.findById(BUSINESS_UNIT_USER_ID))
             .thenReturn(Optional.of(existingBusinessUnitUser));
-        when(businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
-            USER_ID, java.util.Set.of(BUSINESS_UNIT_USER_ID)
-        )).thenReturn(List.of());
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
             BUSINESS_UNIT_ID);
@@ -160,7 +143,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         assertEquals(BUSINESS_UNIT_ID, existingBusinessUnitUser.getBusinessUnitId());
         assertEquals(USER_ID, existingBusinessUnitUser.getUser().getUserId());
         verify(businessUnitUserRepository, never()).save(any(BusinessUnitUserEntity.class));
-        verify(businessUnitUserRoleRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
+        verify(userService).removeStaleBusinessUnitUsers(user, java.util.Set.of(BUSINESS_UNIT_USER_ID));
     }
 
     @Test
@@ -183,7 +166,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         assertEquals(errorMessage(USER_ID, "legacy business unit not found: " + BUSINESS_UNIT_ID),
             exception.getMessage());
         verify(businessUnitUserRepository, never()).save(any(BusinessUnitUserEntity.class));
-        verify(businessUnitUserRoleRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
+        verifyNoInteractions(userService);
     }
 
     @Test
@@ -205,7 +188,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         verifyNoInteractions(
             businessUnitRepository,
             businessUnitUserRepository,
-            businessUnitUserRoleRepository
+            userService
         );
     }
 
@@ -231,7 +214,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         verifyNoInteractions(
             businessUnitRepository,
             businessUnitUserRepository,
-            businessUnitUserRoleRepository
+            userService
         );
     }
 
@@ -247,21 +230,6 @@ class SynchroniseBusinessUnitUsersServiceTest {
         when(businessUnitUserRepository.findById(BUSINESS_UNIT_USER_ID))
             .thenReturn(Optional.of(currentBusinessUnitUser));
 
-        BusinessUnitUserEntity staleBuUserOne = businessUnitUser(STALE_BUSINESS_UNIT_USER_ID,
-                                                                 DIFFERENT_BUSINESS_UNIT_ID,
-                                                                 USER_ID);
-        BusinessUnitUserEntity staleBuUserTwo = businessUnitUser("L083JG", (short) 68, USER_ID);
-
-        BusinessUnitUserRoleEntity staleBuUserOneRoleOne = buUnitUserRole(staleBuUserOne, 201L, 11L);
-        BusinessUnitUserRoleEntity staleBuUserOneRoleTwo = buUnitUserRole(staleBuUserOne, 202L, 22L);
-        BusinessUnitUserRoleEntity staleBuUserTwoRoleOne = buUnitUserRole(staleBuUserTwo, 201L, 11L);
-
-        staleBuUserOne.setBusinessUnitUserRoleList(Set.of(staleBuUserOneRoleOne, staleBuUserOneRoleTwo));
-        staleBuUserTwo.setBusinessUnitUserRoleList(Set.of(staleBuUserTwoRoleOne));
-
-        when(businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
-            USER_ID, java.util.Set.of(BUSINESS_UNIT_USER_ID)
-        )).thenReturn(List.of(staleBuUserOne, staleBuUserTwo));
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
             BUSINESS_UNIT_ID);
@@ -270,30 +238,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, List.of(legacyBusinessUnitUser));
 
         // Assert
-        verify(businessEventService).logBusinessEvent(
-            eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
-            eq(USER_ID),
-            argThat((RoleUnassignedFromUserEvent event) ->
-                event.roleId().equals(201L)
-                    && event.businessUnitIds().equals(Set.of(DIFFERENT_BUSINESS_UNIT_ID, (short) 68))
-                    && event.roleVersion().equals(11L)
-            ),
-            eq(businessEventService)
-        );
-        verify(businessEventService).logBusinessEvent(
-            eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
-            eq(USER_ID),
-            argThat((RoleUnassignedFromUserEvent event) ->
-                event.roleId().equals(202L)
-                    && event.businessUnitIds().equals(Set.of(DIFFERENT_BUSINESS_UNIT_ID))
-                    && event.roleVersion().equals(22L)
-            ),
-            eq(businessEventService)
-        );
-        List<String> staleBusinessUnitUserIds = List.of(STALE_BUSINESS_UNIT_USER_ID, "L083JG");
-        verify(businessUnitUserRoleRepository)
-            .deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
-        verify(businessUnitUserRepository).deleteAllById(staleBusinessUnitUserIds);
+        verify(userService).removeStaleBusinessUnitUsers(user, java.util.Set.of(BUSINESS_UNIT_USER_ID));
     }
 
     @Test
@@ -339,17 +284,6 @@ class SynchroniseBusinessUnitUsersServiceTest {
             .businessUnitUserId(businessUnitUserId)
             .businessUnit(businessUnit(businessUnitId))
             .user(user(userId))
-            .build();
-    }
-
-    private BusinessUnitUserRoleEntity buUnitUserRole(
-        BusinessUnitUserEntity businessUnitUser,
-        long roleId,
-        long versionNumber
-    ) {
-        return BusinessUnitUserRoleEntity.builder()
-            .businessUnitUser(businessUnitUser)
-            .role(RoleEntity.builder().roleId(roleId).versionNumber(versionNumber).build())
             .build();
     }
 

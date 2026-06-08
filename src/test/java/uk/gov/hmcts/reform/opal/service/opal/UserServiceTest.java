@@ -24,6 +24,8 @@ import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 
@@ -50,6 +52,12 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private BusinessUnitUserRepository businessUnitUserRepository;
+
+    @Mock
+    private BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
 
     @Mock
     private BusinessUnitUserService businessUnitUserService;
@@ -237,6 +245,53 @@ class UserServiceTest {
     }
 
     @Test
+    void removeStaleBusinessUnitUsers_deletesStaleUsersAndLogsRoleUnassignedEvents() {
+
+        // Arrange
+        BusinessUnitUserEntity staleUserOne = businessUnitUser("BU002", 123L, (short) 12);
+        BusinessUnitUserEntity staleUserTwo = businessUnitUser("BU003", 123L, (short) 13);
+
+        BusinessUnitUserRoleEntity staleUserOneRoleOne = assignment("BU002", 123L, (short) 12, 201L, 4L);
+        BusinessUnitUserRoleEntity staleUserOneRoleTwo = assignment("BU002", 123L, (short) 12, 202L, 6L);
+        BusinessUnitUserRoleEntity staleUserTwoRoleOne = assignment("BU003", 123L, (short) 13, 201L, 4L);
+
+        staleUserOne.setBusinessUnitUserRoleList(Set.of(staleUserOneRoleOne, staleUserOneRoleTwo));
+        staleUserTwo.setBusinessUnitUserRoleList(Set.of(staleUserTwoRoleOne));
+
+        when(businessUnitUserRepository.findAllByUser_UserIdAndBusinessUnitUserIdNotIn(
+            123L, Set.of("BU001")
+        )).thenReturn(List.of(staleUserOne, staleUserTwo));
+
+        UserEntity user = user(123L);
+
+        // Act
+        userService.removeStaleBusinessUnitUsers(user, Set.of("BU001"));
+
+        // Assert
+        verify(businessEventService).logBusinessEvent(
+            eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
+            eq(123L),
+            argThat((RoleUnassignedFromUserEvent event) ->
+                event.roleId().equals(201L)
+                    && event.businessUnitIds().equals(Set.of((short) 12, (short) 13))
+                    && event.roleVersion().equals(4L)),
+            eq(businessEventService)
+        );
+        verify(businessEventService).logBusinessEvent(
+            eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
+            eq(123L),
+            argThat((RoleUnassignedFromUserEvent event) ->
+                event.roleId().equals(202L)
+                    && event.businessUnitIds().equals(Set.of((short) 12))
+                    && event.roleVersion().equals(6L)),
+            eq(businessEventService)
+        );
+        verify(businessUnitUserRoleRepository)
+            .deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(List.of("BU002", "BU003"));
+        verify(businessUnitUserRepository).deleteAllById(List.of("BU002", "BU003"));
+    }
+
+    @Test
     void activateUser_withoutDate_usesClockTime_andLogsEvent() {
         // Arrange
         OffsetDateTime fixedDateTime = OffsetDateTime.parse("2026-04-27T10:15:30+01:00");
@@ -306,6 +361,14 @@ class UserServiceTest {
         return BusinessUnitUserRoleEntity.builder()
             .businessUnitUser(businessUnitUser(businessUnitUserId, userId, businessUnitId))
             .role(RoleEntity.builder().roleId(roleId).build())
+            .build();
+    }
+
+    private BusinessUnitUserRoleEntity assignment(
+        String businessUnitUserId, Long userId, Short businessUnitId, Long roleId, Long versionNumber) {
+        return BusinessUnitUserRoleEntity.builder()
+            .businessUnitUser(businessUnitUser(businessUnitUserId, userId, businessUnitId))
+            .role(RoleEntity.builder().roleId(roleId).versionNumber(versionNumber).build())
             .build();
     }
 

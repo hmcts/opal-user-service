@@ -40,7 +40,7 @@ public class UserRoleMappingParser {
             for (CSVRecord record : parser) {
 
                 // --- Skip malformed rows ---
-                if (record.size() < 3) {
+                if (record.size() != 3) {
                     log.warn("Skipping malformed CSV row {}: {}", record.getRecordNumber(), record);
                     continue;
                 }

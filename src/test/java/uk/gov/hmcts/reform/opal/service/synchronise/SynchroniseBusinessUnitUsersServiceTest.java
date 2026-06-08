@@ -129,7 +129,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         assertEquals(BUSINESS_UNIT_USER_ID, savedBusinessUnitUser.getBusinessUnitUserId());
         assertEquals(BUSINESS_UNIT_ID, savedBusinessUnitUser.getBusinessUnitId());
         assertEquals(USER_ID, savedBusinessUnitUser.getUser().getUserId());
-        verify(userService).logRoleUnassignmentEvents(user, List.of());
+        verify(userService).deleteBusinessUnitUsers(user, List.of());
         verify(businessUnitUserRoleRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
     }
 
@@ -157,7 +157,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         assertEquals(BUSINESS_UNIT_ID, existingBusinessUnitUser.getBusinessUnitId());
         assertEquals(USER_ID, existingBusinessUnitUser.getUser().getUserId());
         verify(businessUnitUserRepository, never()).save(any(BusinessUnitUserEntity.class));
-        verify(userService).logRoleUnassignmentEvents(user, List.of());
+        verify(userService).deleteBusinessUnitUsers(user, List.of());
         verify(businessUnitUserRoleRepository, never()).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(any());
     }
 
@@ -259,11 +259,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
         synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, List.of(legacyBusinessUnitUser));
 
         // Assert
-        verify(userService).logRoleUnassignmentEvents(user, List.of(staleBusinessUnitUser));
-        List<String> staleBusinessUnitUserIds = List.of(STALE_BUSINESS_UNIT_USER_ID);
-        verify(businessUnitUserRoleRepository)
-            .deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
-        verify(businessUnitUserRepository).deleteAllById(staleBusinessUnitUserIds);
+        verify(userService).deleteBusinessUnitUsers(user, List.of(staleBusinessUnitUser));
     }
 
     @Test

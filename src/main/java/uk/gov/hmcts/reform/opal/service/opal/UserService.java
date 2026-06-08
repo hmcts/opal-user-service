@@ -21,6 +21,8 @@ import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.repository.jpa.UserSpecs;
 import uk.gov.hmcts.reform.opal.service.BusinessEventService;
@@ -53,6 +55,10 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     //@Lazy to avoid circular dependency
     @Lazy
     private final BusinessEventService businessEventService;
+
+    private final BusinessUnitUserRepository businessUnitUserRepository;
+
+    private final BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
 
     private final UserSpecs specs = new UserSpecs();
 
@@ -229,7 +235,23 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
                 () -> new EntityNotFoundException("User not found with id: " + authenticationToken.getUserId()));
     }
 
-    public void logRoleUnassignmentEvents(UserEntity user, List<BusinessUnitUserEntity> staleBusinessUnitUsers) {
+    @Transactional
+    public void deleteBusinessUnitUsers(UserEntity user, List<BusinessUnitUserEntity> staleBusinessUnitUsers) {
+        if (staleBusinessUnitUsers.isEmpty()) {
+            return;
+        }
+
+        logRoleUnassignmentEvents(user, staleBusinessUnitUsers);
+
+        List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
+            .map(BusinessUnitUserEntity::getBusinessUnitUserId)
+            .toList();
+
+        businessUnitUserRoleRepository.deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(staleBusinessUnitUserIds);
+        businessUnitUserRepository.deleteAllById(staleBusinessUnitUserIds);
+    }
+
+    private void logRoleUnassignmentEvents(UserEntity user, List<BusinessUnitUserEntity> staleBusinessUnitUsers) {
         Map<Long, Set<Short>> removedBusinessUnitIdsByRole = new TreeMap<>();
         Map<Long, Long> roleVersionsByRole = new LinkedHashMap<>();
 

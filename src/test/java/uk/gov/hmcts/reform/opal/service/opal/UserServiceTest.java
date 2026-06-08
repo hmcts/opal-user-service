@@ -24,6 +24,8 @@ import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
+import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 
@@ -50,6 +52,12 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private BusinessUnitUserRepository businessUnitUserRepository;
+
+    @Mock
+    private BusinessUnitUserRoleRepository businessUnitUserRoleRepository;
 
     @Mock
     private BusinessUnitUserService businessUnitUserService;
@@ -270,7 +278,7 @@ class UserServiceTest {
     }
 
     @Test
-    void logRoleUnassignmentEvents_aggregatesBusinessUnitIdsByRole() {
+    void deleteBusinessUnitUsers_aggregatesBusinessUnitIdsByRole() {
 
         // Arrange
         UserEntity user = user(123L);
@@ -286,7 +294,7 @@ class UserServiceTest {
         ));
 
         // Act
-        userService.logRoleUnassignmentEvents(user, List.of(staleUserOne, staleUserTwo));
+        userService.deleteBusinessUnitUsers(user, List.of(staleUserOne, staleUserTwo));
 
         // Assert
         verify(businessEventService).logBusinessEvent(
@@ -307,6 +315,10 @@ class UserServiceTest {
                     && event.roleVersion().equals(6L)),
             eq(businessEventService)
         );
+        verify(businessUnitUserRoleRepository).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(
+            List.of("BU001", "BU002")
+        );
+        verify(businessUnitUserRepository).deleteAllById(List.of("BU001", "BU002"));
     }
 
     @Test

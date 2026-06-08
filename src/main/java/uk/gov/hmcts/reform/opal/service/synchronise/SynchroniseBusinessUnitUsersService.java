@@ -75,6 +75,7 @@ public class SynchroniseBusinessUnitUsersService {
             .map(BusinessUnitUserEntity::getBusinessUnitUserId)
             .toList();
 
+        log.info("Deleting legacy business units not in cache for user:{} BUUs:{}", userId, staleBusinessUnitUserIds);
         deleteBusinessUnitUsers(staleBusinessUnitUserIds);
     }
 

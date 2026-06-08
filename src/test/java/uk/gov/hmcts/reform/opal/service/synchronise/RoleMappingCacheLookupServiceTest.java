@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.opal.service.synchronise;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -113,7 +113,7 @@ class RoleMappingCacheLookupServiceTest {
 
         // Arrange
         String cachePayload = "invalid-json";
-        JsonProcessingException jsonProcessingException = new JsonProcessingException("invalid-json") {
+        JacksonException jsonProcessingException = new JacksonException("invalid-json") {
         };
         when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference()))
@@ -129,12 +129,12 @@ class RoleMappingCacheLookupServiceTest {
     }
 
     @Test
-    void getRoleMappingByTokenSubject_throwsSynchronisePermissionsException_whenOMThrowsJsonProcessingException()
+    void getRoleMappingByTokenSubject_throwsSynchronisePermissionsException_whenOMThrowsJacksonException()
         throws Exception {
 
         // Arrange
         String cachePayload = "{\"101\":[\"7\"]}";
-        JsonProcessingException jsonProcessingException = new JsonProcessingException("boom") {
+        JacksonException jsonProcessingException = new JacksonException("boom") {
         };
         when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference()))

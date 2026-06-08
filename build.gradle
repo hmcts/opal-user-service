@@ -358,7 +358,7 @@ dependencies {
     }
   }
 
-  implementation('uk.gov.hmcts:opal-common-lib:0.3.15') {
+  implementation('uk.gov.hmcts:opal-common-lib:0.3.16') {
     exclude group: 'com.microsoft.azure', module: 'applicationinsights-spring-boot-starter'
   }
   implementation('uk.gov.hmcts:spring-exception-handler:1.0.2') {
@@ -418,7 +418,6 @@ dependencies {
   annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
   implementation 'com.networknt:json-schema-validator:3.0.3'
   implementation 'com.jayway.jsonpath:json-path:3.0.0'
-  testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
   testImplementation 'org.springframework.security:spring-security-test'
   testImplementation 'org.springframework.boot:spring-boot-devtools'
   testImplementation 'org.springframework.boot:spring-boot-testcontainers'
@@ -447,6 +446,8 @@ dependencies {
   openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.43"
   openapiImplementation "io.swagger.core.v3:swagger-models:2.2.50"
   openapiImplementation "io.swagger.core.v3:swagger-core:2.2.50"
+  openapiImplementation "tools.jackson.core:jackson-databind"
+  openapiImplementation "tools.jackson.dataformat:jackson-dataformat-yaml"
 
 
   //Added to override dependency version to resolve vulnerability

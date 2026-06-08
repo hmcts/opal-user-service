@@ -1,7 +1,5 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import tools.jackson.databind.JsonNode;
 import uk.gov.hmcts.reform.opal.AbstractLegacyWireMockIntegrationTest;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
@@ -60,9 +59,6 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
 
     @Autowired
     private UserRoleMappingCacheService userRoleMappingCacheService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @BeforeEach
     void initialiseEachTest() throws Exception {

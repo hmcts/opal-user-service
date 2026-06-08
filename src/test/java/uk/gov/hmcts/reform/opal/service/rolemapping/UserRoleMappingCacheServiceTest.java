@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -168,7 +168,7 @@ class UserRoleMappingCacheServiceTest {
             new UserRoleMappingCacheService(redisTemplate, properties, objectMapper);
 
         when(objectMapper.writeValueAsString(any()))
-            .thenThrow(new com.fasterxml.jackson.core.JsonProcessingException("boom") {});
+            .thenThrow(new tools.jackson.core.JacksonException("boom") {});
 
         // ACT
         RuntimeException exception = org.junit.jupiter.api.Assertions.assertThrows(
@@ -182,7 +182,7 @@ class UserRoleMappingCacheServiceTest {
             exception.getMessage()
         );
 
-        assertTrue(exception.getCause() instanceof com.fasterxml.jackson.core.JsonProcessingException);
+        assertTrue(exception.getCause() instanceof tools.jackson.core.JacksonException);
 
         verify(redisTemplate.opsForValue(), never()).set(any(), any(), any());
     }

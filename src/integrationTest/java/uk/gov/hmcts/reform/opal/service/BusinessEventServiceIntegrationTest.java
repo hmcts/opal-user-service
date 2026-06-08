@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.opal.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -84,7 +84,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     public class OpalMode extends AbstractIntegrationTest {
         @Test
         @DisplayName("Should create and persist a business event when all parameters are provided")
-        void logBusinessEvent_persistsExplicitEventDetails() throws JsonProcessingException {
+        void logBusinessEvent_persistsExplicitEventDetails() throws JacksonException {
             AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
 
             BusinessEventEntity result = businessEventService.logBusinessEvent(
@@ -109,7 +109,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         @DisplayName("Should create and persist a business event using the authenticated user as initiator")
-        void logBusinessEvent_persistsEventDetailsForAuthenticatedUser() throws JsonProcessingException {
+        void logBusinessEvent_persistsEventDetailsForAuthenticatedUser() throws JacksonException {
             TestingAuthenticationToken authentication = new TestingAuthenticationToken("principal", "credentials");
             SecurityContextHolder.getContext().setAuthentication(authentication);
             AccountActivationInitiatedEvent eventDetails = new AccountActivationInitiatedEvent(OffsetDateTime.now());
@@ -184,7 +184,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
 
-    private void assertJsonEquals(String expectedJson, String actualJson) throws JsonProcessingException {
+    private void assertJsonEquals(String expectedJson, String actualJson) throws JacksonException {
         JsonNode expected = objectMapper.readTree(expectedJson);
         JsonNode actual = objectMapper.readTree(actualJson);
         assertEquals(expected, actual);

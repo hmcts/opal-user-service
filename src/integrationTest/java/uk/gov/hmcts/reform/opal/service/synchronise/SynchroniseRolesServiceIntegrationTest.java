@@ -1,6 +1,6 @@
 package uk.gov.hmcts.reform.opal.service.synchronise;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,7 +51,7 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should apply cached role mappings and remove stale roles for legacy business units")
-    void synchroniseRoles_appliesCachedRolesAndRemovesStaleRoles() throws JsonProcessingException {
+    void synchroniseRoles_appliesCachedRolesAndRemovesStaleRoles() throws JacksonException {
         // Arrange
         UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         when(userPermissionsService.getAuthenticatedUserId()).thenReturn(USER_WITH_EXISTING_ROLE);

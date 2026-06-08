@@ -90,7 +90,7 @@ class AzureDaoTest {
     }
 
     private HTTPResponse mockSuccessResponse() {
-        String body = "{\"id_token\":\"test_id_token\", \"id_token_expires_in\":\"1234\"}";
+        String body = "{\"id_token\":\"test_id_token\", \"expires_in\":0, \"id_token_expires_in\":\"1234\"}";
 
         HTTPResponse response = Mockito.mock(HTTPResponse.class);
         when(response.getStatusCode()).thenReturn(HttpStatus.SC_OK);

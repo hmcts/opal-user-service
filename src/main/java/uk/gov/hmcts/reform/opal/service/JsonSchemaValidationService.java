@@ -29,7 +29,6 @@ public class JsonSchemaValidationService {
 
     private static final String PATH_ROOT = "jsonSchemas";
     private static final String CLASSPATH_SCHEMA_LOCATION_PREFIX = "classpath:";
-    //TODO remove once common lib is updated to use tools.jackson
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Map<String, Schema> schemaCache = HashMap.newHashMap(37);
 

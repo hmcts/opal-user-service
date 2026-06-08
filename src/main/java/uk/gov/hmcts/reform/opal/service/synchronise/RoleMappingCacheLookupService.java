@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
+import uk.gov.hmcts.reform.opal.service.opal.RoleService;
 import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingCacheService;
 
 import java.util.HashMap;
@@ -23,6 +24,7 @@ public class RoleMappingCacheLookupService {
     private static final String UNEXPECTED_RUNTIME_EXCEPTION_REASON = "unexpected runtime exception";
 
     private final UserRoleMappingCacheService userRoleMappingCacheService;
+    private final RoleService roleService;
     private final ObjectMapper objectMapper;
 
     /**
@@ -72,11 +74,17 @@ public class RoleMappingCacheLookupService {
      *                 {@link String}
      * @return map keyed by role id as {@link Long}, with values containing business unit ids as {@link Short}
      */
+    @SuppressWarnings("java:S135")
     private Map<Long, Set<Short>> convertCacheMap(UserEntity user, Map<String, Set<String>> cacheMap) {
 
         Map<Long, Set<Short>> converted = new HashMap<>();
         for (Map.Entry<String, Set<String>> entry : cacheMap.entrySet()) {
             Long roleId = parseRoleId(user, entry.getKey());
+            if (!roleService.roleExists(roleId)) {
+                log.warn("Cache roleId not found in database. user: {} roleId: {}", user.getTokenSubject(), roleId);
+                continue;
+            }
+
             if (entry.getValue() == null) {
                 log.warn("Role {} has null business unit ids in cache for user {}. Treating as empty set.",
                          entry.getKey(), user.getUserId());

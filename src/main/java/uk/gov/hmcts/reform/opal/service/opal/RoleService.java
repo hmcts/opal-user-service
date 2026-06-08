@@ -37,6 +37,11 @@ public class RoleService {
     }
 
     @Transactional(readOnly = true)
+    public boolean roleExists(long roleId) {
+        return roleRepository.existsById(roleId);
+    }
+
+    @Transactional(readOnly = true)
     public List<BusinessUnitUserEntity> getAlignedBusinessUnitUsers(Long userId, Set<Short> businessUnitIds) {
         if (businessUnitIds.isEmpty()) {
             return List.of();

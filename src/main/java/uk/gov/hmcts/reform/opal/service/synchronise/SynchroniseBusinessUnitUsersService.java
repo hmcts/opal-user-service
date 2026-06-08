@@ -75,13 +75,16 @@ public class SynchroniseBusinessUnitUsersService {
             .filter(buUser -> !validatedBusinessUnitIds.contains(buUser.getBusinessUnitId()))
             .toList();
 
-        List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
-            .map(BusinessUnitUserEntity::getBusinessUnitUserId)
-            .toList();
-        log.info("Deleting legacy business units not in cache for user:{} BUUs:{}", user.getUserId(),
+        if (!staleBusinessUnitUsers.isEmpty()) {
+
+            List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
+                .map(BusinessUnitUserEntity::getBusinessUnitUserId)
+                .toList();
+            log.info("Deleting business units not in cache for user:{} BUUs:{}", user.getUserId(),
                  staleBusinessUnitUserIds);
 
-        userService.deleteBusinessUnitUsers(user, staleBusinessUnitUsers);
+            userService.deleteBusinessUnitUsers(user, staleBusinessUnitUsers);
+        }
     }
 
     private void processBusinessUnitUser(UserEntity user, String businessUnitUserId, Short businessUnitId) {
@@ -146,6 +149,15 @@ public class SynchroniseBusinessUnitUsersService {
                 legacyBusinessUnitUserIds
             );
 
-        userService.deleteBusinessUnitUsers(user, staleBusinessUnitUsers);
+        if (!staleBusinessUnitUsers.isEmpty()) {
+
+            List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
+                .map(BusinessUnitUserEntity::getBusinessUnitUserId)
+                .toList();
+            log.info("Deleting business units not in legacy for user:{} BUUs:{}", user.getUserId(),
+                     staleBusinessUnitUserIds);
+
+            userService.deleteBusinessUnitUsers(user, staleBusinessUnitUsers);
+        }
     }
 }

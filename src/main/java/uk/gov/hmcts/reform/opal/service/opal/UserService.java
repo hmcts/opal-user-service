@@ -174,7 +174,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
                 BusinessEventLogType.ROLE_ASSIGNED_TO_USER, user.getUserId(),
                 new RoleAssignedToUserEvent(role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds),
                 businessEventService);
-        } else {
+        } else if (!addedBusinessUnitIds.isEmpty() || !removedBusinessUnitIds.isEmpty()) {
             log.debug(
                 ":logBusinessEvent: amended business units: added {}, removed {}",
                 addedBusinessUnitIds,
@@ -185,6 +185,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
                 new UnitsAssociatedToRoleAmendedEvent(
                     role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds, removedBusinessUnitIds),
                 businessEventService);
+        } else {
+            log.debug(":logBusinessEvent: no business unit changes for role {}", role.getRoleId());
         }
     }
 

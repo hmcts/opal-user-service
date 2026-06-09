@@ -61,7 +61,7 @@ public class SynchronisePermissionsService {
             //7. Call activateUser method if the user does not have an activation date
             if (!validatedRoleIds.isEmpty() && user.getActivationDate() == null) {
                 userService.activateUser(user);
-                log.debug("User activated");
+                log.info("User activated");
             }
         } catch (RuntimeException exception) {
             if (exception instanceof SynchronisePermissionsException synchronisePermissionsException) {

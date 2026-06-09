@@ -1,6 +1,6 @@
 #!groovy
 
-@Library("Infrastructure")
+@Library("Infrastructure@DTSPO-30114/library-nagger")
 
 def type = "java"
 def product = "opal"

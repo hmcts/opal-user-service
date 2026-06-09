@@ -54,7 +54,7 @@ public class SynchronisePermissionsService {
             // Legacy may return extra BU rows that are absent from the CSV mapping. Remove those
             // after role sync so neither the DB nor user state retains empty BU entries.
             synchroniseBusinessUnitUsersService.removeBusinessUnitUsersWithoutValidatedRoleMappings(
-                user.getUserId(),
+                user,
                 getValidatedBusinessUnitIds(validatedRoleMap)
             );
 

@@ -101,7 +101,7 @@ class SynchronisePermissionsServiceTest {
         verify(synchroniseRolesService).getValidatedRoleMap(MANAGED_USER_WITH_NO_ACTIVATION, legacyBusinessUnitUsers);
         verify(synchroniseRolesService).synchroniseRoles(MANAGED_USER_WITH_NO_ACTIVATION, VALIDATED_ROLE_MAP);
         verify(synchroniseBusinessUnitUsersService).removeBusinessUnitUsersWithoutValidatedRoleMappings(
-            USER_ID,
+            MANAGED_USER_WITH_NO_ACTIVATION,
             Set.of(BUSINESS_UNIT_ID)
         );
         verify(userService, never()).activateUser(MANAGED_USER_WITH_NO_ACTIVATION);

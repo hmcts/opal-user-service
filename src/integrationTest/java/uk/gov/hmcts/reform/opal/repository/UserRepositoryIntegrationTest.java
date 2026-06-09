@@ -59,7 +59,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                  {
                      "user_id": 500000001,
                      "username": "opal-test-2@HMCTS.NET",
-                     "name": null,
+                     "name": "token name",
                      "status": "PENDING",
                      "version": 0,
                      "cache_name": null,

@@ -74,15 +74,15 @@ public class SynchroniseRolesService {
                     user
                 );
 
-                Set<Short> legacyBuuIds = new LinkedHashSet<>();
+                Set<Short> legacyBuIds = new LinkedHashSet<>();
                 for (LegacyBusinessUnitUserId legacyUser : legacyBuuList) {
-                    legacyBuuIds.add(parseBusinessUnitId(user, legacyUser.getBusinessUnitId()));
+                    legacyBuIds.add(parseBusinessUnitId(user, legacyUser.getBusinessUnitId()));
                 }
 
                 // Keep only BU ids that appear in both sources:
                 // CSV cache says "user should have role on BU"
                 // legacy says "user currently has BU"
-                return pruneBusinessUnitsNotReturnedByLegacy(roleMap, legacyBuuIds);
+                return pruneBusinessUnitsNotReturnedByLegacy(roleMap, legacyBuIds);
             } catch (UserMissingFromCacheException e) {
                 log.warn("Nothing in cache for : " + user.getTokenSubject());
                 return Map.of();
@@ -97,19 +97,19 @@ public class SynchroniseRolesService {
     }
 
     private static @NonNull Map<Long, Set<Short>> pruneBusinessUnitsNotReturnedByLegacy(
-        Map<Long, Set<Short>> typedRoleMap, Set<Short> legacyBuuIds) {
+        Map<Long, Set<Short>> typedRoleMap, Set<Short> legacyBuIds) {
         Map<Long, Set<Short>> prunedMap = new LinkedHashMap<>();
         for (Long roleId : typedRoleMap.keySet()) {
             // Core comparison: a BU survives only if it is present in the
             // CSV-derived role map and in the legacy response for the current user.
-            Set<Short> verifiedBuus = new LinkedHashSet<>();
-            for (Short buu : typedRoleMap.get(roleId)) {
-                if (legacyBuuIds.contains(buu)) {
-                    verifiedBuus.add(buu);
+            Set<Short> verifiedBuIds = new LinkedHashSet<>();
+            for (Short buId : typedRoleMap.get(roleId)) {
+                if (legacyBuIds.contains(buId)) {
+                    verifiedBuIds.add(buId);
                 }
             }
-            if (!verifiedBuus.isEmpty()) {
-                prunedMap.put(roleId, verifiedBuus);
+            if (!verifiedBuIds.isEmpty()) {
+                prunedMap.put(roleId, verifiedBuIds);
             }
         }
         return prunedMap;

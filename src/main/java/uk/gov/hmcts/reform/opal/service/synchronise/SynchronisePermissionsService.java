@@ -34,6 +34,7 @@ public class SynchronisePermissionsService {
 
     @Transactional(propagation = REQUIRES_NEW, rollbackFor = Exception.class)
     public void synchronise(UserEntity detachedUser) {
+        log.info("Synchronizing permissions for userId: {}", detachedUser.getUserId());
         UserEntity user = detachedUser;
         try {
             user = userService.getUser(detachedUser.getUserId());

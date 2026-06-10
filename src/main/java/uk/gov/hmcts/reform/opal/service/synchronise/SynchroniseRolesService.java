@@ -107,7 +107,8 @@ public class SynchroniseRolesService {
                 if (legacyBuIds.contains(buId)) {
                     verifiedBuIds.add(buId);
                 } else {
-                    log.info("Ignoring business unit {} from mapping as not found in legacy. User:{}", buId, user.getUserId());
+                    log.info("Ignoring business unit {} from mapping as not found in legacy. User:{}",
+                             buId, user.getUserId());
                 }
             }
             if (!verifiedBuIds.isEmpty()) {

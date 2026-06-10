@@ -1,11 +1,16 @@
 package uk.gov.hmcts.reform.opal.service.synchronise;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyBusinessUnitUserId;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
@@ -22,6 +27,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,6 +36,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SynchroniseBusinessUnitUsersServiceTest {
+
+    private static final String LOGGER_NAME = "opal.SynchroniseBusinessUnitUsersService";
 
     private static final long USER_ID = 500000001L;
     private static final long DIFFERENT_USER_ID = 500000006L;
@@ -254,18 +262,25 @@ class SynchroniseBusinessUnitUsersServiceTest {
         UserEntity user = user(USER_ID);
         LegacyBusinessUnitUserId legacyBusinessUnitUser = legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID,
             BUSINESS_UNIT_ID);
+        ListAppender<ILoggingEvent> logAppender = attachLogAppender();
 
         // Act
         synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, List.of(legacyBusinessUnitUser));
 
         // Assert
+        assertInfoLogged(
+            logAppender,
+            "Deleting business units not in legacy for user:" + USER_ID + " BUUs:[" + STALE_BUSINESS_UNIT_USER_ID + "]"
+        );
         verify(userService).deleteBusinessUnitUsers(user, List.of(staleBusinessUnitUser));
+        detachLogAppender(logAppender);
     }
 
     @Test
     void synchroniseBusinessUnitUsers_withNoLegacyBusinessUnitUsers_removesAllStaleBusinessUnitUsers() {
 
         // Arrange
+        ListAppender<ILoggingEvent> logAppender = attachLogAppender();
         UserEntity user = user(USER_ID);
         BusinessUnitUserEntity staleBusinessUnitUser = businessUnitUser(
             STALE_BUSINESS_UNIT_USER_ID,
@@ -279,8 +294,13 @@ class SynchroniseBusinessUnitUsersServiceTest {
         synchroniseBusinessUnitUsersService.synchroniseBusinessUnitsUsers(user, List.of());
 
         // Assert
+        assertInfoLogged(
+            logAppender,
+            "Deleting business units not in legacy for user:" + USER_ID + " BUUs:[" + STALE_BUSINESS_UNIT_USER_ID + "]"
+        );
         verify(businessUnitUserRepository).findAllByUser_UserId(USER_ID);
         verify(userService).deleteBusinessUnitUsers(user, List.of(staleBusinessUnitUser));
+        detachLogAppender(logAppender);
     }
 
     @Test
@@ -311,6 +331,7 @@ class SynchroniseBusinessUnitUsersServiceTest {
     void removeBusinessUnitUsersWithoutValidatedRoleMappings_callsUserServiceWithFilteredStaleBusinessUnitUsers() {
 
         // Arrange
+        ListAppender<ILoggingEvent> logAppender = attachLogAppender();
         UserEntity user = user(USER_ID);
         BusinessUnitUserEntity validatedBusinessUnitUser = businessUnitUser(
             BUSINESS_UNIT_USER_ID,
@@ -332,8 +353,13 @@ class SynchroniseBusinessUnitUsersServiceTest {
         );
 
         // Assert
+        assertInfoLogged(
+            logAppender,
+            "Deleting business units not in cache for user:" + USER_ID + " BUUs:[" + STALE_BUSINESS_UNIT_USER_ID + "]"
+        );
         verify(businessUnitUserRepository).findAllByUser_UserId(USER_ID);
         verify(userService).deleteBusinessUnitUsers(user, List.of(staleBusinessUnitUser));
+        detachLogAppender(logAppender);
     }
 
     @Test
@@ -387,6 +413,28 @@ class SynchroniseBusinessUnitUsersServiceTest {
             .businessUnitUserId(businessUnitUserId)
             .businessUnitId(Short.toString(businessUnitId))
             .build();
+    }
+
+    private ListAppender<ILoggingEvent> attachLogAppender() {
+        Logger logger = (Logger) LoggerFactory.getLogger(LOGGER_NAME);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        return appender;
+    }
+
+    private void assertInfoLogged(ListAppender<ILoggingEvent> appender, String expectedMessage) {
+        assertTrue(
+            appender.list.stream()
+                .anyMatch(event -> event.getLevel() == Level.INFO
+                    && expectedMessage.equals(event.getFormattedMessage())),
+            "Expected INFO log message not found: " + expectedMessage
+        );
+    }
+
+    private void detachLogAppender(ListAppender<ILoggingEvent> appender) {
+        Logger logger = (Logger) LoggerFactory.getLogger(LOGGER_NAME);
+        logger.detachAppender(appender);
     }
 
 }

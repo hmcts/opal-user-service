@@ -14,15 +14,6 @@
     <!-- We do not use the mail api-->
     <cve>CVE-2025-7962</cve>
   </suppress>
- <suppress until="2026-06-10">
-    <notes><![CDATA[
-    Reviewed 2026-06-01.
-    CVE-2026-33117 applies to key vault vulnerabilities in the Azure Storage SDK.
-    We don't uses the key vault vuncinality within our codebase instead platform injects them into our PODs via environment variables.
-    We should none the less reguallrly review this one such that once a fix is avaialble we apply it
-    ]]></notes>
-    <cve>CVE-2026-33117</cve>
- </suppress>
   <suppress until="2026-08-31Z">
     <notes><![CDATA[
     Reviewed 2026-04-01.
@@ -49,17 +40,19 @@
     <packageUrl regex="true">^pkg:maven/com\.microsoft\.azure/applicationinsights\-(core|web)@.*$</packageUrl>
     <cve>CVE-2025-21199</cve>
   </suppress>
-  <suppress until="2026-06-05Z">
+  <suppress until="2026-06-24Z">
     <notes><![CDATA[
-    Reviewed 2026-05-22.
+    Reviewed 2026-06-10.
     User-service uses Azure Blob Storage only for reading the role-mapping file via
     BlobServiceClientBuilder.connectionString(...), then reading blob properties and content.
     Current runtime artifacts flagged for CVE-2026-33117 are:
     - com.azure:azure-core:1.58.0
     - com.azure:azure-core-http-netty:1.16.4
     - com.azure:azure-json:1.5.1
-    Maven metadata review found these are already the latest stable GA releases available in the
-    current Azure Storage SDK chain used by this repo, with no newer non-beta upgrade path.
+    The opal-common-lib transitive applicationinsights-spring-boot-starter path has been excluded,
+    so this suppression now covers only the direct Azure Storage SDK runtime path.
+    Maven metadata review still found no newer stable GA upgrade path in the current Azure Storage SDK chain
+    used by this repo.
     This suppression expires in two weeks so the dependency-check failure returns unless an
     upstream GA fix or a better remediation path is available.
     ]]></notes>

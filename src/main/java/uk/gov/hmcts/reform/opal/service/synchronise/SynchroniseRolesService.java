@@ -82,7 +82,7 @@ public class SynchroniseRolesService {
                 // Keep only BU ids that appear in both sources:
                 // CSV cache says "user should have role on BU"
                 // legacy says "user currently has BU"
-                return pruneBusinessUnitsNotReturnedByLegacy(roleMap, legacyBuIds);
+                return pruneBusinessUnitsNotReturnedByLegacy(roleMap, legacyBuIds, user);
             } catch (UserMissingFromCacheException e) {
                 log.warn("Nothing in cache for : " + user.getTokenSubject());
                 return Map.of();
@@ -97,7 +97,7 @@ public class SynchroniseRolesService {
     }
 
     private static @NonNull Map<Long, Set<Short>> pruneBusinessUnitsNotReturnedByLegacy(
-        Map<Long, Set<Short>> typedRoleMap, Set<Short> legacyBuIds) {
+        Map<Long, Set<Short>> typedRoleMap, Set<Short> legacyBuIds, UserEntity user) {
         Map<Long, Set<Short>> prunedMap = new LinkedHashMap<>();
         for (Long roleId : typedRoleMap.keySet()) {
             // Core comparison: a BU survives only if it is present in the
@@ -106,6 +106,9 @@ public class SynchroniseRolesService {
             for (Short buId : typedRoleMap.get(roleId)) {
                 if (legacyBuIds.contains(buId)) {
                     verifiedBuIds.add(buId);
+                } else {
+                    log.info("Ignoring business unit {} from mapping as not found in legacy. User:{}",
+                             buId, user.getUserId());
                 }
             }
             if (!verifiedBuIds.isEmpty()) {

@@ -80,7 +80,7 @@ public class SynchroniseBusinessUnitUsersService {
             List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
                 .map(BusinessUnitUserEntity::getBusinessUnitUserId)
                 .toList();
-            log.debug("Deleting business units not in cache for user:{} BUUs:{}", user.getUserId(),
+            log.info("Deleting business units not in cache for user:{} BUUs:{}", user.getUserId(),
                  staleBusinessUnitUserIds);
 
             userService.deleteBusinessUnitUsers(user, staleBusinessUnitUsers);
@@ -154,7 +154,7 @@ public class SynchroniseBusinessUnitUsersService {
             List<String> staleBusinessUnitUserIds = staleBusinessUnitUsers.stream()
                 .map(BusinessUnitUserEntity::getBusinessUnitUserId)
                 .toList();
-            log.debug("Deleting business units not in legacy for user:{} BUUs:{}", user.getUserId(),
+            log.info("Deleting business units not in legacy for user:{} BUUs:{}", user.getUserId(),
                      staleBusinessUnitUserIds);
 
             userService.deleteBusinessUnitUsers(user, staleBusinessUnitUsers);

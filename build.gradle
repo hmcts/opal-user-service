@@ -361,7 +361,7 @@ dependencies {
   implementation('uk.gov.hmcts:opal-common-lib:0.3.17') {
     exclude group: 'com.microsoft.azure', module: 'applicationinsights-spring-boot-starter'
   }
-  implementation('uk.gov.hmcts:spring-exception-handler:1.0.1') {
+  implementation('uk.gov.hmcts:spring-exception-handler:1.0.2') {
     exclude group: 'com.microsoft.azure', module: 'applicationinsights-spring-boot-starter'
   }
 

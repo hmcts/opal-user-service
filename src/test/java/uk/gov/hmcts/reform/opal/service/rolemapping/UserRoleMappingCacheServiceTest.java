@@ -21,11 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 class UserRoleMappingCacheServiceTest {
 
@@ -185,6 +187,38 @@ class UserRoleMappingCacheServiceTest {
         assertTrue(exception.getCause() instanceof tools.jackson.core.JacksonException);
 
         verify(redisTemplate.opsForValue(), never()).set(any(), any(), any());
+    }
+
+    @Test
+    void putUserMappingThrowsWhenRedisWriteFails() {
+
+        // ARRANGE
+        RoleMappingCacheProperties properties = Mockito.mock(RoleMappingCacheProperties.class);
+        StringRedisTemplate redisTemplate = Mockito.mock(StringRedisTemplate.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> valueOperations = Mockito.mock(ValueOperations.class);
+
+        when(properties.getUserTtl()).thenReturn(Duration.ofMinutes(30));
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        Mockito.doThrow(new QueryTimeoutException("redis timeout"))
+            .when(valueOperations)
+            .set(PREFIX + "AS1", "{}", Duration.ofMinutes(30));
+
+        UserRoleMappingCacheService cacheService =
+            new UserRoleMappingCacheService(redisTemplate, properties, new ObjectMapper());
+
+        // ACT
+        RuntimeException exception = org.junit.jupiter.api.Assertions.assertThrows(
+            RuntimeException.class,
+            () -> cacheService.putUserMapping("AS1", Map.of())
+        );
+
+        // ASSERT
+        assertEquals(
+            "Redis write failed for key ROLE_MAPPING_USER_AS1",
+            exception.getMessage()
+        );
+        assertTrue(exception.getCause() instanceof QueryTimeoutException);
     }
 
     // ---------------------------------------

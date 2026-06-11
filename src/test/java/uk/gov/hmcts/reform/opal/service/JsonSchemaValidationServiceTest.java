@@ -52,6 +52,20 @@ class JsonSchemaValidationServiceTest {
     }
 
     @Test
+    void testIsValid_validBodyReturnsTrue() {
+        String validJson = """
+            {
+              "test_long_id": 1,
+              "test_short_id": 2,
+              "test_date_time": "2025-06-09T14:00:00Z",
+              "test_text_1": "value"
+            }
+            """;
+
+        assertTrue(jsonSchemaValidationService.isValid(validJson, "testSchema.json"));
+    }
+
+    @Test
     void testIsValid_failValidate1() {
         Set<String> messages = jsonSchemaValidationService
             .validate("", "testSchema.json");

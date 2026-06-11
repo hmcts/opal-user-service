@@ -152,6 +152,28 @@ class RoleMappingCacheLookupServiceTest {
     }
 
     @Test
+    void getRoleMappingByTokenSubject_throwsSynchronisePermissionsException_whenMapperThrowsIllegalArgumentException()
+        throws Exception {
+
+        // Arrange
+        String cachePayload = "{\"101\":[\"7\"]}";
+        IllegalArgumentException illegalArgumentException = new IllegalArgumentException("bad type");
+        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference()))
+            .thenThrow(illegalArgumentException);
+
+        // Act
+        SynchronisePermissionsException exception = assertThrows(
+            SynchronisePermissionsException.class,
+            () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
+        );
+
+        // Assert
+        assertEquals(errorMessage(PARSE_JSON_REASON), exception.getMessage());
+        assertSame(illegalArgumentException, exception.getCause());
+    }
+
+    @Test
     void getRoleMappingByTokenSubject_throwsUserMissingFromCacheException_whenCachePayloadIsBlank() {
 
         // Arrange

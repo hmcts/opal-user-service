@@ -89,6 +89,26 @@ class AzureDaoTest {
         assertEquals(400, exception.getHttpStatus());
     }
 
+    @Test
+    void fetchAccessTokenShouldThrowExceptionWhenAzureResponseBodyIsInvalidJson() {
+        HTTPResponse response = Mockito.mock(HTTPResponse.class);
+        when(response.getStatusCode()).thenReturn(HttpStatus.SC_OK);
+        when(response.getBody()).thenReturn("not-json");
+        when(azureActiveDirectoryB2CClient.fetchAccessToken(any(), any(), any(), any(), any(), any())).thenReturn(
+            response);
+
+        AzureDaoException exception = assertThrows(
+            AzureDaoException.class,
+            () -> azureDao.fetchAccessToken(
+                "CODE",
+                authenticationProviderConfiguration,
+                authenticationConfiguration
+            )
+        );
+
+        assertEquals("Failed to fetch Azure AD Access Token", exception.getMessage());
+    }
+
     private HTTPResponse mockSuccessResponse() {
         String body = "{\"id_token\":\"test_id_token\", \"expires_in\":0, \"id_token_expires_in\":\"1234\"}";
 

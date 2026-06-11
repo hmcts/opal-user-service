@@ -171,7 +171,6 @@ tasks.register('functionalOpal', Test) {
   reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/functional/opal"))
   testLogging.showStandardStreams = true
   gradle.startParameter.continueOnFailure = true
-  environment("DEFAULT_APP_MODE", "opal")
   environment("IS_LEGACY_MODE", false)
   include '**/OpalTestRunner.class'
 
@@ -185,7 +184,6 @@ tasks.register('functionalOpalToggle', Test) {
   reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/functional/opal-toggle"))
   testLogging.showStandardStreams = true
   gradle.startParameter.continueOnFailure = true
-  environment("DEFAULT_APP_MODE", "opal")
   include '**/OpalToggleTestRunner.class'
 }
 tasks.register('functionalLegacy', Test) {
@@ -197,7 +195,6 @@ tasks.register('functionalLegacy', Test) {
   reports.junitXml.getOutputLocation().set(layout.buildDirectory.dir("test-results/functional/legacy"))
   gradle.startParameter.continueOnFailure = true
   testLogging.showStandardStreams = true
-  environment("DEFAULT_APP_MODE", "legacy")
   environment("IS_LEGACY_MODE", true)
 
   include '**/LegacyTestRunner.class'

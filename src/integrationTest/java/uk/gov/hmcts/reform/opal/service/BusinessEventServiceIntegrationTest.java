@@ -32,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
 import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.IS_LEGACY_MODE_PROPERTY;
 
 @ActiveProfiles({"integration"})
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
@@ -56,7 +57,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
 
 
     @TestPropertySource(properties = {
-        "opal.feature-flags.is-legacy-mode=true"
+        IS_LEGACY_MODE_PROPERTY+"=true"
     })
     @Nested
     public class LegacyMode extends AbstractIntegrationTest {
@@ -78,7 +79,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @TestPropertySource(properties = {
-        "opal.feature-flags.is-legacy-mode=false"
+        IS_LEGACY_MODE_PROPERTY+"=false"
     })
     @Nested
     public class OpalMode extends AbstractIntegrationTest {

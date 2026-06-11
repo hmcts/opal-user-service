@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.common.exceptions.standard.InternalServerErrorException;
-import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
+import uk.gov.hmcts.reform.opal.config.LegacyModeConfiguration;
 import uk.gov.hmcts.reform.opal.dto.businessevent.BusinessEvent;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
@@ -25,7 +25,7 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
     private static final long SYSTEM_USER_ID = -1L;
     private final BusinessEventRepository businessEventRepository;
     private final UserPermissionsService userPermissionsService;
-    private final FeatureToggleApi featureToggleApi;
+    private final LegacyModeConfiguration legacyModeConfiguration;
     private final Clock clock;
 
     @Transactional
@@ -67,11 +67,7 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
 
     private Long resolveInitiatorUserId() {
         try {
-            if (featureToggleApi.isFeatureEnabledWithPropertyValueDefault(
-                "is-legacy-mode",
-                "opal.feature-flags.is-legacy-mode",
-                false)
-            ) {
+            if (legacyModeConfiguration.isLegacyMode()) {
                 return SYSTEM_USER_ID;
             } else {
                 return userPermissionsService.getAuthenticatedUserId();

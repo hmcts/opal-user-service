@@ -57,7 +57,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
 
 
     @TestPropertySource(properties = {
-        IS_LEGACY_MODE_PROPERTY+"=true"
+        IS_LEGACY_MODE_PROPERTY + "=true"
     })
     @Nested
     public class LegacyMode extends AbstractIntegrationTest {
@@ -79,7 +79,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @TestPropertySource(properties = {
-        IS_LEGACY_MODE_PROPERTY+"=false"
+        IS_LEGACY_MODE_PROPERTY + "=false"
     })
     @Nested
     public class OpalMode extends AbstractIntegrationTest {

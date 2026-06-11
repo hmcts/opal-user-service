@@ -8,7 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
-import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
+import uk.gov.hmcts.reform.opal.config.LegacyModeConfiguration;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountDeactivationDateAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
@@ -42,7 +42,7 @@ class BusinessEventServiceTest {
     private UserPermissionsService userPermissionsService;
 
     @Mock
-    private FeatureToggleApi featureToggleApi;
+    private LegacyModeConfiguration legacyModeConfiguration;
 
     private BusinessEventService businessEventService;
 
@@ -51,7 +51,7 @@ class BusinessEventServiceTest {
         businessEventService = new BusinessEventService(
             businessEventRepository,
             userPermissionsService,
-            featureToggleApi,
+            legacyModeConfiguration,
             CLOCK
         );
     }
@@ -61,11 +61,8 @@ class BusinessEventServiceTest {
         SecurityContextHolder.clearContext();
     }
 
-    public void setupFeatureFlags(boolean isLegacyMode) {
-        when(featureToggleApi.isFeatureEnabledWithPropertyValueDefault(
-            "is-legacy-mode",
-            "opal.feature-flags.is-legacy-mode",
-            false)).thenReturn(isLegacyMode);
+    private void setupLegacyMode(boolean isLegacyMode) {
+        when(legacyModeConfiguration.isLegacyMode()).thenReturn(isLegacyMode);
     }
 
     @Test
@@ -128,8 +125,8 @@ class BusinessEventServiceTest {
     }
 
     @Test
-    void logBusinessEvent_usesSystemUserWhenAppModeIsLegacy() {
-        setupFeatureFlags(true);
+    void logBusinessEvent_usesSystemUserWhenLegacyMode() {
+        setupLegacyMode(true);
         RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, 1L, Set.of((short) 11));
         BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(13L).build();
 
@@ -149,8 +146,8 @@ class BusinessEventServiceTest {
     }
 
     @Test
-    void logBusinessEvent_usesLoggedInUserWhenAppModeIsNotLegacy() {
-        setupFeatureFlags(false);
+    void logBusinessEvent_usesLoggedInUserWhenNotLegacyMode() {
+        setupLegacyMode(false);
         RoleAssignedToUserEvent eventDetails = new RoleAssignedToUserEvent(201L, 1L, Set.of((short) 11));
         BusinessEventEntity savedEntity = BusinessEventEntity.builder().businessEventId(13L).build();
 

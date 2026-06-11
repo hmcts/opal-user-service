@@ -20,7 +20,7 @@ import uk.gov.hmcts.common.exceptions.standard.UnauthorizedException;
 import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
-import uk.gov.hmcts.reform.opal.config.properties.AppModeConfiguration;
+import uk.gov.hmcts.reform.opal.config.LegacyModeConfiguration;
 import uk.gov.hmcts.reform.opal.config.properties.CacheConfiguration;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
@@ -101,7 +101,7 @@ class UserPermissionsServiceV2Test {
     private SynchronisePermissionsService synchronisePermissionsService;
 
     @Mock
-    private AppModeConfiguration appModeConfiguration;
+    private LegacyModeConfiguration legacyModeConfiguration;
 
     @Mock
     private UserService userService;
@@ -119,7 +119,7 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.clearContext();
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         lenient().when(cacheConfiguration.getUserStateTimeoutMinutes()).thenReturn(CACHE_TIMEOUT_MINUTES);
-        lenient().when(appModeConfiguration.getAppMode()).thenReturn("opal");
+        lenient().when(legacyModeConfiguration.isLegacyMode()).thenReturn(false);
     }
 
     @Test
@@ -203,7 +203,7 @@ class UserPermissionsServiceV2Test {
 
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
-        when(appModeConfiguration.getAppMode()).thenReturn("legacy");
+        when(legacyModeConfiguration.isLegacyMode()).thenReturn(true);
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
         when(userService.getUser(USER_ID)).thenReturn(userEntity);
@@ -223,7 +223,7 @@ class UserPermissionsServiceV2Test {
 
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
-        when(appModeConfiguration.getAppMode()).thenReturn("legacy");
+        when(legacyModeConfiguration.isLegacyMode()).thenReturn(true);
         when(userService.getUser(USER_ID)).thenReturn(userEntity);
         UserEntity synchronisedUser = UserEntity.builder()
             .userId(USER_ID)
@@ -251,7 +251,7 @@ class UserPermissionsServiceV2Test {
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
         RuntimeException runtimeException = new RuntimeException("sync failed");
-        when(appModeConfiguration.getAppMode()).thenReturn("legacy");
+        when(legacyModeConfiguration.isLegacyMode()).thenReturn(true);
         doThrow(runtimeException).when(synchronisePermissionsService).synchronise(userEntity);
         when(userService.getUser(USER_ID)).thenReturn(userEntity);
 
@@ -267,11 +267,11 @@ class UserPermissionsServiceV2Test {
     }
 
     @Test
-    void getUserStateV2_whenAppModeIsOpal_doesNotCallLegacySynchronisationServices() {
+    void getUserStateV2_whenNotLegacyMode_doesNotCallLegacySynchronisationServices() {
 
         // Arrange
         setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
-        when(appModeConfiguration.getAppMode()).thenReturn("opal");
+        when(legacyModeConfiguration.isLegacyMode()).thenReturn(false);
         when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
         when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
         when(userService.getUser(USER_ID)).thenReturn(userEntity);

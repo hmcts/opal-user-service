@@ -59,8 +59,7 @@ class UserRoleMappingCacheServiceTest {
         verify(redisTemplate.opsForValue()).set(
             PREFIX + "AS1",
             "{\"R1\":[\"BU1\",\"BU2\"],\"R2\":[\"BU1\"]}",
-            Duration.ofMinutes(30)
-        );
+            Duration.ofMinutes(30));
     }
 
     @Test
@@ -107,8 +106,7 @@ class UserRoleMappingCacheServiceTest {
         verify(redisTemplate.opsForValue()).set(
             "USER_MAPPING_FILE_LAST_UPDATE_AT",
             timestamp,
-            Duration.ofHours(1)
-        );
+            Duration.ofHours(1));
 
         when(redisTemplate.opsForValue().get("USER_MAPPING_FILE_LAST_UPDATE_AT"))
             .thenReturn(timestamp);
@@ -142,16 +140,14 @@ class UserRoleMappingCacheServiceTest {
         stubScanKeys(
             PREFIX + "AS1",
             PREFIX + "AS2",
-            PREFIX + "AS3"
-        );
+            PREFIX + "AS3");
 
         // ACT
         cacheService.deleteStaleUserMappings(Set.of("AS1", "AS3"));
 
         // ASSERT
         verify(redisTemplate).delete(argThat((Collection<String> keys) ->
-                                                 keys.size() == 1 && keys.contains(PREFIX + "AS2")
-        ));
+            keys.size() == 1 && keys.contains(PREFIX + "AS2")));
     }
 
     @Test
@@ -175,18 +171,14 @@ class UserRoleMappingCacheServiceTest {
         // ACT
         RuntimeException exception = org.junit.jupiter.api.Assertions.assertThrows(
             RuntimeException.class,
-            () -> cacheService.putUserMapping("AS1", Map.of())
-        );
+            () -> cacheService.putUserMapping("AS1", Map.of()));
 
         // ASSERT
-        assertEquals(
-            "Failed to serialize mapping for key ROLE_MAPPING_USER_AS1",
-            exception.getMessage()
-        );
+        assertEquals("Failed to serialize mapping for key ROLE_MAPPING_USER_AS1", exception.getMessage());
 
         assertTrue(exception.getCause() instanceof tools.jackson.core.JacksonException);
 
-        verify(redisTemplate.opsForValue(), never()).set(any(), any(), any());
+        verify(redisTemplate.opsForValue(), never()).set(any(), any(), any(Duration.class));
     }
 
     @Test
@@ -210,14 +202,10 @@ class UserRoleMappingCacheServiceTest {
         // ACT
         RuntimeException exception = org.junit.jupiter.api.Assertions.assertThrows(
             RuntimeException.class,
-            () -> cacheService.putUserMapping("AS1", Map.of())
-        );
+            () -> cacheService.putUserMapping("AS1", Map.of()));
 
         // ASSERT
-        assertEquals(
-            "Redis write failed for key ROLE_MAPPING_USER_AS1",
-            exception.getMessage()
-        );
+        assertEquals("Redis write failed for key ROLE_MAPPING_USER_AS1", exception.getMessage());
         assertTrue(exception.getCause() instanceof QueryTimeoutException);
     }
 

@@ -45,7 +45,7 @@ import uk.gov.hmcts.reform.opal.service.opal.UserService;
     FeatureToggleAspect.class,
     OpalGlobalExceptionHandler.class, Release1AFeatureToggleDisabledIntegrationTest.TestAopConfiguration.class})
 @Import(Release1AFeatureToggleDisabledIntegrationTest.TestAopConfiguration.class)
-@DisplayName("Release 1A gated endpoints return 405 when disabled")
+@DisplayName("Release 1A gated endpoints return 404 when disabled")
 class Release1AFeatureToggleDisabledIntegrationTest {
 
     private static final String AUTHORIZATION = "Authorization";
@@ -112,7 +112,7 @@ class Release1AFeatureToggleDisabledIntegrationTest {
                                                             MockHttpServletRequestBuilder request)
         throws Exception {
         mockMvc.perform(request)
-            .andExpect(status().isMethodNotAllowed())
+            .andExpect(status().isNotFound())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Feature Disabled"))
             .andExpect(jsonPath("$.detail").value("The requested feature is not currently available"));

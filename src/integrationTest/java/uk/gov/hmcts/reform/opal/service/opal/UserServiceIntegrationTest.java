@@ -1,6 +1,6 @@
 package uk.gov.hmcts.reform.opal.service.opal;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +8,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
@@ -53,7 +53,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should add role assignments and log assigned event")
-    void addOrReplaceRoleInformationOnUser_addsRoleAssignments() throws JsonProcessingException {
+    void addOrReplaceRoleInformationOnUser_addsRoleAssignments() throws JacksonException {
         when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
 
         final long businessEventCountBeforeCall = businessEventRepository.count();
@@ -77,7 +77,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should replace existing role assignments and log amended event")
-    void addOrReplaceRoleInformationOnUser_replacesRoleAssignments() throws JsonProcessingException {
+    void addOrReplaceRoleInformationOnUser_replacesRoleAssignments() throws JacksonException {
         when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
 
         final long businessEventCountBeforeCall = businessEventRepository.count();
@@ -144,7 +144,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @DisplayName("Should remove role assignments and log unassigned event")
-    void deleteRoleFromUser_removesRoleAssignments() throws JsonProcessingException {
+    void deleteRoleFromUser_removesRoleAssignments() throws JacksonException {
         when(userPermissionsService.getAuthenticatedUserId()).thenReturn(500000003L);
 
         final long businessEventCountBeforeCall = businessEventRepository.count();
@@ -216,7 +216,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     private void assertRoleAssignedEventDetails(String actualJson, Long roleId, Set<Short> addedBusinessUnitIds)
-        throws JsonProcessingException {
+        throws JacksonException {
         JsonNode actual = objectMapper.readTree(actualJson);
         assertThat(actual.get("role_id").longValue()).isEqualTo(roleId);
         assertThat(actual.get("added_business_unit_ids"))
@@ -226,7 +226,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
 
     private void assertRoleAmendedEventDetails(
         String actualJson, Long roleId, Set<Short> addedBusinessUnitIds, Set<Short> removedBusinessUnitIds)
-        throws JsonProcessingException {
+        throws JacksonException {
 
         JsonNode actual = objectMapper.readTree(actualJson);
         assertThat(actual.get("role_id").longValue()).isEqualTo(roleId);
@@ -239,7 +239,7 @@ class UserServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     private void assertRoleUnassignedEventDetails(
-        String actualJson, Long roleId, Set<Short> businessUnitIds, Long roleVersion) throws JsonProcessingException {
+        String actualJson, Long roleId, Set<Short> businessUnitIds, Long roleVersion) throws JacksonException {
 
         JsonNode actual = objectMapper.readTree(actualJson);
         assertThat(actual.get("role_id").longValue()).isEqualTo(roleId);

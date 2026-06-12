@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.opal.authentication.dao;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +13,6 @@ import uk.gov.hmcts.opal.common.user.authentication.config.AuthProviderConfigura
 import uk.gov.hmcts.opal.common.user.authentication.model.OAuthProviderRawResponse;
 import uk.gov.hmcts.reform.opal.authentication.client.OAuthClient;
 import uk.gov.hmcts.reform.opal.authentication.exception.AzureDaoException;
-
-import java.io.IOException;
 
 @Component
 @Slf4j(topic = "opal.AzureDao")
@@ -58,7 +57,7 @@ public class AzureDao {
             log.debug("Obtained access token for authorization code: {}, {}", code, tokenResponse);
             return tokenResponse;
 
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new AzureDaoException("Failed to fetch Azure AD Access Token", e);
         }
     }

@@ -1,6 +1,6 @@
 package uk.gov.hmcts.reform.opal.rolemapping;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import com.azure.storage.blob.BlobClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

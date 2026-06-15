@@ -1,3 +1,4 @@
-app-mode: opal
 launchdarkly:
   enabled: false
+  default-flag-values:
+    is-legacy-mode: false

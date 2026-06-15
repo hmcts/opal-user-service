@@ -14,7 +14,7 @@ import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.opal.common.util.SecurityUtil;
-import uk.gov.hmcts.reform.opal.config.properties.AppModeConfiguration;
+import uk.gov.hmcts.reform.opal.config.LegacyModeConfiguration;
 import uk.gov.hmcts.reform.opal.config.properties.CacheConfiguration;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
@@ -55,7 +55,7 @@ public class UserPermissionsService {
     private final Clock clock;
     private final CacheConfiguration cacheConfiguration;
     private final SynchronisePermissionsService synchronisePermissionsService;
-    private final AppModeConfiguration appModeConfiguration;
+    private final LegacyModeConfiguration legacyModeConfiguration;
     private final UserService userService;
 
     public Long getAuthenticatedUserId() {
@@ -69,7 +69,7 @@ public class UserPermissionsService {
         UserEntity user = getUserFromAuthentication();
         Long userId = user.getUserId();
 
-        if (appModeConfiguration.getAppMode().equalsIgnoreCase("legacy")) {
+        if (legacyModeConfiguration.isLegacyMode()) {
             synchronisePermissionsService.synchronise(user);
             // synchronise() was processed in a different transaction, so we need to refresh user entity
             userService.refreshUser(user);

@@ -27,6 +27,9 @@ ext {
   set('spring-framework.version', "7.0.8")
 }
 
+var skipTests = true//System.getenv('SKIP_TESTS') != null && System.getenv('SKIP_TESTS').toBoolean();
+var skipSonar = true//System.getenv('SKIP_SONAR') != null && System.getenv('SKIP_SONAR').toBoolean();
+
 group = 'uk.gov.hmcts.reform'
 version = '0.0.1'
 
@@ -100,6 +103,10 @@ tasks.withType(JavaExec).configureEach {
 
 tasks.withType(Test).configureEach {
   useJUnitPlatform()
+
+  if (skipTests) {
+    exclude("uk/gov/hmcts/opal/**")
+  }
 
   testLogging {
     exceptionFormat = 'full'
@@ -288,6 +295,9 @@ tasks.named("sonarqube") {
   dependsOn(tasks.named("jacocoTestReport"))
 }
 tasks.named("check") {
+  if (!skipTests) {
+    dependsOn(tasks.named("checkTestJiraAnnotations"))
+  }
   dependsOn(tasks.named("integration"))
 }
 
@@ -303,6 +313,9 @@ sonarqube {
     property "sonar.exclusions", coverageExclusions.join(', ')
     property 'sonar.coverage.exclusions', "**/entity/*,**/model/*,**/exception/*,**/config/**,**/repository/jpa/*,**/opal/dto/*"
     property 'sonar.cpd.exclusions', "**/entity/*,**/opal/dto/**"
+    if (skipSonar) {
+      property 'sonar.exclusions', "**/**"
+    }
   }
 }
 

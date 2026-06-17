@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.opal.service.legacy;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,6 @@ import static org.assertj.core.api.Assertions.tuple;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @DisplayName("LegacyBusinessUnitUserService integration tests")
 class LegacyBuuServiceIntegrationTest extends AbstractIntegrationTest {
 
@@ -29,8 +27,6 @@ class LegacyBuuServiceIntegrationTest extends AbstractIntegrationTest {
     void getBusinessUnitUserIds_callsLegacyGatewayAndMapsBusinessUnitUserIdsResponse() {
         GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> response =
             legacyBusinessUnitUserService.getBusinessUnitUserIds(List.of("SU001", "SU002"));
-
-        log.info(response.toString());
 
         assertThat(response).isNotNull();
         assertThat(response.isSuccessful()).isTrue();

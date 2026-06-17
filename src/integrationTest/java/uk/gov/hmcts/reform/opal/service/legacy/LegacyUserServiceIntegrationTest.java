@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.opal.service.legacy;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +9,6 @@ import uk.gov.hmcts.reform.opal.dto.legacy.LegacyGetUserResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @DisplayName("LegacyUserService integration tests")
 class LegacyUserServiceIntegrationTest extends AbstractIntegrationTest {
 
@@ -28,8 +26,6 @@ class LegacyUserServiceIntegrationTest extends AbstractIntegrationTest {
     void getUser_callsLegacyGatewayAndMapsLibraUserIdsResponse() {
         GatewayService.Response<LegacyGetUserResponse> response =
             legacyUserService.getUser("legacy.user@hmcts.net");
-
-        log.info("legacyUserService.getUser() response: {}", response);
 
         assertThat(response).isNotNull();
         assertThat(response.isSuccessful()).isTrue();

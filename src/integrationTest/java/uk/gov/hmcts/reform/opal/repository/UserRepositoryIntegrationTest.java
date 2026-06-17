@@ -42,6 +42,10 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @DisplayName("Test UserStateV2Dto production in isolation")
+    @Sql(
+        scripts = "classpath:db.insertData/insert_authorisation_data_with_duplicate_buu.sql",
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+    )
     void testUserStateV2DtoProductionInIsolation() throws JacksonException {
         UserEntity user = userRepository.findIdWithPermissions(500000000L).orElseThrow();
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
@@ -68,7 +72,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
              """));
     }
 
-    public static final String EXPECTED_V2_USER_STATE =
+    private static final String EXPECTED_V2_USER_STATE =
         """
             {
               "user_id": 500000000,

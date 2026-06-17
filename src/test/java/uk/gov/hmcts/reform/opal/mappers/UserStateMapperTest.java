@@ -192,6 +192,52 @@ class UserStateMapperTest {
     }
 
     @Test
+    void toUserStateV2Dto_omitsDuplicateBusinessUnitIdsFromMapping() throws JacksonException {
+
+        // Arrange
+        RoleEntity duplicateRole = buildRole("duplicateRole", List.of(permAE));
+        RoleEntity uniqueRole = buildRole("uniqueRole", List.of(permSAVA));
+
+        when(user.getBusinessUnitUsers()).thenReturn(Set.of(
+            buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(duplicateRole)),
+            buildBusinessUnitUserEntity("DEF456", fines, (short) 41, Set.of(duplicateRole)),
+            buildBusinessUnitUserEntity("GHI789", confiscations, (short) 51, Set.of(uniqueRole))
+        ));
+
+        // Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        // Assert
+        assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
+            .isEqualTo(objectMapper.readTree("""
+                {
+                  "user_id": 123,
+                  "username": "username",
+                  "name": "token",
+                  "status": "ACTIVE",
+                  "version": 321,
+                  "cache_name": null,
+                  "domains": {
+                    "confiscation": {
+                      "business_unit_users": [
+                        {
+                          "business_unit_user_id": "GHI789",
+                          "business_unit_id": 51,
+                          "permissions": [
+                            {
+                              "permission_id": 6,
+                              "permission_name": "Search and view accounts"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+            """));
+    }
+
+    @Test
     void toUserStateV2_populatesCacheName() {
 
         // Arrange

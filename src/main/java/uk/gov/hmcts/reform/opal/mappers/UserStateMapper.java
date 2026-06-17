@@ -83,22 +83,46 @@ public interface UserStateMapper {
     @Mapping(source = "userEntity.version", target = "version")
     @Mapping(target = "cacheName", ignore = true)
     @Mapping(target = "domains", expression = "java(mapBusinessUnitUsersToDomainBusinessUnitUsers(userEntity"
-        + ".getBusinessUnitUsers()))")
+        + ".getUserId(), userEntity.getBusinessUnitUsers()))")
     UserStateV2 toUserStateV2(UserEntity userEntity, @Context  Clock clock);
 
     default Map<Domain, DomainBusinessUnitUsers> mapBusinessUnitUsersToDomainBusinessUnitUsers(
+        Long userId,
         Set<BusinessUnitUserEntity> businessUnitUsers) {
 
         if (businessUnitUsers == null || businessUnitUsers.isEmpty()) {
             return new EnumMap<>(Domain.class);
         }
 
-        // Group BU users by domain.
-        Map<Domain, List<BusinessUnitUserEntity>> groupedByDomain = new EnumMap<>(Domain.class);
-        businessUnitUsers.stream()
+        Map<Short, List<BusinessUnitUserEntity>> groupedByBusinessUnitId = businessUnitUsers.stream()
             .filter(Objects::nonNull)
             .filter(buu -> buu.getBusinessUnit() != null)
             .filter(buu -> buu.getBusinessUnit().getDomain() != null)
+            .filter(buu -> toDomainOrNull(buu.getBusinessUnit().getDomain().getName()) != null)
+            .collect(Collectors.groupingBy(BusinessUnitUserEntity::getBusinessUnitId));
+
+        Set<Short> duplicatedBusinessUnitIds = groupedByBusinessUnitId.entrySet().stream()
+            .filter(entry -> entry.getValue().size() > 1)
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+
+        duplicatedBusinessUnitIds.stream()
+            .sorted()
+            .forEach(businessUnitId -> log.error(
+                "Duplicate business unit user mappings found for user {} and business unit {}: {}; "
+                    + "ignoring all entries for that business unit",
+                userId,
+                businessUnitId,
+                groupedByBusinessUnitId.get(businessUnitId).stream()
+                    .map(BusinessUnitUserEntity::getBusinessUnitUserId)
+                    .sorted()
+                    .toList()));
+
+        // Group BU users by domain.
+        Map<Domain, List<BusinessUnitUserEntity>> groupedByDomain = new EnumMap<>(Domain.class);
+        groupedByBusinessUnitId.values().stream()
+            .flatMap(List::stream)
+            .filter(buu -> !duplicatedBusinessUnitIds.contains(buu.getBusinessUnitId()))
             .forEach(businessUnitUser -> {
                 Domain mappedDomain = toDomainOrNull(businessUnitUser.getBusinessUnit().getDomain().getName());
                 if (mappedDomain != null) {

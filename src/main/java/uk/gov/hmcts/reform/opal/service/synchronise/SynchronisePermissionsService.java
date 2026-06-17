@@ -34,6 +34,7 @@ public class SynchronisePermissionsService {
 
     @Transactional(propagation = REQUIRES_NEW, rollbackFor = Exception.class)
     public void synchronise(UserEntity detachedUser) {
+        log.info("Synchronizing permissions for userId: {}", detachedUser.getUserId());
         UserEntity user = detachedUser;
         try {
             user = userService.getUser(detachedUser.getUserId());
@@ -61,7 +62,7 @@ public class SynchronisePermissionsService {
             //7. Call activateUser method if the user does not have an activation date
             if (!validatedRoleIds.isEmpty() && user.getActivationDate() == null) {
                 userService.activateUser(user);
-                log.debug("User activated");
+                log.info("User activated");
             }
         } catch (RuntimeException exception) {
             if (exception instanceof SynchronisePermissionsException synchronisePermissionsException) {

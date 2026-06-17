@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.opal.service.synchronise;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -62,7 +62,7 @@ public class RoleMappingCacheLookupService {
                 throw new SynchronisePermissionsException(user, SYNC_STAGE, "payload resolved to null");
             }
             return cacheMap;
-        } catch (JsonProcessingException | IllegalArgumentException exception) {
+        } catch (JacksonException | IllegalArgumentException exception) {
             throw new SynchronisePermissionsException(user, SYNC_STAGE, "could not parse JSON", exception);
         }
     }

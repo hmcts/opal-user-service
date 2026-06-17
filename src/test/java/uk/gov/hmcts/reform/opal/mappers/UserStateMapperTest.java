@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.opal.mappers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -84,7 +84,7 @@ class UserStateMapperTest {
     }
 
     @Test
-    void toUserStateV2Dto() throws JsonProcessingException {
+    void toUserStateV2Dto() throws JacksonException {
 
         // Arrange
         RoleEntity role1 = buildRole("role1", List.of(permAE, permBadName, permAEN));
@@ -186,7 +186,7 @@ class UserStateMapperTest {
     }
 
     @Test
-    void toUserStateV2Dto_badFunctionNamesSkipped() throws JsonProcessingException {
+    void toUserStateV2Dto_badFunctionNamesSkipped() throws JacksonException {
 
         // Arrange
         RoleEntity role = buildRole("role1", List.of(permAE, permBadName, permAEN));
@@ -226,7 +226,7 @@ class UserStateMapperTest {
     }
 
     @Test
-    void toUserStateV2_WhenBusinessUnitUsersNull() throws JsonProcessingException {
+    void toUserStateV2_WhenBusinessUnitUsersNull() throws JacksonException {
 
         // Arrange
         when(user.getBusinessUnitUsers()).thenReturn(null);
@@ -240,7 +240,7 @@ class UserStateMapperTest {
     }
 
     @Test
-    void toUserStateV2_WhenBusinessUnitUsersEmpty() throws JsonProcessingException {
+    void toUserStateV2_WhenBusinessUnitUsersEmpty() throws JacksonException {
 
         // Arrange
         when(user.getBusinessUnitUsers()).thenReturn(emptySet());

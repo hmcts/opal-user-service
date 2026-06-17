@@ -1,6 +1,6 @@
 package uk.gov.hmcts.reform.opal.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @DisplayName("Test UserStateV2Dto production in isolation")
-    void testUserStateV2DtoProductionInIsolation() throws JsonProcessingException {
+    void testUserStateV2DtoProductionInIsolation() throws JacksonException {
         UserEntity user = userRepository.findIdWithPermissions(500000000L).orElseThrow();
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -51,7 +51,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @DisplayName("Test UserStateV2Dto production in isolation when user has no business units")
-    void testUserStateV2DtoProductionInIsolationWhenUserHasNoBusinessUnitUsers() throws JsonProcessingException {
+    void testUserStateV2DtoProductionInIsolationWhenUserHasNoBusinessUnitUsers() throws JacksonException {
         UserEntity user = userRepository.findIdWithPermissions(500000001L).orElseThrow();
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))

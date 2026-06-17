@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.opal.service.synchronise;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -180,7 +180,7 @@ public class TestHelperService {
     }
 
     public void setRoleMappingCache(UserEntity user, Map<Long, Set<Short>> roleMapping, String roleMappingUserPrefix)
-        throws JsonProcessingException {
+        throws JacksonException {
         String cacheKey = roleMappingUserPrefix + user.getTokenSubject();
         redisTemplate.opsForValue().set(
             cacheKey,
@@ -192,7 +192,7 @@ public class TestHelperService {
         UserEntity user,
         Map<Long, Set<Short>> expectedRoleMapping,
         String roleMappingUserPrefix
-    ) throws JsonProcessingException {
+    ) throws JacksonException {
         String cacheKey = roleMappingUserPrefix + user.getTokenSubject();
         String actualRoleMappingCacheValue = redisTemplate.opsForValue().get(cacheKey);
         assertThat(actualRoleMappingCacheValue).isNotNull();
@@ -218,7 +218,7 @@ public class TestHelperService {
         try {
             return objectMapper.writerWithDefaultPrettyPrinter()
                 .writeValueAsString(getPermissionsSnapshot(userId));
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalStateException("Unable to serialise permissions snapshot for user " + userId, exception);
         }
     }

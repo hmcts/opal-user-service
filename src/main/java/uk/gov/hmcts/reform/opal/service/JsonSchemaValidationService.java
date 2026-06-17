@@ -10,7 +10,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
+import uk.gov.hmcts.opal.common.dto.ToJsonString;
 import uk.gov.hmcts.reform.opal.exception.JsonSchemaValidationException;
 import uk.gov.hmcts.reform.opal.exception.SchemaConfigurationException;
 
@@ -29,8 +29,6 @@ public class JsonSchemaValidationService {
 
     private static final String PATH_ROOT = "jsonSchemas";
     private static final String CLASSPATH_SCHEMA_LOCATION_PREFIX = "classpath:";
-    //TODO remove once common lib is updated to use tools.jackson
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Map<String, Schema> schemaCache = HashMap.newHashMap(37);
 
     public boolean isValid(String body, String jsonSchemaFileName) {
@@ -82,7 +80,7 @@ public class JsonSchemaValidationService {
 
     private JsonNode getJsonNodeFromStringContent(String content) {
         try {
-            return OBJECT_MAPPER.readTree(content);
+            return ToJsonString.toJsonNode(content);
         } catch (JacksonException e) {
             StringBuilder sb = new StringBuilder(e.getMessage().length() + content.length() + 99);
             sb.append(e.getOriginalMessage());

@@ -18,14 +18,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 class UserRoleMappingCacheServiceTest {
 
@@ -57,8 +59,7 @@ class UserRoleMappingCacheServiceTest {
         verify(redisTemplate.opsForValue()).set(
             PREFIX + "AS1",
             "{\"R1\":[\"BU1\",\"BU2\"],\"R2\":[\"BU1\"]}",
-            Duration.ofMinutes(30)
-        );
+            Duration.ofMinutes(30));
     }
 
     @Test
@@ -105,8 +106,7 @@ class UserRoleMappingCacheServiceTest {
         verify(redisTemplate.opsForValue()).set(
             "USER_MAPPING_FILE_LAST_UPDATE_AT",
             timestamp,
-            Duration.ofHours(1)
-        );
+            Duration.ofHours(1));
 
         when(redisTemplate.opsForValue().get("USER_MAPPING_FILE_LAST_UPDATE_AT"))
             .thenReturn(timestamp);
@@ -140,16 +140,14 @@ class UserRoleMappingCacheServiceTest {
         stubScanKeys(
             PREFIX + "AS1",
             PREFIX + "AS2",
-            PREFIX + "AS3"
-        );
+            PREFIX + "AS3");
 
         // ACT
         cacheService.deleteStaleUserMappings(Set.of("AS1", "AS3"));
 
         // ASSERT
         verify(redisTemplate).delete(argThat((Collection<String> keys) ->
-                                                 keys.size() == 1 && keys.contains(PREFIX + "AS2")
-        ));
+            keys.size() == 1 && keys.contains(PREFIX + "AS2")));
     }
 
     @Test
@@ -168,23 +166,47 @@ class UserRoleMappingCacheServiceTest {
             new UserRoleMappingCacheService(redisTemplate, properties, objectMapper);
 
         when(objectMapper.writeValueAsString(any()))
-            .thenThrow(new com.fasterxml.jackson.core.JsonProcessingException("boom") {});
+            .thenThrow(new tools.jackson.core.JacksonException("boom") {});
 
         // ACT
         RuntimeException exception = org.junit.jupiter.api.Assertions.assertThrows(
             RuntimeException.class,
-            () -> cacheService.putUserMapping("AS1", Map.of())
-        );
+            () -> cacheService.putUserMapping("AS1", Map.of()));
 
         // ASSERT
-        assertEquals(
-            "Failed to serialize mapping for key ROLE_MAPPING_USER_AS1",
-            exception.getMessage()
-        );
+        assertEquals("Failed to serialize mapping for key ROLE_MAPPING_USER_AS1", exception.getMessage());
 
-        assertTrue(exception.getCause() instanceof com.fasterxml.jackson.core.JsonProcessingException);
+        assertTrue(exception.getCause() instanceof tools.jackson.core.JacksonException);
 
-        verify(redisTemplate.opsForValue(), never()).set(any(), any(), any());
+        verify(redisTemplate.opsForValue(), never()).set(any(), any(), any(Duration.class));
+    }
+
+    @Test
+    void putUserMappingThrowsWhenRedisWriteFails() {
+
+        // ARRANGE
+        RoleMappingCacheProperties properties = Mockito.mock(RoleMappingCacheProperties.class);
+        StringRedisTemplate redisTemplate = Mockito.mock(StringRedisTemplate.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> valueOperations = Mockito.mock(ValueOperations.class);
+
+        when(properties.getUserTtl()).thenReturn(Duration.ofMinutes(30));
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        Mockito.doThrow(new QueryTimeoutException("redis timeout"))
+            .when(valueOperations)
+            .set(PREFIX + "AS1", "{}", Duration.ofMinutes(30));
+
+        UserRoleMappingCacheService cacheService =
+            new UserRoleMappingCacheService(redisTemplate, properties, new ObjectMapper());
+
+        // ACT
+        RuntimeException exception = org.junit.jupiter.api.Assertions.assertThrows(
+            RuntimeException.class,
+            () -> cacheService.putUserMapping("AS1", Map.of()));
+
+        // ASSERT
+        assertEquals("Redis write failed for key ROLE_MAPPING_USER_AS1", exception.getMessage());
+        assertTrue(exception.getCause() instanceof QueryTimeoutException);
     }
 
     // ---------------------------------------

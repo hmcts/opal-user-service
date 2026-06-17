@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.opal.service.rolemapping;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashSet;
@@ -117,7 +117,7 @@ public class UserRoleMappingCacheService {
                 "Redis write failed for key " + cacheKey,
                 e
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException(
                 "Failed to serialize mapping for key " + cacheKey,
                 e

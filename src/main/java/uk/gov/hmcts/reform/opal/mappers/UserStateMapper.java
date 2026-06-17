@@ -108,7 +108,7 @@ public interface UserStateMapper {
 
         duplicatedBusinessUnitIds.stream()
             .sorted()
-            .forEach(businessUnitId -> log.error(
+            .forEach(businessUnitId -> log.warn(
                 "Duplicate business unit user mappings found for user {} and business unit {}: {}; "
                     + "ignoring all entries for that business unit",
                 userId,

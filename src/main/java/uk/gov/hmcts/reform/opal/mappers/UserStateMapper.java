@@ -53,20 +53,23 @@ public interface UserStateMapper {
                                 List<BusinessUnitUserDto> businessUnitUsers,
                                 @Context Clock clock);
 
-    @Mapping(source = "userEntity.userId", target = "userId")
-    @Mapping(source = "userEntity.username", target = "username")
-    @Mapping(source = "userEntity.tokenName", target = "name")
-    @Mapping(source = "userEntity", target = "status", qualifiedByName = "mapUpperCaseStatusStr")
-    @Mapping(source = "userEntity.version", target = "version")
-    @Mapping(target = "cacheName", ignore = true)
-    @Mapping(target = "domains", expression = "java(mapBusinessUnitUsersToDomains(userEntity.getBusinessUnitUsers()))")
-    UserStateV2Dto toUserStateV2Dto(UserEntity userEntity, @Context Clock clock);
+    default UserStateV2Dto toUserStateV2Dto(UserEntity userEntity, @Context Clock clock) {
+        return toUserStateV2Dto(toUserStateV2(userEntity, clock));
+    }
 
+    @Mapping(source = "userId", target = "userId")
+    @Mapping(source = "username", target = "username")
+    @Mapping(source = "name", target = "name")
+    @Mapping(source = "status", target = "status")
+    @Mapping(source = "version", target = "version")
+    @Mapping(target = "cacheName", ignore = true)
+    @Mapping(target = "domains", expression = "java(mapUserStateV2DomainsToDto(userStateV2.getDomains()))")
+    UserStateV2Dto toUserStateV2Dto(UserStateV2 userStateV2);
 
     @Mapping(source = "businessUnitUserId", target = "businessUnitUserId")
     @Mapping(source = "businessUnitId", target = "businessUnitId")
-    @Mapping(source = "businessUnitUserRoleList", target = "permissions")
-    BusinessUnitUserDto toBusinessUnitUserDto(BusinessUnitUserEntity businessUnitUser);
+    @Mapping(source = "permissions", target = "permissions")
+    BusinessUnitUserDto toBusinessUnitUserDto(BusinessUnitUser businessUnitUser);
 
     @Mapping(source = "businessUnitUserId", target = "businessUnitUserId")
     @Mapping(source = "businessUnitId", target = "businessUnitId")
@@ -116,38 +119,27 @@ public interface UserStateMapper {
         return domains;
     }
 
-    default Map<Domain, DomainDto> mapBusinessUnitUsersToDomains(Set<BusinessUnitUserEntity> businessUnitUsers) {
-
-        if (businessUnitUsers == null || businessUnitUsers.isEmpty()) {
+    default Map<Domain, DomainDto> mapUserStateV2DomainsToDto(Map<Domain, DomainBusinessUnitUsers> domains) {
+        if (domains == null || domains.isEmpty()) {
             return new EnumMap<>(Domain.class);
         }
 
-        // Group BU users by domain.
-        Map<Domain, List<BusinessUnitUserEntity>> groupedByDomain = new EnumMap<>(Domain.class);
-        businessUnitUsers.stream()
-            .filter(Objects::nonNull)
-            .filter(buu -> buu.getBusinessUnit() != null)
-            .filter(buu -> buu.getBusinessUnit().getDomain() != null)
-            .forEach(businessUnitUser -> {
-                Domain mappedDomain = toDomainOrNull(businessUnitUser.getBusinessUnit().getDomain().getName());
-                if (mappedDomain != null) {
-                    groupedByDomain.computeIfAbsent(mappedDomain, ignored -> new java.util.ArrayList<>())
-                        .add(businessUnitUser);
-                }
-            });
+        EnumMap<Domain, DomainDto> mappedDomains = new EnumMap<>(Domain.class);
+        domains.forEach((domain, domainBusinessUnitUsers) -> {
+            if (domainBusinessUnitUsers == null || domainBusinessUnitUsers.getBusinessUnitUsers() == null) {
+                mappedDomains.put(domain, DomainDto.builder().businessUnitUsers(List.of()).build());
+                return;
+            }
 
-        // Convert the map *values* from Lists to DomainDtos
-        EnumMap<Domain, DomainDto> domains = new EnumMap<>(Domain.class);
-        groupedByDomain.forEach((domain, users) -> domains.put(domain, DomainDto.builder()
-            .businessUnitUsers(users.stream()
-                .sorted(Comparator.comparing(BusinessUnitUserEntity::getBusinessUnitUserId))
-                .map(this::toBusinessUnitUserDto)
-                .toList())
-            .build()));
+            mappedDomains.put(domain, DomainDto.builder()
+                .businessUnitUsers(domainBusinessUnitUsers.getBusinessUnitUsers().stream()
+                    .map(this::toBusinessUnitUserDto)
+                    .toList())
+                .build());
+        });
 
-        return domains;
+        return mappedDomains;
     }
-
 
     default List<PermissionDto> mapBusinessUnitUserRoleEntitysToPermissionDto(
         Set<BusinessUnitUserRoleEntity> businessUnitUserRoleList) {
@@ -163,6 +155,17 @@ public interface UserStateMapper {
             .distinct()
             .sorted(Comparator.comparingLong((Permissions permission) -> permission.id))
             .map(permission -> new PermissionDto(permission.id, permission.description))
+            .toList();
+    }
+
+    default List<PermissionDto> mapPermissionsToPermissionDto(Set<Permission> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return permissions.stream()
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparingLong(Permission::getId))
+            .map(permission -> new PermissionDto(permission.getId(), permission.getDescription()))
             .toList();
     }
 

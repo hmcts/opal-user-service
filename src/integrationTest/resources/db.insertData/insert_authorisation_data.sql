@@ -36,6 +36,8 @@ VALUES (61, 'Test BU 61', 'T61', 'Accounting Division', 1),
 -- Link User 500000000 to Business Units from Flyway script V20240730_005
 INSERT INTO business_unit_users (business_unit_user_id, business_unit_id, user_id)
 VALUES ('L065JG', 70, 500000000),
+       ('L083JG', 70, 500000000),
+       ('L084JG', 70, 500000000),
        ('L066JG', 68, 500000000),
        ('L067JG', 73, 500000000),
        ('L073JG', 71, 500000000),

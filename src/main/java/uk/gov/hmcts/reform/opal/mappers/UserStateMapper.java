@@ -57,18 +57,10 @@ public interface UserStateMapper {
         return toUserStateV2Dto(toUserStateV2(userEntity, clock));
     }
 
-    @Mapping(source = "userId", target = "userId")
-    @Mapping(source = "username", target = "username")
-    @Mapping(source = "name", target = "name")
-    @Mapping(source = "status", target = "status")
-    @Mapping(source = "version", target = "version")
     @Mapping(target = "cacheName", ignore = true)
     @Mapping(target = "domains", expression = "java(mapUserStateV2DomainsToDto(userStateV2.getDomains()))")
     UserStateV2Dto toUserStateV2Dto(UserStateV2 userStateV2);
 
-    @Mapping(source = "businessUnitUserId", target = "businessUnitUserId")
-    @Mapping(source = "businessUnitId", target = "businessUnitId")
-    @Mapping(source = "permissions", target = "permissions")
     BusinessUnitUserDto toBusinessUnitUserDto(BusinessUnitUser businessUnitUser);
 
     @Mapping(source = "businessUnitUserId", target = "businessUnitUserId")
@@ -163,23 +155,6 @@ public interface UserStateMapper {
         });
 
         return mappedDomains;
-    }
-
-    default List<PermissionDto> mapBusinessUnitUserRoleEntitysToPermissionDto(
-        Set<BusinessUnitUserRoleEntity> businessUnitUserRoleList) {
-        if (businessUnitUserRoleList == null || businessUnitUserRoleList.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return businessUnitUserRoleList.stream()
-            .map(BusinessUnitUserRoleEntity::getRole)
-            .filter(Objects::nonNull)
-            .flatMap(role -> role.getApplicationFunctionList().stream())
-            .map(Permissions::toPermissionOrNull)
-            .filter(Objects::nonNull)
-            .distinct()
-            .sorted(Comparator.comparingLong((Permissions permission) -> permission.id))
-            .map(permission -> new PermissionDto(permission.id, permission.description))
-            .toList();
     }
 
     default List<PermissionDto> mapPermissionsToPermissionDto(Set<Permission> permissions) {

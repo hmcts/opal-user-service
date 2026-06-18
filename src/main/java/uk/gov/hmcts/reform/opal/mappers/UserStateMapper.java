@@ -86,6 +86,16 @@ public interface UserStateMapper {
             return new EnumMap<>(Domain.class);
         }
 
+        List<BusinessUnitUserEntity> validBusinessUnitUsers =
+            filterValidBusinessUnitUsers(userId, businessUnitUsers);
+
+        return groupBusinessUnitUsersByDomain(validBusinessUnitUsers);
+    }
+
+    default List<BusinessUnitUserEntity> filterValidBusinessUnitUsers(
+        Long userId,
+        Set<BusinessUnitUserEntity> businessUnitUsers) {
+
         Map<Short, List<BusinessUnitUserEntity>> groupedByBusinessUnitId = businessUnitUsers.stream()
             .filter(Objects::nonNull)
             .filter(buu -> buu.getBusinessUnit() != null)
@@ -110,11 +120,18 @@ public interface UserStateMapper {
                     .sorted()
                     .toList()));
 
-        // Group BU users by domain.
-        Map<Domain, List<BusinessUnitUserEntity>> groupedByDomain = new EnumMap<>(Domain.class);
-        groupedByBusinessUnitId.values().stream()
+        return groupedByBusinessUnitId.values().stream()
             .flatMap(List::stream)
             .filter(buu -> !duplicatedBusinessUnitIds.contains(buu.getBusinessUnitId()))
+            .toList();
+    }
+
+    default Map<Domain, DomainBusinessUnitUsers> groupBusinessUnitUsersByDomain(
+        List<BusinessUnitUserEntity> businessUnitUsers) {
+
+        // Group BU users by domain.
+        Map<Domain, List<BusinessUnitUserEntity>> groupedByDomain = new EnumMap<>(Domain.class);
+        businessUnitUsers.stream()
             .forEach(businessUnitUser -> {
                 Domain mappedDomain = toDomainOrNull(businessUnitUser.getBusinessUnit().getDomain().getName());
                 if (mappedDomain != null) {

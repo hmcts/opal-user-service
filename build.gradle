@@ -92,26 +92,7 @@ configurations.configureEach {
 }
 
 
-tasks.withType(JavaCompile).configureEach {
-  options.compilerArgs << "-Xlint:unchecked" << "-Werror"
-}
 
-// https://github.com/gradle/gradle/issues/16791
-tasks.withType(JavaExec).configureEach {
-  javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
-}
-
-tasks.withType(Test).configureEach {
-  useJUnitPlatform()
-
-  if (skipTests) {
-    exclude("uk/gov/hmcts/reform/**")
-  }
-
-  testLogging {
-    exceptionFormat = 'full'
-  }
-}
 
 test {
   failFast = false
@@ -306,6 +287,27 @@ tasks.named("check") {
 
 jacocoTestReport.dependsOn check
 jacocoTestCoverageVerification.dependsOn jacocoTestReport
+
+tasks.withType(JavaCompile).configureEach {
+  options.compilerArgs << "-Xlint:unchecked" << "-Werror"
+}
+
+// https://github.com/gradle/gradle/issues/16791
+tasks.withType(JavaExec).configureEach {
+  javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+}
+
+tasks.withType(Test).configureEach {
+  useJUnitPlatform()
+
+  if (skipTests) {
+    exclude("uk/gov/hmcts/reform/**")
+  }
+
+  testLogging {
+    exceptionFormat = 'full'
+  }
+}
 
 sonarqube {
   properties {

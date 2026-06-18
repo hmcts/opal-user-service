@@ -17,7 +17,10 @@ bin/main/application.yaml
 .springBeans
 
 ### IntelliJ IDEA ###
-.idea
+.idea/*
+!.idea/codeStyles/
+!.idea/codeStyles/Project.xml
+!.idea/codeStyles/codeStyleConfig.xml
 /out
 *.iws
 *.iml

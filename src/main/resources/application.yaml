@@ -33,7 +33,7 @@ spring:
       client:
         registration:
           internal-azure-ad:
-            client-id: failing
+            client-id: ${AAD_CLIENT_ID:00000000-0000-0000-0000-000000000000}
             client-secret: ${AAD_CLIENT_SECRET:}
             scope: api://${AAD_CLIENT_ID:00000000-0000-0000-0000-000000000000}/opalinternaluser
             redirect-uri: ${opal.frontend.url}/sso/login-callback

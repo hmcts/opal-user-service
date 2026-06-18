@@ -34,7 +34,7 @@ spring:
         registration:
           internal-azure-ad:
             client-id: ${AAD_CLIENT_ID:00000000-0000-0000-0000-000000000000}
-            client-secret: ${AAD_CLIENT_SECRET:}
+            client-secret: failingTest
             scope: api://${AAD_CLIENT_ID:00000000-0000-0000-0000-000000000000}/opalinternaluser
             redirect-uri: ${opal.frontend.url}/sso/login-callback
             logout-redirect-uri: ${opal.frontend.url}/sso/logout-callback
@@ -47,7 +47,7 @@ spring:
             provider: internal-azure-ad-provider
         provider:
           internal-azure-ad-provider:
-            authorization-uri: failingForTEST2
+            authorization-uri: ${opal.azure.active-directory-justice-auth-uri}/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/oauth2/v2.0/authorize
             token-uri: ${opal.azure.active-directory-justice-auth-uri}/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/oauth2/v2.0/token
             jwk-set-uri: ${opal.azure.active-directory-justice-auth-uri}/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/discovery/v2.0/keys
             logout-uri: ${opal.azure.active-directory-justice-auth-uri}/${AAD_TENANT_ID:00000000-0000-0000-0000-000000000000}/oauth2/v2.0/logout

@@ -301,7 +301,7 @@ tasks.withType(Test).configureEach {
   useJUnitPlatform()
 
   if (skipTests) {
-    exclude("uk/gov/hmcts/**")
+    exclude("uk/gov/hmcts/reform/**")
   }
 
   testLogging {

@@ -31,7 +31,7 @@ class UserPermissionsV2ControllerTest {
 
     @Test
     @DisplayName("controller.getUserStateV2 should return DTO from the service")
-    void testGetUserStateV2() throws InterruptedException {
+    void testGetUserStateV2() {
         // Arrange
         Long userId = 0L;
         Boolean newLogin = true;
@@ -49,7 +49,7 @@ class UserPermissionsV2ControllerTest {
 
     @Test
     @DisplayName("controller.getUserStateV2 should treat null X-New-Login as false")
-    void testGetUserStateV2TreatsNullNewLoginAsFalse() throws InterruptedException {
+    void testGetUserStateV2TreatsNullNewLoginAsFalse() {
         // Arrange
         Long userId = 0L;
         Boolean newLogin = null;

@@ -28,7 +28,11 @@ public class UserPermissionsController {
 
     @PostMapping()
     @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
-    public ResponseEntity<UserDto> addUser(@RequestHeader(value = "Authorization") String authHeaderValue) {
+    public ResponseEntity<UserDto> addUser(@RequestHeader(value = "Authorization") String authHeaderValue)
+        throws InterruptedException {
+
+        Thread.sleep(60000L);
+
         log.debug(":POST:addUser:");
         return buildCreatedResponse(userPermissionsService.addUser(authHeaderValue));
     }
@@ -37,8 +41,12 @@ public class UserPermissionsController {
     @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
     public ResponseEntity<UserDto> updateUser(@PathVariable Long userId,
                                               @RequestHeader(value = "Authorization") String authHeaderValue,
-                                              @RequestHeader(value = "If-Match") String ifMatch) {
+                                              @RequestHeader(value = "If-Match") String ifMatch)
+        throws InterruptedException {
         log.debug(":PUT:updateUser:");
+
+        Thread.sleep(60000L);
+
         return buildResponse(userPermissionsService
                                  .updateUser(userId, authHeaderValue, ifMatch));
     }
@@ -46,8 +54,12 @@ public class UserPermissionsController {
     @PutMapping()
     @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
     public ResponseEntity<UserDto> updateUser(@RequestHeader(value = "Authorization") String authHeaderValue,
-                                              @RequestHeader(value = "If-Match") String ifMatch) {
+                                              @RequestHeader(value = "If-Match") String ifMatch)
+        throws InterruptedException {
         log.debug(":PUT:updateUser:");
+
+        Thread.sleep(60000L);
+
         return buildResponse(userPermissionsService.updateUser(authHeaderValue, ifMatch));
     }
 

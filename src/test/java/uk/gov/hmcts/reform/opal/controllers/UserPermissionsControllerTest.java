@@ -37,7 +37,7 @@ class UserPermissionsControllerTest {
     }
 
     @Test
-    void testAddUser() {
+    void testAddUser() throws InterruptedException {
         // Arrange
         UserDto returnedDto = new UserDto();
         returnedDto.setUserId(123L);
@@ -55,7 +55,7 @@ class UserPermissionsControllerTest {
     }
 
     @Test
-    void testUpdateUser_withId() {
+    void testUpdateUser_withId() throws InterruptedException {
         // Arrange
         UserDto returnedDto = new UserDto();
         returnedDto.setUserId(123L);
@@ -80,7 +80,7 @@ class UserPermissionsControllerTest {
     }
 
     @Test
-    void testUpdateUser_withoutId() {
+    void testUpdateUser_withoutId() throws InterruptedException {
         // Arrange
         UserDto returnedDto = new UserDto();
         returnedDto.setUserId(123L);

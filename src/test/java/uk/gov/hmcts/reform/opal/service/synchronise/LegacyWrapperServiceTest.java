@@ -57,7 +57,7 @@ class LegacyWrapperServiceTest {
         when(legacyUserService.getUser(any(LegacyGetUserRequest.class))).thenReturn(
             new GatewayService.Response<>(
                 HttpStatus.OK,
-                LegacyGetUserResponse.builder().count(libraUserIds.size()).libraUserIds(libraUserIds).build()
+                LegacyGetUserResponse.builder().libraUserIds(libraUserIds).build()
             )
         );
         when(legacyBusinessUnitUserService.getBusinessUnitUserIds(libraUserIds)).thenReturn(
@@ -107,7 +107,7 @@ class LegacyWrapperServiceTest {
         when(legacyUserService.getUser(any(LegacyGetUserRequest.class))).thenReturn(
             new GatewayService.Response<>(
                 HttpStatus.OK,
-                LegacyGetUserResponse.builder().count(libraUserIds.size()).libraUserIds(libraUserIds).build()
+                LegacyGetUserResponse.builder().libraUserIds(libraUserIds).build()
             )
         );
         when(legacyBusinessUnitUserService.getBusinessUnitUserIds(libraUserIds)).thenReturn(
@@ -303,7 +303,7 @@ class LegacyWrapperServiceTest {
         when(legacyUserService.getUser(any(LegacyGetUserRequest.class))).thenReturn(
             new GatewayService.Response<>(
                 HttpStatus.OK,
-                LegacyGetUserResponse.builder().count(libraUserIds.size()).libraUserIds(libraUserIds).build()
+                LegacyGetUserResponse.builder().libraUserIds(libraUserIds).build()
             )
         );
         return libraUserIds;

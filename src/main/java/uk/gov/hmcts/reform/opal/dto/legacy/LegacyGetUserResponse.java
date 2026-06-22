@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +16,7 @@ import uk.gov.hmcts.opal.common.legacy.model.HasErrorResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-@XmlRootElement(name = "LibraUserIds")
+@XmlRootElement(name = "response")
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
 @NoArgsConstructor
@@ -23,13 +24,10 @@ import java.util.List;
 @Builder
 public class LegacyGetUserResponse implements HasErrorResponse {
 
-    @JsonProperty("count")
-    @XmlElement(name = "count")
-    private Integer count;
-
     @Builder.Default
     @JsonProperty("libra_user_ids")
-    @XmlElement(name = "libra_user_ids")
+    @XmlElementWrapper(name = "libra_user_ids")
+    @XmlElement(name = "libra_user_ids_element")
     private List<String> libraUserIds = new ArrayList<>();
 
     @XmlElement(name = "error_response")

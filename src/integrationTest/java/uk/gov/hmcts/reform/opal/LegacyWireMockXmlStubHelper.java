@@ -21,9 +21,9 @@ public final class LegacyWireMockXmlStubHelper {
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(5))
         .build();
-    private static final int DEFAULT_STUB_PRIORITY = 5;
-    private static final String GET_SYSTEM_USER_IDS_BY_EMAIL = "GetSystemUserIdsByEmail";
-    private static final String GET_BUU_BY_LIBRA_IDS = "GetBUUserIdsBySystemUserIds";
+    private static final int DEFAULT_STUB_PRIORITY = 1;
+    private static final String GET_SYSTEM_USER_IDS_BY_EMAIL = "getLibraSystemUserIDs";
+    private static final String GET_BUU_BY_LIBRA_IDS = "getBusinessUnitUserIDs";
 
     private final ObjectMapper objectMapper;
     private final String wireMockAdminBaseUrl;
@@ -72,17 +72,19 @@ public final class LegacyWireMockXmlStubHelper {
         throws Exception {
         Objects.requireNonNull(businessUnitUsers, "businessUnitUsers must not be null");
         StringBuilder responseXml = new StringBuilder()
-            .append("<BusinessUnitUserIds>")
-            .append("<count>").append(businessUnitUsers.size()).append("</count>");
+            .append("<response>")
+            .append("<count>").append(businessUnitUsers.size()).append("</count>")
+            .append("<business_unit_user_ids>");
         for (LegacyBusinessUnitUserId businessUnitUser : businessUnitUsers) {
-            responseXml.append("<business_unit_user_ids>")
+            responseXml.append("<business_unit_user_ids_element>")
                 .append("<business_unit_user_id>").append(businessUnitUser.getBusinessUnitUserId())
                 .append("</business_unit_user_id>")
                 .append("<business_unit_id>").append(businessUnitUser.getBusinessUnitId())
                 .append("</business_unit_id>")
-                .append("</business_unit_user_ids>");
+                .append("</business_unit_user_ids_element>");
         }
-        responseXml.append("</BusinessUnitUserIds>");
+        responseXml.append("</business_unit_user_ids>")
+            .append("</response>");
         registerXmlStub(GET_BUU_BY_LIBRA_IDS, responseXml.toString(), priority);
     }
 
@@ -93,12 +95,13 @@ public final class LegacyWireMockXmlStubHelper {
     public void registerSystemUserLookupStub(List<String> libraUserIds, int priority) throws Exception {
         Objects.requireNonNull(libraUserIds, "libraUserIds must not be null");
         StringBuilder responseXml = new StringBuilder()
-            .append("<LibraUserIds>")
-            .append("<count>").append(libraUserIds.size()).append("</count>");
+            .append("<response>")
+            .append("<libra_user_ids>");
         for (String libraUserId : libraUserIds) {
-            responseXml.append("<libra_user_ids>").append(libraUserId).append("</libra_user_ids>");
+            responseXml.append("<libra_user_ids_element>").append(libraUserId).append("</libra_user_ids_element>");
         }
-        responseXml.append("</LibraUserIds>");
+        responseXml.append("</libra_user_ids>")
+            .append("</response>");
         registerXmlStub(GET_SYSTEM_USER_IDS_BY_EMAIL, responseXml.toString(), priority);
     }
 

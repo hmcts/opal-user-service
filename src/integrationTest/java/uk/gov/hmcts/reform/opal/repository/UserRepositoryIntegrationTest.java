@@ -42,10 +42,6 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @DisplayName("Test UserStateV2Dto production in isolation")
-    @Sql(
-        scripts = "classpath:db.insertData/insert_authorisation_data_with_duplicate_buu.sql",
-        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
-    )
     void testUserStateV2DtoProductionInIsolation() throws JacksonException {
         UserEntity user = userRepository.findIdWithPermissions(500000000L).orElseThrow();
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
@@ -72,7 +68,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
              """));
     }
 
-    private static final String EXPECTED_V2_USER_STATE =
+    public static final String EXPECTED_V2_USER_STATE =
         """
             {
               "user_id": 500000000,
@@ -84,6 +80,36 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
               "domains": {
                 "fines": {
                   "business_unit_users": [
+                    {
+                      "business_unit_user_id": "L065JG",
+                      "business_unit_id": 70,
+                      "permissions": [
+                        {
+                          "permission_id": 1,
+                          "permission_name": "Create and Manage Draft Accounts"
+                        },
+                        {
+                          "permission_id": 3,
+                          "permission_name": "Account Enquiry"
+                        },
+                        {
+                          "permission_id": 4,
+                          "permission_name": "Collection Order"
+                        },
+                        {
+                          "permission_id": 5,
+                          "permission_name": "Check and Validate Draft Accounts"
+                        },
+                        {
+                          "permission_id": 6,
+                          "permission_name": "Search and view accounts"
+                        },
+                        {
+                          "permission_id": 7,
+                          "permission_name": "Account Maintenance"
+                        }
+                      ]
+                    },
                     {
                       "business_unit_user_id": "L066JG",
                       "business_unit_id": 68,

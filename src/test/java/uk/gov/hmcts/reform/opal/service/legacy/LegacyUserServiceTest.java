@@ -33,11 +33,11 @@ class LegacyUserServiceTest {
     void getUser_buildsRequestFromEmailAddress() {
         GatewayService.Response<LegacyGetUserResponse> expected = new GatewayService.Response<>(
             HttpStatus.OK,
-            LegacyGetUserResponse.builder().count(2).libraUserIds(java.util.List.of("SU001", "SU002")).build()
+            LegacyGetUserResponse.builder().libraUserIds(java.util.List.of("SU001", "SU002")).build()
         );
 
         when(gatewayService.postToGateway(
-            eq("GetSystemUserIdsByEmail"),
+            eq("getLibraSystemUserIDs"),
             eq(LegacyGetUserResponse.class),
             eq(LegacyGetUserRequest.builder().emailAddress("legacy.user@hmcts.net").build()),
             isNull())).thenReturn(expected);
@@ -54,7 +54,7 @@ class LegacyUserServiceTest {
             new GatewayService.Response<>(HttpStatus.OK, (LegacyGetUserResponse) null);
 
         when(gatewayService.postToGateway(
-            eq("GetSystemUserIdsByEmail"),
+            eq("getLibraSystemUserIDs"),
             eq(LegacyGetUserResponse.class),
             eq(request),
             isNull())).thenReturn(expected);
@@ -71,7 +71,7 @@ class LegacyUserServiceTest {
             new GatewayService.Response<>(HttpStatus.OK, (LegacyGetUserResponse) null);
 
         when(gatewayService.postToGateway(
-            eq("GetSystemUserIdsByEmail"),
+            eq("getLibraSystemUserIDs"),
             eq(LegacyGetUserResponse.class),
             eq(request),
             isNull())).thenReturn(expected);
@@ -81,7 +81,7 @@ class LegacyUserServiceTest {
         ArgumentCaptor<LegacyGetUserRequest> requestCaptor = ArgumentCaptor.forClass(LegacyGetUserRequest.class);
 
         verify(gatewayService).postToGateway(
-            eq("GetSystemUserIdsByEmail"),
+            eq("getLibraSystemUserIDs"),
             eq(LegacyGetUserResponse.class),
             requestCaptor.capture(),
             isNull());
@@ -107,7 +107,7 @@ class LegacyUserServiceTest {
             "raw exception body");
 
         when(gatewayService.postToGateway(
-            eq("GetSystemUserIdsByEmail"),
+            eq("getLibraSystemUserIDs"),
             eq(LegacyGetUserResponse.class),
             eq(request),
             isNull())).thenReturn(expected);
@@ -125,7 +125,7 @@ class LegacyUserServiceTest {
             new GatewayService.Response<>(HttpStatus.INTERNAL_SERVER_ERROR, "legacy failure body");
 
         when(gatewayService.postToGateway(
-            eq("GetSystemUserIdsByEmail"),
+            eq("getLibraSystemUserIDs"),
             eq(LegacyGetUserResponse.class),
             eq(request),
             isNull())).thenReturn(expected);
@@ -146,7 +146,7 @@ class LegacyUserServiceTest {
                 .build());
 
         when(gatewayService.postToGateway(
-            eq("GetSystemUserIdsByEmail"),
+            eq("getLibraSystemUserIDs"),
             eq(LegacyGetUserResponse.class),
             eq(request),
             isNull())).thenReturn(expected);

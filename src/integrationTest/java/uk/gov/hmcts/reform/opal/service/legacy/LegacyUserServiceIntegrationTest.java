@@ -30,7 +30,7 @@ class LegacyUserServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(response).isNotNull();
         assertThat(response.isSuccessful()).isTrue();
         assertThat(response.responseEntity).isNotNull();
-        assertThat(response.responseEntity.getCount()).isEqualTo(2);
-        assertThat(response.responseEntity.getLibraUserIds()).containsExactly("SU001", "SU002");
+        assertThat(response.responseEntity.getLibraUserIds())
+            .containsExactly("869", "632", "609", "388", "1607", "1568", "1648", "1627", "1628", "1758");
     }
 }

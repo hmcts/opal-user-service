@@ -16,7 +16,7 @@ import java.util.Objects;
 @Slf4j(topic = "opal.LegacyBusinessUnitUserService")
 public class LegacyBusinessUnitUserService {
 
-    private static final String GET_BUSINESS_UNIT_USER_IDS = "GetBUUserIdsBySystemUserIds";
+    private static final String GET_BUSINESS_UNIT_USER_IDS = "getBusinessUnitUserIDs";
 
     private final GatewayService gatewayService;
 

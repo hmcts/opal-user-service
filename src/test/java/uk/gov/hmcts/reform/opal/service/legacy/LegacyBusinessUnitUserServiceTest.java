@@ -49,7 +49,7 @@ class LegacyBusinessUnitUserServiceTest {
                         .build()))
                 .build());
 
-        when(gatewayService.postToGateway(eq("GetBUUserIdsBySystemUserIds"),
+        when(gatewayService.postToGateway(eq("getBusinessUnitUserIDs"),
             eq(LegacyGetBusinessUnitUserIdsResponse.class),
             eq(LegacyGetBusinessUnitUserIdsRequest.builder().libraUserIds(List.of("SU001", "SU002")).build()),
             isNull())).thenReturn(expected);
@@ -67,7 +67,7 @@ class LegacyBusinessUnitUserServiceTest {
         GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> expected =
             new GatewayService.Response<>(HttpStatus.OK, (LegacyGetBusinessUnitUserIdsResponse) null);
 
-        when(gatewayService.postToGateway(eq("GetBUUserIdsBySystemUserIds"),
+        when(gatewayService.postToGateway(eq("getBusinessUnitUserIDs"),
             eq(LegacyGetBusinessUnitUserIdsResponse.class), eq(request), isNull())).thenReturn(expected);
 
         GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> result =
@@ -83,7 +83,7 @@ class LegacyBusinessUnitUserServiceTest {
         GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> expected =
             new GatewayService.Response<>(HttpStatus.OK, (LegacyGetBusinessUnitUserIdsResponse) null);
 
-        when(gatewayService.postToGateway(eq("GetBUUserIdsBySystemUserIds"),
+        when(gatewayService.postToGateway(eq("getBusinessUnitUserIDs"),
             eq(LegacyGetBusinessUnitUserIdsResponse.class), eq(request), isNull())).thenReturn(expected);
 
         legacyBusinessUnitUserService.getBusinessUnitUserIds(request);
@@ -91,7 +91,7 @@ class LegacyBusinessUnitUserServiceTest {
         ArgumentCaptor<LegacyGetBusinessUnitUserIdsRequest> requestCaptor =
             ArgumentCaptor.forClass(LegacyGetBusinessUnitUserIdsRequest.class);
 
-        verify(gatewayService).postToGateway(eq("GetBUUserIdsBySystemUserIds"),
+        verify(gatewayService).postToGateway(eq("getBusinessUnitUserIDs"),
             eq(LegacyGetBusinessUnitUserIdsResponse.class), requestCaptor.capture(), isNull());
 
         assertEquals(List.of("SU004"), requestCaptor.getValue().getLibraUserIds());
@@ -112,7 +112,7 @@ class LegacyBusinessUnitUserServiceTest {
         GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> expected = new GatewayService.Response<>(
             HttpStatus.INTERNAL_SERVER_ERROR, new RuntimeException("gateway boom"), "raw exception body");
 
-        when(gatewayService.postToGateway(eq("GetBUUserIdsBySystemUserIds"),
+        when(gatewayService.postToGateway(eq("getBusinessUnitUserIDs"),
             eq(LegacyGetBusinessUnitUserIdsResponse.class), eq(request), isNull())).thenReturn(expected);
 
         GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> result =
@@ -128,7 +128,7 @@ class LegacyBusinessUnitUserServiceTest {
         GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> expected =
             new GatewayService.Response<>(HttpStatus.INTERNAL_SERVER_ERROR, "legacy failure body");
 
-        when(gatewayService.postToGateway(eq("GetBUUserIdsBySystemUserIds"),
+        when(gatewayService.postToGateway(eq("getBusinessUnitUserIDs"),
             eq(LegacyGetBusinessUnitUserIdsResponse.class), eq(request), isNull())).thenReturn(expected);
 
         GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> result =
@@ -147,7 +147,7 @@ class LegacyBusinessUnitUserServiceTest {
                 .errorResponse(ErrorResponse.builder().errorCode("ERR001").errorMessage("legacy rejected").build())
                 .build());
 
-        when(gatewayService.postToGateway(eq("GetBUUserIdsBySystemUserIds"),
+        when(gatewayService.postToGateway(eq("getBusinessUnitUserIDs"),
             eq(LegacyGetBusinessUnitUserIdsResponse.class), eq(request), isNull())).thenReturn(expected);
 
         GatewayService.Response<LegacyGetBusinessUnitUserIdsResponse> result =

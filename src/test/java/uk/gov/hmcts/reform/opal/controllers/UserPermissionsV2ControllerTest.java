@@ -31,7 +31,7 @@ class UserPermissionsV2ControllerTest {
 
     @Test
     @DisplayName("controller.getUserStateV2 should return DTO from the service")
-    void testGetUserStateV2() throws InterruptedException {
+    void testGetUserStateV2() {
         // Arrange
         Long userId = 0L;
         Boolean newLogin = true;
@@ -40,7 +40,7 @@ class UserPermissionsV2ControllerTest {
             .thenReturn(dto);
 
         // Act
-        ResponseEntity<UserStateV2Dto> response = controller.getUserStateV2(userId, newLogin, String.valueOf(false));
+        ResponseEntity<UserStateV2Dto> response = controller.getUserStateV2(userId, newLogin);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -49,7 +49,7 @@ class UserPermissionsV2ControllerTest {
 
     @Test
     @DisplayName("controller.getUserStateV2 should treat null X-New-Login as false")
-    void testGetUserStateV2TreatsNullNewLoginAsFalse() throws InterruptedException {
+    void testGetUserStateV2TreatsNullNewLoginAsFalse() {
         // Arrange
         Long userId = 0L;
         Boolean newLogin = null;
@@ -58,7 +58,7 @@ class UserPermissionsV2ControllerTest {
             .thenReturn(dto);
 
         // Act
-        ResponseEntity<UserStateV2Dto> response = controller.getUserStateV2(userId, newLogin, String.valueOf(false));
+        ResponseEntity<UserStateV2Dto> response = controller.getUserStateV2(userId, newLogin);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -74,7 +74,7 @@ class UserPermissionsV2ControllerTest {
         Boolean newLogin = true;
 
         // Act / Assert
-        assertThatThrownBy(() -> controller.getUserStateV2(userId, newLogin,String.valueOf(false)))
+        assertThatThrownBy(() -> controller.getUserStateV2(userId, newLogin))
             .isInstanceOf(ResponseStatusException.class)
             .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
                 .isEqualTo(HttpStatus.BAD_REQUEST));

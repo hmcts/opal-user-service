@@ -32,13 +32,7 @@ public class UserPermissionsV2Controller {
     @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
     public ResponseEntity<UserStateV2Dto> getUserStateV2(
         @PathVariable Long userId,
-        @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin,
-        @RequestHeader(value = "X-FMEA", required = false) String xfmea
-    ) throws InterruptedException {
-
-        if ("true".equalsIgnoreCase(xfmea)) {
-            Thread.sleep(90000);
-        }
+        @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
 
         log.debug(":GET:getUserStateV2: userId: {}, new login: {}", userId, newLogin);
         if (!CURRENT_USER_ID.equals(userId)) {

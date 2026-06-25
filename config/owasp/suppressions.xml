@@ -40,9 +40,9 @@
     <packageUrl regex="true">^pkg:maven/com\.microsoft\.azure/applicationinsights\-(core|web)@.*$</packageUrl>
     <cve>CVE-2025-21199</cve>
   </suppress>
-  <suppress until="2026-06-24Z">
+  <suppress until="2026-07-14Z">
     <notes><![CDATA[
-    Reviewed 2026-06-10.
+    Reviewed 2026-06-24.
     User-service uses Azure Blob Storage only for reading the role-mapping file via
     BlobServiceClientBuilder.connectionString(...), then reading blob properties and content.
     Current runtime artifacts flagged for CVE-2026-33117 are:

@@ -38,17 +38,8 @@ java:
     RUN_DB_MIGRATION_ON_STARTUP: true
     OPAL_FRONTEND_URL: https://opal-frontend.{{ .Values.global.environment }}.apps.hmcts.net
     TESTING_SUPPORT_ENDPOINTS_ENABLED: true
-    LAUNCH_DARKLY_ENABLED: false
+    LAUNCH_DARKLY_ENABLED: true
     FLYWAY_LOCATIONS: classpath:db/migration/ddl,classpath:db/migration/data/allEnvs
-    # The Following have been added to work around an issue in the legacy response for user mgmt endpoints.
-    # Related tickets
-    # https://tools.hmcts.net/jira/browse/PO-7271
-    # https://tools.hmcts.net/jira/browse/PO-7272
-    IS_LEGACY_MODE: false
-    DEFAULT_APP_MODE: opal
-    RELEASE_1A_ENABLED: true
-    RELEASE_1B_ENABLED: true
-    RELEASE_1C_ENABLED: true
   postgresql:
     enabled: false
     image:

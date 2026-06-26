@@ -40,21 +40,26 @@
     <packageUrl regex="true">^pkg:maven/com\.microsoft\.azure/applicationinsights\-(core|web)@.*$</packageUrl>
     <cve>CVE-2025-21199</cve>
   </suppress>
-  <suppress until="2026-07-14Z">
+  <suppress until="2026-09-15Z">
     <notes><![CDATA[
-    Reviewed 2026-06-24.
+    Reviewed 2026-06-26.
     User-service uses Azure Blob Storage only for reading the role-mapping file via
     BlobServiceClientBuilder.connectionString(...), then reading blob properties and content.
     Current runtime artifacts flagged for CVE-2026-33117 are:
-    - com.azure:azure-core:1.58.0
-    - com.azure:azure-core-http-netty:1.16.4
+    - com.azure:azure-core:1.58.1
+    - com.azure:azure-core-http-netty:1.16.5
     - com.azure:azure-json:1.5.1
     The opal-common-lib transitive applicationinsights-spring-boot-starter path has been excluded,
     so this suppression now covers only the direct Azure Storage SDK runtime path.
-    Maven metadata review still found no newer stable GA upgrade path in the current Azure Storage SDK chain
-    used by this repo.
-    This suppression expires in two weeks so the dependency-check failure returns unless an
-    upstream GA fix or a better remediation path is available.
+    Local dependency review still found no newer GA Azure Storage SDK chain available in the current
+    resolved Gradle cache used by this repo.
+    No public MSRC/NVD advisory detail was found during review, so this remains treated as a narrow
+    dependency-check/CPE match for this repo's limited Azure Blob Storage usage.
+    Risk is considered low for this service because the affected Azure SDK path is used only by
+    role-mapping file retrieval from configured blob storage, not for processing arbitrary
+    user-supplied Azure SDK requests or exposing an Azure SDK endpoint.
+    This suppression expires in mid-September so the dependency-check failure returns unless an
+    upstream GA fix, public advisory detail or a better remediation path is available.
     ]]></notes>
     <packageUrl regex="true">^pkg:maven/com\.azure/(azure\-core|azure\-core\-http\-netty|azure\-json)@.*$</packageUrl>
     <cve>CVE-2026-33117</cve>

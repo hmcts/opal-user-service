@@ -7,10 +7,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
+import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
@@ -186,6 +192,120 @@ class UserStateMapperTest {
     }
 
     @Test
+    void toUserStateV2Dto_omitsDuplicateBusinessUnitIdsFromMapping() throws JacksonException {
+
+        // Arrange
+        RoleEntity duplicateRole = buildRole("duplicateRole", List.of(permAE));
+        RoleEntity uniqueRole = buildRole("uniqueRole", List.of(permSAVA));
+
+        when(user.getBusinessUnitUsers()).thenReturn(Set.of(
+            buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(duplicateRole)),
+            buildBusinessUnitUserEntity("DEF456", fines, (short) 41, Set.of(duplicateRole)),
+            buildBusinessUnitUserEntity("GHI789", confiscations, (short) 51, Set.of(uniqueRole))
+        ));
+
+        // Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        // Assert
+        assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
+            .isEqualTo(objectMapper.readTree("""
+                {
+                  "user_id": 123,
+                  "username": "username",
+                  "name": "token",
+                  "status": "ACTIVE",
+                  "version": 321,
+                  "cache_name": null,
+                  "domains": {
+                    "confiscation": {
+                      "business_unit_users": [
+                        {
+                          "business_unit_user_id": "GHI789",
+                          "business_unit_id": 51,
+                          "permissions": [
+                            {
+                              "permission_id": 6,
+                              "permission_name": "Search and view accounts"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+            """));
+    }
+
+    @Test
+    void toUserStateV2_populatesCacheName() {
+
+        // Arrange
+        when(user.getBusinessUnitUsers()).thenReturn(emptySet());
+
+        // Act
+        UserStateV2 result = mapper.toUserStateV2(user, clock);
+
+        // Assert
+        assertThat(result.getCacheName()).isNull();
+    }
+
+    @Test
+    @MockitoSettings(strictness = Strictness.LENIENT)
+    void toUserStateV2Dto_fromUserStateV2_mapsCacheNameAndDomains() throws JacksonException {
+
+        // Arrange
+        UserStateV2 userStateV2 = UserStateV2.builder()
+            .userId(123L)
+            .username("username")
+            .name("token")
+            .status(UserStatus.ACTIVE)
+            .version(321L)
+            .cacheName("USER_STATE_subject-123")
+            .domains(java.util.Map.of(
+                Domain.FINES, DomainBusinessUnitUsers.builder()
+                    .businessUnitUsers(List.of(
+                        BusinessUnitUser.builder()
+                            .businessUnitUserId("ABC123")
+                            .businessUnitId((short) 41)
+                            .permissions(emptySet())
+                            .build()
+                    ))
+                    .build()
+            ))
+            .build();
+
+        // Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(userStateV2);
+
+        // Assert
+        assertThat(dto.getCacheName()).isNull();
+        assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
+            .isEqualTo(objectMapper.readTree("""
+                {
+                  "user_id": 123,
+                  "username": "username",
+                  "name": "token",
+                  "status": "ACTIVE",
+                  "version": 321,
+                  "cache_name": null,
+                  "domains": {
+                    "fines": {
+                      "business_unit_users": [
+                        {
+                          "business_unit_user_id": "ABC123",
+                          "business_unit_id": 41,
+                          "permissions": []
+                        }
+                      ]
+                    }
+                  }
+                }
+            """));
+    }
+
+    @Test
+    @MockitoSettings(strictness = Strictness.LENIENT)
     void toUserStateV2Dto_badFunctionNamesSkipped() throws JacksonException {
 
         // Arrange

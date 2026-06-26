@@ -62,6 +62,7 @@ user-role-mapping-refresh:
   image: 'hmctsprod.azurecr.io/opal/user-service:latest'
   schedule: "*/30 * * * *"
   concurrencyPolicy: Forbid
+  command: ["java", "-jar", "/opt/app/opal-user-service.jar"]
   args:
     - AutomatedTask:UserRoleMappingFileRefresh
   aadIdentityName: opal

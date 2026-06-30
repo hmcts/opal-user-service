@@ -1,11 +1,8 @@
-opal:
-  feature-flags:
-    is-legacy-mode: false
-
 launchdarkly:
   enabled: false
   default-flag-values:
     release-1a: true
+    is-legacy-mode: false
 
 spring:
   jpa:

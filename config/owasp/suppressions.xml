@@ -64,4 +64,11 @@
     <packageUrl regex="true">^pkg:maven/com\.azure/(azure\-core|azure\-core\-http\-netty|azure\-json)@.*$</packageUrl>
     <cve>CVE-2026-33117</cve>
   </suppress>
+  <suppress until="2026-09-15Z">
+    <notes><![CDATA[
+   file name: jackson-databind-2.21.4.jar
+   ]]></notes>
+    <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-databind@.*$</packageUrl>
+    <cve>CVE-2026-54515</cve>
+  </suppress>
 </suppressions>

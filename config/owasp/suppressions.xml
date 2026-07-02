@@ -40,7 +40,7 @@
     <packageUrl regex="true">^pkg:maven/com\.microsoft\.azure/applicationinsights\-(core|web)@.*$</packageUrl>
     <cve>CVE-2025-21199</cve>
   </suppress>
-  <suppress until="2026-09-15Z">
+  <suppress until="2026-07-24Z">
     <notes><![CDATA[
     Reviewed 2026-06-26.
     User-service uses Azure Blob Storage only for reading the role-mapping file via

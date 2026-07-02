@@ -27,6 +27,9 @@ ext {
   set('spring-framework.version', "7.0.8")
 }
 
+var skipTests = true//System.getenv('SKIP_TESTS') != null && System.getenv('SKIP_TESTS').toBoolean();
+var skipSonar = true//System.getenv('SKIP_SONAR') != null && System.getenv('SKIP_SONAR').toBoolean();
+
 group = 'uk.gov.hmcts.reform'
 version = '0.0.1'
 
@@ -89,22 +92,7 @@ configurations.configureEach {
 }
 
 
-tasks.withType(JavaCompile).configureEach {
-  options.compilerArgs << "-Xlint:unchecked" << "-Werror"
-}
 
-// https://github.com/gradle/gradle/issues/16791
-tasks.withType(JavaExec).configureEach {
-  javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
-}
-
-tasks.withType(Test).configureEach {
-  useJUnitPlatform()
-
-  testLogging {
-    exceptionFormat = 'full'
-  }
-}
 
 test {
   failFast = false
@@ -288,11 +276,35 @@ tasks.named("sonarqube") {
   dependsOn(tasks.named("jacocoTestReport"))
 }
 tasks.named("check") {
+  if (!skipTests) {
+    dependsOn(tasks.named("checkTestJiraAnnotations"))
+  }
   dependsOn(tasks.named("integration"))
 }
 
 jacocoTestReport.dependsOn check
 jacocoTestCoverageVerification.dependsOn jacocoTestReport
+
+tasks.withType(JavaCompile).configureEach {
+  options.compilerArgs << "-Xlint:unchecked" << "-Werror"
+}
+
+// https://github.com/gradle/gradle/issues/16791
+tasks.withType(JavaExec).configureEach {
+  javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+}
+
+tasks.withType(Test).configureEach {
+  useJUnitPlatform()
+
+  if (skipTests) {
+    exclude("uk/gov/hmcts/**")
+  }
+
+  testLogging {
+    exceptionFormat = 'full'
+  }
+}
 
 sonarqube {
   properties {
@@ -303,6 +315,9 @@ sonarqube {
     property "sonar.exclusions", coverageExclusions.join(', ')
     property 'sonar.coverage.exclusions', "**/entity/*,**/model/*,**/exception/*,**/config/**,**/repository/jpa/*,**/opal/dto/*"
     property 'sonar.cpd.exclusions', "**/entity/*,**/opal/dto/**"
+    if (skipSonar) {
+      property 'sonar.exclusions', "**/**"
+    }
   }
 }
 

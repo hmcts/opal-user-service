@@ -29,6 +29,7 @@ public class UserPermissionsController {
     @PostMapping()
     @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
     public ResponseEntity<UserDto> addUser(@RequestHeader(value = "Authorization") String authHeaderValue) {
+
         log.debug(":POST:addUser:");
         return buildCreatedResponse(userPermissionsService.addUser(authHeaderValue));
     }
@@ -39,6 +40,7 @@ public class UserPermissionsController {
                                               @RequestHeader(value = "Authorization") String authHeaderValue,
                                               @RequestHeader(value = "If-Match") String ifMatch) {
         log.debug(":PUT:updateUser:");
+
         return buildResponse(userPermissionsService
                                  .updateUser(userId, authHeaderValue, ifMatch));
     }
@@ -48,6 +50,7 @@ public class UserPermissionsController {
     public ResponseEntity<UserDto> updateUser(@RequestHeader(value = "Authorization") String authHeaderValue,
                                               @RequestHeader(value = "If-Match") String ifMatch) {
         log.debug(":PUT:updateUser:");
+
         return buildResponse(userPermissionsService.updateUser(authHeaderValue, ifMatch));
     }
 

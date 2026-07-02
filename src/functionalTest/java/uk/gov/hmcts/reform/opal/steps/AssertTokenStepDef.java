@@ -1,14 +1,14 @@
-package uk.gov.hmcts.opal.steps;
+package uk.gov.hmcts.reform.opal.steps;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.cucumber.java.en.Then;
 import net.serenitybdd.core.Serenity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.hmcts.opal.utils.TokenUtils;
+import uk.gov.hmcts.reform.opal.utils.TokenUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static uk.gov.hmcts.opal.steps.BearerTokenStepDef.getToken;
+import static uk.gov.hmcts.reform.opal.steps.BearerTokenStepDef.getToken;
 
 /**
  * Defines assertions over the bearer token captured for the current scenario.

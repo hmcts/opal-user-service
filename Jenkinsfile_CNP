@@ -1,6 +1,12 @@
 #!groovy
 
-@Library("Infrastructure@master")
+properties([
+  parameters([
+    booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip all tests'),
+    booleanParam(name: 'SKIP_SONAR', defaultValue: false, description: 'Skip sonar'),
+  ])
+])
+@Library("Infrastructure@2.0.0")
 
 def type = "java"
 def product = "opal"
@@ -12,52 +18,44 @@ withPipeline(type, product, component) {
   afterAlways('functionalTest:dev') {
     steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'functional-test-report/**/*'
 
-    publishHTML target: [
-      allowMissing         : true,
-      alwaysLinkToLastBuild: true,
-      keepAll              : true,
-      reportDir            : "functional-test-report/",
-      reportFiles          : "index.html",
-      reportName           : "Serenity Functional Test Report"
-    ]
+    publishHTML target: [allowMissing         : true,
+                         alwaysLinkToLastBuild: true,
+                         keepAll              : true,
+                         reportDir            : "functional-test-report/",
+                         reportFiles          : "index.html",
+                         reportName           : "Serenity Functional Test Report"]
   }
 
   afterAlways('smoketest:dev') {
     steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'smoke-test-report/**/*'
 
-    publishHTML target: [
-      allowMissing         : true,
-      alwaysLinkToLastBuild: true,
-      keepAll              : true,
-      reportDir            : "smoke-test-report/",
-      reportFiles          : "index.html",
-      reportName           : "Serenity Smoke Test Report"
-    ]
+    publishHTML target: [allowMissing         : true,
+                         alwaysLinkToLastBuild: true,
+                         keepAll              : true,
+                         reportDir            : "smoke-test-report/",
+                         reportFiles          : "index.html",
+                         reportName           : "Serenity Smoke Test Report"]
   }
 
   afterAlways('functionalTest:stg') {
     steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'functional-test-report/**/*'
 
-    publishHTML target: [
-      allowMissing         : true,
-      alwaysLinkToLastBuild: true,
-      keepAll              : true,
-      reportDir            : "functional-test-report/",
-      reportFiles          : "index.html",
-      reportName           : "Serenity Functional Test Report"
-    ]
+    publishHTML target: [allowMissing         : true,
+                         alwaysLinkToLastBuild: true,
+                         keepAll              : true,
+                         reportDir            : "functional-test-report/",
+                         reportFiles          : "index.html",
+                         reportName           : "Serenity Functional Test Report"]
 
   }
   afterAlways('smoketest:stg') {
     steps.archiveArtifacts allowEmptyArchive: true, artifacts: 'smoke-test-report/**/*'
 
-    publishHTML target: [
-      allowMissing         : true,
-      alwaysLinkToLastBuild: true,
-      keepAll              : true,
-      reportDir            : "smoke-test-report/",
-      reportFiles          : "index.html",
-      reportName           : "Serenity Smoke Test Report"
-    ]
+    publishHTML target: [allowMissing         : true,
+                         alwaysLinkToLastBuild: true,
+                         keepAll              : true,
+                         reportDir            : "smoke-test-report/",
+                         reportFiles          : "index.html",
+                         reportName           : "Serenity Smoke Test Report"]
   }
 }

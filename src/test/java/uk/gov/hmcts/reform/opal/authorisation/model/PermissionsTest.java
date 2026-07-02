@@ -14,6 +14,12 @@ class PermissionsTest {
     }
 
     @Test
+    void toPermissionOrNull_returnsProcessAndAllocatePaymentsPermission() {
+        Permissions permission = Permissions.toPermissionOrNull("Process and Allocate Payments");
+        assertEquals(Permissions.PROCESS_AND_ALLOCATE_PAYMENTS, permission);
+    }
+
+    @Test
     void toPermissionOrNull_returnsNullForInvalidDescription() {
         Permissions permission = Permissions.toPermissionOrNull("NOT_A_PERMISSION");
         assertNull(permission);

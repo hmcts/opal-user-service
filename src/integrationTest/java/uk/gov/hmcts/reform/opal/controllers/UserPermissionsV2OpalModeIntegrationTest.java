@@ -37,8 +37,8 @@ class UserPermissionsV2OpalModeIntegrationTest extends AbstractIntegrationTest {
     private SynchronisePermissionsService synchronisePermissionsService;
 
     @Test
-    @DisplayName("Should not trigger legacy synchronisation when app mode is opal")
-    void getUserStateV2_whenAppModeIsOpal_doesNotSynchroniseWithLegacy() throws Exception {
+    @DisplayName("Should not trigger legacy synchronisation when legacy mode is disabled")
+    void getUserStateV2_whenNotLegacyMode_doesNotSynchroniseWithLegacy() throws Exception {
         UserEntity user = userRepository.findById(USER_ID).orElseThrow();
         TestHelperUtil.setAuthenticatedUser(user);
 

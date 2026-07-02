@@ -19,7 +19,8 @@ public enum Permissions {
     ADD_AND_REMOVE_PAYMENT_HOLD(12, "Add and Remove payment hold"),
     CONSOLIDATE(13, "Consolidate"),
     OPERATIONAL_REPORT_BY_ENFORCEMENT(14, "Operational report by enforcement"),
-    OPERATIONAL_REPORT_BY_PAYMENTS(15, "Operational report by payments");
+    OPERATIONAL_REPORT_BY_PAYMENTS(15, "Operational report by payments"),
+    PROCESS_AND_ALLOCATE_PAYMENTS(16, "Process and Allocate Payments");
 
     public final long id;
 

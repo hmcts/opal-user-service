@@ -20,6 +20,12 @@ class PermissionsTest {
     }
 
     @Test
+    void toPermissionOrNull_returnsAutoEnforcementPermission() {
+        Permissions permission = Permissions.toPermissionOrNull("Auto Enforcement");
+        assertEquals(Permissions.AUTO_ENFORCEMENT, permission);
+    }
+
+    @Test
     void toPermissionOrNull_returnsNullForInvalidDescription() {
         Permissions permission = Permissions.toPermissionOrNull("NOT_A_PERMISSION");
         assertNull(permission);

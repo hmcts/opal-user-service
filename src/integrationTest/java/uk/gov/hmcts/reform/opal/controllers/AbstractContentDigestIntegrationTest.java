@@ -15,6 +15,8 @@ abstract class AbstractContentDigestIntegrationTest extends AbstractIntegrationT
 
     protected static final String CONTENT_DIGEST = "Content-Digest";
     protected static final String ROOT_ENDPOINT = "/";
+    protected static final String POST_ENDPOINT = "/users";
+    protected static final String POST_BODY = "{}";
 
     private static final byte[] EMPTY_BODY = new byte[0];
 

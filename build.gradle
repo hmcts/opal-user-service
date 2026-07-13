@@ -345,7 +345,7 @@ repositories {
 
 ext['snakeyaml.version'] = '2.0'
 ext['tomcat.version'] = '10.1.43'
-ext['postgresql.version'] = '42.7.11'
+ext['postgresql.version'] = '42.7.12' // Fix CVE-2026-54291
 
 dependencies {
 

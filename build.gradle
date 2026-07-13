@@ -345,7 +345,7 @@ repositories {
 
 ext['snakeyaml.version'] = '2.0'
 ext['tomcat.version'] = '10.1.43'
-ext['postgresql.version'] = '42.7.11'
+ext['postgresql.version'] = '42.7.12' // Fix CVE-2026-54291
 
 dependencies {
 
@@ -403,7 +403,7 @@ dependencies {
 
   compileOnly 'org.projectlombok:lombok:1.18.46'
   annotationProcessor 'org.projectlombok:lombok:1.18.46'
-  annotationProcessor 'org.hibernate.orm:hibernate-processor:7.4.3.Final'
+  annotationProcessor 'org.hibernate.orm:hibernate-processor:7.4.5.Final'
 
   testCompileOnly 'org.projectlombok:lombok:1.18.46'
   testAnnotationProcessor 'org.projectlombok:lombok:1.18.46'

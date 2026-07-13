@@ -71,4 +71,19 @@
     <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-databind@.*$</packageUrl>
     <cve>CVE-2026-54515</cve>
   </suppress>
+  <suppress until="2026-10-15Z">
+    <notes><![CDATA[
+    Reviewed 2026-07-10.
+    CVE-2026-54428 and CVE-2026-54399 affect Apache HttpComponents Core 5.x, specifically the
+    org.apache.httpcomponents.core5:httpcore5-h2 package up to 5.4.2.
+    This repo does not resolve any org.apache.httpcomponents.core5 artifacts on runtimeClasspath.
+    Local Gradle dependency review found only org.apache.httpcomponents:httpcore:4.4.16, pulled in
+    transitively by io.rest-assured:rest-assured:6.0.0.
+    Keep this suppression only for Dependency-Check false positives where HttpComponents 4.x jars are
+    mapped to the generic httpcomponents_core CPE used by the 5.x advisory.
+    ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents/httpcore@.*$</packageUrl>
+    <cve>CVE-2026-54428</cve>
+    <cve>CVE-2026-54399</cve>
+  </suppress>
 </suppressions>

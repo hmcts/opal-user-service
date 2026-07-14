@@ -20,7 +20,8 @@ public enum Permissions {
     CONSOLIDATE(13, "Consolidate"),
     OPERATIONAL_REPORT_BY_ENFORCEMENT(14, "Operational report by enforcement"),
     OPERATIONAL_REPORT_BY_PAYMENTS(15, "Operational report by payments"),
-    PROCESS_AND_ALLOCATE_PAYMENTS(16, "Process and Allocate Payments");
+    PROCESS_AND_ALLOCATE_PAYMENTS(16, "Process and Allocate Payments"),
+    AUTO_ENFORCEMENT(17, "Auto Enforcement");
 
     public final long id;
 

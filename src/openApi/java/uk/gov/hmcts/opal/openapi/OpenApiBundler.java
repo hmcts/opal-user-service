@@ -71,7 +71,7 @@ public class OpenApiBundler {
                             Map<String, Object> dst = getOrCreateSection(bundledComponents, section);
                             for (Map.Entry<String, Object> e : src.entrySet()) {
                                 String oldName = e.getKey();
-                                String newName = maybeSuffix(oldName, suffix);
+                                String newName = applyFileScope(oldName, suffix);
                                 Object valueWithRewrites = rewriteRefs(e.getValue(), suffix);
 
                                 if (dst.containsKey(newName)) {
@@ -149,13 +149,14 @@ public class OpenApiBundler {
         String name = (next == -1) ? rest : rest.substring(0, next);
         String tail = (next == -1) ? "" : rest.substring(next); // includes the '/'
 
-        String suffixedName = maybeSuffix(name, suffix);
+        String suffixedName = applyFileScope(name, suffix);
         return section + "/" + suffixedName + tail;
     }
 
-    // Only add the suffix if it's not already there
-    private static String maybeSuffix(String name, String suffix) {
-        return name.endsWith(suffix) ? name : name + suffix;
+    // Only add the file scope if it is not already present. Newer specs can use a filename prefix for clearer
+    // generated model names; older specs keep the historic suffix behaviour.
+    private static String applyFileScope(String name, String suffix) {
+        return name.startsWith(suffix) || name.endsWith(suffix) ? name : name + suffix;
     }
 
     private static String stripYaml(String fileName) {

@@ -394,7 +394,7 @@ dependencies {
   implementation 'com.azure:azure-storage-blob:12.35.0'
   implementation 'org.apache.commons:commons-csv:1.14.1'
 
-  implementation 'io.rest-assured:rest-assured:6.0.0'
+  implementation 'io.rest-assured:rest-assured:6.0.1'
   implementation 'org.flywaydb:flyway-core:12.10.0'
   runtimeOnly 'org.flywaydb:flyway-database-postgresql:12.10.0', {
     exclude group: 'org.flywaydb', module: 'flyway-core'

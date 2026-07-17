@@ -18,11 +18,6 @@
       "allowedVersions": "<2.0.0"
     },
     {
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["postgres"],
-      "enabled": false
-    },
-    {
       "matchManagers": ["gradle"],
       "matchPackageNames": ["org.hibernate.orm:hibernate-jpamodelgen"],
       "matchUpdateTypes": ["minor", "patch"]
@@ -44,12 +39,6 @@
       "matchManagers": ["gradle"],
       "matchPackageNames": ["org.springdoc:springdoc-openapi-starter-webmvc-ui"],
       "allowedVersions": "<3.0.0"
-    },
-    {
-      "description": "opal-common-lib updates are coordinated manually across consuming services",
-      "matchManagers": ["gradle"],
-      "matchPackageNames": ["uk.gov.hmcts:opal-common-lib"],
-      "enabled": false
     },
     {
       "description": "Group all Gradle plugins - Minor/Patch",

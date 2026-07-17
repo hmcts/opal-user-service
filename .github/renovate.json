@@ -18,6 +18,10 @@
       "allowedVersions": "<2.0.0"
     },
     {
+      "matchPackageNames": ["postgres"],
+      "enabled": false
+    },
+    {
       "matchManagers": ["gradle"],
       "matchPackageNames": ["org.hibernate.orm:hibernate-jpamodelgen"],
       "matchUpdateTypes": ["minor", "patch"]

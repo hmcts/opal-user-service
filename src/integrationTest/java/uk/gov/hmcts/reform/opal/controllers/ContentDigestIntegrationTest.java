@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ContentDigestIntegrationTest extends AbstractContentDigestIntegrationTest {
 
     @Test
-    void missingHeader_returnsSuccessWithoutResponseContentDigest() throws Exception {
-        mockMvc.perform(get(ROOT_ENDPOINT))
+    void missingHeader_returnsSuccessWithResponseContentDigest() throws Exception {
+        mockMvc.perform(get(ROOT_ENDPOINT).header(CONTENT_DIGEST, validEmptyBodyDigest()))
             .andExpect(status().isOk())
-            .andExpect(header().doesNotExist(CONTENT_DIGEST));
+            .andExpect(header().exists(CONTENT_DIGEST));
     }
 }

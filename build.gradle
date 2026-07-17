@@ -22,7 +22,7 @@ plugins {
 ext {
   log4JVersion = "2.26.1"
   logbackVersion = "1.5.12"
-  serenityVersion = "5.3.10"
+  serenityVersion = "5.3.11"
   cucumberVersion = "7.23.0" // Serenity (Integration Tests) 4.2.34 needs cucumber version 7.23.0 (see renovate.json)
   set('spring-framework.version', "7.0.8")
 }
@@ -423,13 +423,13 @@ dependencies {
   testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
   testImplementation 'org.testcontainers:testcontainers-postgresql'
   testImplementation 'com.redis:testcontainers-redis'
-  testImplementation(platform('org.junit:junit-bom:6.1.1'))
+  testImplementation(platform('org.junit:junit-bom:6.1.2'))
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testImplementation 'org.springframework.boot:spring-boot-starter-test', {
     exclude group: 'junit', module: 'junit'
     exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
   }
-  testImplementation 'org.junit.platform:junit-platform-suite:6.1.1'
+  testImplementation 'org.junit.platform:junit-platform-suite:6.1.2'
   testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
 
   testImplementation "net.serenity-bdd:serenity-core:${serenityVersion}"

@@ -58,6 +58,18 @@ public final class TestHttpClient {
         return send(requestBuilder.build());
     }
 
+    public static TestHttpResponseDetails postWithResponseDetails(String url, String body,
+        Map<String, String> headers) {
+        String requestBody = body == null ? "" : body;
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .POST(HttpRequest.BodyPublishers.ofString(requestBody));
+
+        addHeaders(requestBuilder, headers);
+
+        return sendWithResponseDetails(requestBuilder.build());
+    }
+
     public static TestHttpResponse put(String url, String body, Map<String, String> headers) {
         String requestBody = body == null ? "" : body;
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
@@ -113,7 +125,7 @@ public final class TestHttpClient {
             try {
                 JsonNode root = OBJECT_MAPPER.readTree(body);
                 JsonNode node = root.path(fieldName);
-                return node.isMissingNode() || node.isNull() ? null : node.asText();
+                return node.isMissingNode() || node.isNull() ? null : node.asString();
             } catch (JacksonException e) {
                 throw new IllegalStateException("Failed to parse JSON response body", e);
             }

@@ -9,11 +9,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -108,6 +110,12 @@ public class TestingSupportController {
         userService.activateUser(userId, request.activationDate());
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/post-user", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> userPost(@RequestBody Object body) {
+        log.debug(":userPost : body: {}", body);
+        return ResponseEntity.ok(body);
     }
 
     record TestingSupportTokenResponse(@JsonProperty("access_token") String accessToken) {

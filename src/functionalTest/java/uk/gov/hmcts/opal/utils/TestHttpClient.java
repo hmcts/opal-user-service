@@ -58,18 +58,6 @@ public final class TestHttpClient {
         return send(requestBuilder.build());
     }
 
-    public static TestHttpResponseDetails postWithResponseDetails(String url, String body,
-        Map<String, String> headers) {
-        String requestBody = body == null ? "" : body;
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .POST(HttpRequest.BodyPublishers.ofString(requestBody));
-
-        addHeaders(requestBuilder, headers);
-
-        return sendWithResponseDetails(requestBuilder.build());
-    }
-
     public static TestHttpResponse put(String url, String body, Map<String, String> headers) {
         String requestBody = body == null ? "" : body;
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
@@ -90,6 +78,18 @@ public final class TestHttpClient {
         addHeaders(requestBuilder, headers);
 
         return send(requestBuilder.build());
+    }
+
+    public static TestHttpResponseDetails patchWithResponseDetails(String url, String body,
+        Map<String, String> headers) {
+        String requestBody = body == null ? "" : body;
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .method("PATCH", HttpRequest.BodyPublishers.ofString(requestBody));
+
+        addHeaders(requestBuilder, headers);
+
+        return sendWithResponseDetails(requestBuilder.build());
     }
 
     private static void addHeaders(HttpRequest.Builder requestBuilder, Map<String, String> headers) {

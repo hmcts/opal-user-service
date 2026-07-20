@@ -76,7 +76,7 @@ user-role-mapping-refresh:
           alias: ROLE_MAPPING_STORAGE_CONTAINER_NAME
         - name: storage-connection-string
           alias: AZURE_STORAGE_CONNECTION_STRING
-        - name: redis-connection-string
+        - name: managed-redis-connection-string
           alias: REDIS_CONNECTION_STRING
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: false

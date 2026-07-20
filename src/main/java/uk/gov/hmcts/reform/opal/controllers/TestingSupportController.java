@@ -113,9 +113,9 @@ public class TestingSupportController {
     }
 
     @PostMapping(value = "/post-user", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> userPost(@RequestBody Object body) {
+    public ResponseEntity<Void> userPost(@RequestBody Object body) {
         log.debug(":userPost : body: {}", body);
-        return ResponseEntity.ok(body);
+        return ResponseEntity.ok().build();
     }
 
     record TestingSupportTokenResponse(@JsonProperty("access_token") String accessToken) {

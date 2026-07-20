@@ -19,8 +19,8 @@ public class ContentDigestStepDef extends BaseStepDef {
     private static final String APPLICATION_JSON = "application/json";
     private static final String CONTENT_DIGEST = "Content-Digest";
     private static final String LAST_CONTENT_DIGEST_RESPONSE = "LAST_CONTENT_DIGEST_RESPONSE";
-    private static final String POST_ENDPOINT = "/testing-support/users/500000005";
-    private static final String POST_BODY = "{}";
+    private static final String PATCH_ENDPOINT = "/testing-support/users/500000005";
+    private static final String PATCH_BODY = "{}";
 
     @When("I make a content digest request without a Content-Digest header")
     public void getRootWithoutContentDigestHeader() {
@@ -62,7 +62,7 @@ public class ContentDigestStepDef extends BaseStepDef {
 
     private static void patch(Map<String, String> headers) {
         TestHttpResponseDetails response = TestHttpClient.patchWithResponseDetails(
-            getTestUrl() + POST_ENDPOINT, POST_BODY, headers);
+            getTestUrl() + PATCH_ENDPOINT, PATCH_BODY, headers);
         Serenity.setSessionVariable("LAST_RESPONSE").to(response.toTestHttpResponse());
         Serenity.setSessionVariable(LAST_CONTENT_DIGEST_RESPONSE).to(response);
     }

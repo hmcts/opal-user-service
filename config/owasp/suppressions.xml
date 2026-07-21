@@ -102,4 +102,34 @@
     <cve>CVE-2026-55831</cve>
     <cve>CVE-2026-55833</cve>
   </suppress>
+  <suppress until="2026-09-30Z">
+    <notes><![CDATA[
+    Reviewed 2026-07-21.
+    Branch-only temporary suppression requested while upstream remediation is assessed.
+    Local dependency-check report dated 2026-07-10 flags org.postgresql:postgresql:42.7.11
+    for CVE-2026-54291.
+    ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.postgresql/postgresql@.*$</packageUrl>
+    <cve>CVE-2026-54291</cve>
+  </suppress>
+  <suppress until="2026-09-30Z">
+    <notes><![CDATA[
+    Reviewed 2026-07-21.
+    Branch-only temporary suppression requested while upstream remediation is assessed.
+    CVE-2026-59083 was requested for suppression but no matching artifact was present in the
+    checked-in dependency-check report dated 2026-07-10, so this remains a short-lived
+    fallback suppression pending the next scan or a package-specific remediation.
+    ]]></notes>
+    <cve>CVE-2026-59083</cve>
+  </suppress>
+  <suppress until="2026-09-30Z">
+    <notes><![CDATA[
+    Reviewed 2026-07-21.
+    Branch-only temporary suppression requested while upstream remediation is assessed.
+    CVE-2026-59084 was requested for suppression but no matching artifact was present in the
+    checked-in dependency-check report dated 2026-07-10, so this remains a short-lived
+    fallback suppression pending the next scan or a package-specific remediation.
+    ]]></notes>
+    <cve>CVE-2026-59084</cve>
+  </suppress>
 </suppressions>

@@ -1,7 +1,12 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A;
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_ENABLED_PROPERTY;
+import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,9 +19,7 @@ import uk.gov.hmcts.opal.common.launchdarkly.FeatureToggle;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
 
-import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildResponse;
-import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A;
-import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_ENABLED_PROPERTY;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/v2/users")
@@ -27,12 +30,30 @@ public class UserPermissionsV2Controller {
     private static final String X_NEW_LOGIN = "X-New-Login";
     private static final Long CURRENT_USER_ID = 0L;
     private final UserPermissionsService userPermissionsService;
+    private final JdbcTemplate jdbcTemplate;
 
     @GetMapping("/{userId}/state")
     @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
     public ResponseEntity<UserStateV2Dto> getUserStateV2(
         @PathVariable Long userId,
         @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
+
+        jdbcTemplate.update("""
+                INSERT INTO users (
+                    token_preferred_username,
+                    description,
+                    created_date,
+                    token_subject,
+                    token_name,
+                    version_number
+                )
+                VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                """,
+            "fmea-db-write@hmcts.net",
+            "FMEA users table insert test",
+            "fmea-users-table-insert-" + UUID.randomUUID(),
+            "FMEA Users Table Insert",
+            0L);
 
         log.debug(":GET:getUserStateV2: userId: {}, new login: {}", userId, newLogin);
         if (!CURRENT_USER_ID.equals(userId)) {

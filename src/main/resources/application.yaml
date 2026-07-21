@@ -123,7 +123,7 @@ opal:
     content-digest:
       request:
         enforce: ${OPAL_COMMON_CONTENT_DIGEST_REQUEST_ENFORCE:false}
-        auto-generate: ${OPAL_COMMON_CONTENT_DIGEST_REQUEST_AUTO_GENERATE:false}
+        auto-generate: ${OPAL_COMMON_CONTENT_DIGEST_REQUEST_AUTO_GENERATE:true}
       response:
         enforce: ${OPAL_COMMON_CONTENT_DIGEST_RESPONSE_ENFORCE:false}
         algorithm: ${OPAL_COMMON_CONTENT_DIGEST_RESPONSE_ALGORITHM:SHA-512}

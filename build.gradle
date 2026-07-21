@@ -2,7 +2,7 @@ import org.flywaydb.gradle.task.FlywayMigrateTask
 
 buildscript {
   dependencies {
-    classpath("org.flywaydb:flyway-database-postgresql:12.10.0")
+    classpath("org.flywaydb:flyway-database-postgresql:12.11.0")
   }
 }
 
@@ -14,7 +14,7 @@ plugins {
   id 'com.github.ben-manes.versions' version '0.54.0'
   id 'org.sonarqube' version '7.3.1.8318'
   id 'uk.gov.hmcts.java' version '0.12.70'
-  id 'org.flywaydb.flyway' version '12.10.0'
+  id 'org.flywaydb.flyway' version '12.11.0'
   id 'net.serenity-bdd.serenity-gradle-plugin' version '5.3.9'
   id "org.openapi.generator" version "7.23.0"
 }
@@ -22,7 +22,7 @@ plugins {
 ext {
   log4JVersion = "2.26.1"
   logbackVersion = "1.5.12"
-  serenityVersion = "5.3.10"
+  serenityVersion = "5.3.11"
   cucumberVersion = "7.23.0" // Serenity (Integration Tests) 4.2.34 needs cucumber version 7.23.0 (see renovate.json)
   set('spring-framework.version', "7.0.8")
 }
@@ -394,9 +394,9 @@ dependencies {
   implementation 'com.azure:azure-storage-blob:12.35.0'
   implementation 'org.apache.commons:commons-csv:1.14.1'
 
-  implementation 'io.rest-assured:rest-assured:6.0.0'
-  implementation 'org.flywaydb:flyway-core:12.10.0'
-  runtimeOnly 'org.flywaydb:flyway-database-postgresql:12.10.0', {
+  implementation 'io.rest-assured:rest-assured:6.0.1'
+  implementation 'org.flywaydb:flyway-core:12.11.0'
+  runtimeOnly 'org.flywaydb:flyway-database-postgresql:12.11.0', {
     exclude group: 'org.flywaydb', module: 'flyway-core'
   }
   implementation 'org.postgresql:postgresql'
@@ -419,17 +419,17 @@ dependencies {
   testImplementation 'org.springframework.boot:spring-boot-devtools'
   testImplementation 'org.springframework.boot:spring-boot-testcontainers'
   testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-  testImplementation 'com.auth0:java-jwt:4.5.2'
+  testImplementation 'com.auth0:java-jwt:4.6.0'
   testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
   testImplementation 'org.testcontainers:testcontainers-postgresql'
   testImplementation 'com.redis:testcontainers-redis'
-  testImplementation(platform('org.junit:junit-bom:6.1.1'))
+  testImplementation(platform('org.junit:junit-bom:6.1.2'))
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testImplementation 'org.springframework.boot:spring-boot-starter-test', {
     exclude group: 'junit', module: 'junit'
     exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
   }
-  testImplementation 'org.junit.platform:junit-platform-suite:6.1.1'
+  testImplementation 'org.junit.platform:junit-platform-suite:6.1.2'
   testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
 
   testImplementation "net.serenity-bdd:serenity-core:${serenityVersion}"

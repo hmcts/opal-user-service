@@ -7,14 +7,17 @@ import org.mapstruct.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.DomainDto;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserV2Dto;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.DomainV2Dto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.PermissionDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
-import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
+import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsersV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Permission;
+import uk.gov.hmcts.opal.common.user.authorisation.model.PermissionV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
@@ -63,10 +66,25 @@ public interface UserStateMapper {
 
     BusinessUnitUserDto toBusinessUnitUserDto(BusinessUnitUser businessUnitUser);
 
+    BusinessUnitUserV2Dto toBusinessUnitUserV2Dto(BusinessUnitUserV2 businessUnitUser);
+
     @Mapping(source = "businessUnitUserId", target = "businessUnitUserId")
     @Mapping(source = "businessUnitId", target = "businessUnitId")
     @Mapping(source = "businessUnitUserRoleList", target = "permissions")
     BusinessUnitUser toBusinessUnitUser(BusinessUnitUserEntity businessUnitUser);
+
+    @Mapping(source = "businessUnitUserId", target = "businessUnitUserId")
+    @Mapping(source = "businessUnitId", target = "businessUnitId")
+    @Mapping(target = "permissions", expression = "java(mapBusinessUserEntityToPermissions(businessUnitUser))")
+    BusinessUnitUserV2 toBusinessUnitUserV2(BusinessUnitUserEntity businessUnitUser);
+
+    default Set<PermissionV2> mapBusinessUserEntityToPermissions(BusinessUnitUserEntity businessUnitUser) {
+        if (Objects.isNull(businessUnitUser)) {
+            return Collections.emptySet();
+        }
+
+        return Collections.emptySet();                  //  Place-holder
+    }
 
     @Mapping(source = "userEntity.userId", target = "userId")
     @Mapping(source = "userEntity.username", target = "username")
@@ -78,7 +96,7 @@ public interface UserStateMapper {
         + ".getUserId(), userEntity.getBusinessUnitUsers()))")
     UserStateV2 toUserStateV2(UserEntity userEntity, @Context  Clock clock);
 
-    default Map<Domain, DomainBusinessUnitUsers> mapBusinessUnitUsersToDomainBusinessUnitUsers(
+    default Map<Domain, DomainBusinessUnitUsersV2> mapBusinessUnitUsersToDomainBusinessUnitUsers(
         Long userId,
         Set<BusinessUnitUserEntity> businessUnitUsers) {
 
@@ -126,7 +144,7 @@ public interface UserStateMapper {
             .toList();
     }
 
-    default Map<Domain, DomainBusinessUnitUsers> groupBusinessUnitUsersByDomain(
+    default Map<Domain, DomainBusinessUnitUsersV2> groupBusinessUnitUsersByDomain(
         List<BusinessUnitUserEntity> businessUnitUsers) {
 
         // Group BU users by domain.
@@ -141,32 +159,32 @@ public interface UserStateMapper {
             });
 
         // Convert the map *values* from Lists to DomainDtos
-        EnumMap<Domain, DomainBusinessUnitUsers> domains = new EnumMap<>(Domain.class);
-        groupedByDomain.forEach((domain, users) -> domains.put(domain, DomainBusinessUnitUsers.builder()
+        EnumMap<Domain, DomainBusinessUnitUsersV2> domains = new EnumMap<>(Domain.class);
+        groupedByDomain.forEach((domain, users) -> domains.put(domain, DomainBusinessUnitUsersV2.builder()
             .businessUnitUsers(users.stream()
                 .sorted(Comparator.comparing(BusinessUnitUserEntity::getBusinessUnitUserId))
-                .map(this::toBusinessUnitUser)
+                .map(this::toBusinessUnitUserV2)
                 .toList())
             .build()));
 
         return domains;
     }
 
-    default Map<Domain, DomainDto> mapUserStateV2DomainsToDto(Map<Domain, DomainBusinessUnitUsers> domains) {
+    default Map<Domain, DomainV2Dto> mapUserStateV2DomainsToDto(Map<Domain, DomainBusinessUnitUsersV2> domains) {
         if (domains == null || domains.isEmpty()) {
             return new EnumMap<>(Domain.class);
         }
 
-        EnumMap<Domain, DomainDto> mappedDomains = new EnumMap<>(Domain.class);
+        EnumMap<Domain, DomainV2Dto> mappedDomains = new EnumMap<>(Domain.class);
         domains.forEach((domain, domainBusinessUnitUsers) -> {
             if (domainBusinessUnitUsers == null || domainBusinessUnitUsers.getBusinessUnitUsers() == null) {
-                mappedDomains.put(domain, DomainDto.builder().businessUnitUsers(List.of()).build());
+                mappedDomains.put(domain, DomainV2Dto.builder().businessUnitUsers(List.of()).build());
                 return;
             }
 
-            mappedDomains.put(domain, DomainDto.builder()
+            mappedDomains.put(domain, DomainV2Dto.builder()
                 .businessUnitUsers(domainBusinessUnitUsers.getBusinessUnitUsers().stream()
-                    .map(this::toBusinessUnitUserDto)
+                    .map(this::toBusinessUnitUserV2Dto)
                     .toList())
                 .build());
         });

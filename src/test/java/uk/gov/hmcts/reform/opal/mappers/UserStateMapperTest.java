@@ -12,9 +12,9 @@ import org.mockito.quality.Strictness;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
-import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
-import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
+import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsersV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
@@ -263,9 +263,9 @@ class UserStateMapperTest {
             .version(321L)
             .cacheName("USER_STATE_subject-123")
             .domains(java.util.Map.of(
-                Domain.FINES, DomainBusinessUnitUsers.builder()
+                Domain.FINES, DomainBusinessUnitUsersV2.builder()
                     .businessUnitUsers(List.of(
-                        BusinessUnitUser.builder()
+                        BusinessUnitUserV2.builder()
                             .businessUnitUserId("ABC123")
                             .businessUnitId((short) 41)
                             .permissions(emptySet())

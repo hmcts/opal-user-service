@@ -20,7 +20,7 @@ import org.springframework.security.oauth2.server.resource.authentication.Bearer
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
-import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
+import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsersV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
@@ -134,7 +134,7 @@ class UserOpalJwtAuthenticationProviderTest {
         final Object someDetailsObject = mock(Object.class);
         final Jwt jwt = mock(Jwt.class);
         final UserStateV2 userState = mock(UserStateV2.class);
-        final DomainBusinessUnitUsers  domainBusinessUnitUsers = mock(DomainBusinessUnitUsers.class);
+        final DomainBusinessUnitUsersV2 domainBusinessUnitUsers = mock(DomainBusinessUnitUsersV2.class);
         final Collection<GrantedAuthority> authorityCollection = List.of(
             mock(GrantedAuthority.class), mock(GrantedAuthority.class), mock(GrantedAuthority.class)
         );

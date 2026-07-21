@@ -10,9 +10,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import uk.gov.hmcts.common.exceptions.standard.UnauthorizedException;
 import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
-import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
-import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
+import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsersV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
@@ -49,7 +49,7 @@ class UserStateLookupDatabaseIntegrationTest extends AbstractIntegrationTest {
 
         assertEquals(500000000L, result.getUserId());
         assertEquals("opal-test@HMCTS.NET", result.getUsername());
-        DomainBusinessUnitUsers domainBusinessUnitUsers = result.getDomainBusinessUnitUsers(Domain.FINES);
+        DomainBusinessUnitUsersV2 domainBusinessUnitUsers = result.getDomainBusinessUnitUsers(Domain.FINES);
         assertEquals(7, domainBusinessUnitUsers.getBusinessUnitUsers().size());
 
         assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 70).isPresent());
@@ -60,9 +60,9 @@ class UserStateLookupDatabaseIntegrationTest extends AbstractIntegrationTest {
         assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 69).isPresent());
         assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 61).isPresent());
 
-        Optional<BusinessUnitUser> businessUnit70 =
+        Optional<BusinessUnitUserV2> businessUnit70 =
             domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 70);
-        Optional<BusinessUnitUser> businessUnit73 =
+        Optional<BusinessUnitUserV2> businessUnit73 =
             domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 73);
 
         assertTrue(businessUnit70.isPresent());

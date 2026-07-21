@@ -27,6 +27,7 @@ ext {
   set('spring-framework.version', "7.0.8")
 }
 
+// skip everything
 var skipTests = true//System.getenv('SKIP_TESTS') != null && System.getenv('SKIP_TESTS').toBoolean();
 var skipSonar = true//System.getenv('SKIP_SONAR') != null && System.getenv('SKIP_SONAR').toBoolean();
 

@@ -38,6 +38,7 @@ public class UserPermissionsV2Controller {
         @PathVariable Long userId,
         @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
 
+        log.info("\n\n UserPermissionV2Controller getUserStateV2: \n Writing to locked User table.\n\n");
         jdbcTemplate.update("""
                 INSERT INTO users (
                     token_preferred_username,

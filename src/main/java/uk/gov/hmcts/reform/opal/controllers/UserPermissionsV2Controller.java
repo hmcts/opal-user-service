@@ -1,5 +1,9 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A;
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_ENABLED_PROPERTY;
+import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,10 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.opal.common.launchdarkly.FeatureToggle;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
-
-import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildResponse;
-import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A;
-import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_ENABLED_PROPERTY;
 
 @RestController
 @RequestMapping("/v2/users")

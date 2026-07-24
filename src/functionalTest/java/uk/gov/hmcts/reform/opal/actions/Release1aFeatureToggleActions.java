@@ -1,8 +1,8 @@
-package uk.gov.hmcts.opal.actions;
+package uk.gov.hmcts.reform.opal.actions;
 
 import net.serenitybdd.core.Serenity;
-import uk.gov.hmcts.opal.utils.TestHttpClient;
-import uk.gov.hmcts.opal.utils.TestHttpClient.TestHttpResponse;
+import uk.gov.hmcts.reform.opal.utils.TestHttpClient;
+import uk.gov.hmcts.reform.opal.utils.TestHttpClient.TestHttpResponse;
 
 import java.util.Map;
 

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lettuce.core.ClientOptions;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -76,7 +77,7 @@ class CacheConfigTest {
         return cacheConfig;
     }
 
-    private java.lang.reflect.Method sampleMethodReference() throws NoSuchMethodException {
+    private Method sampleMethodReference() throws NoSuchMethodException {
         return getClass().getDeclaredMethod("sampleMethod");
     }
 

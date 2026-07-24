@@ -75,7 +75,7 @@ class GlobalExceptionHandlerTest {
         assertEquals("Not Acceptable", problemDetail.getTitle());
         assertEquals("The requested media type cannot be produced by the server", problemDetail.getDetail());
         assertEquals(URI.create("https://hmcts.gov.uk/problems/not-acceptable"), problemDetail.getType());
-        assertNotNull(problemDetail.getInstance());
+        assertCommonProblemDetailProperties(problemDetail, false);
 
         assertTrue(response.getHeaders().getContentType().toString()
                        .contains(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
@@ -267,7 +267,7 @@ class GlobalExceptionHandlerTest {
         assertEquals("Internal Server Error", problemDetail.getTitle());
         assertEquals("An error occurred while processing your request", problemDetail.getDetail());
         assertEquals(URI.create("https://hmcts.gov.uk/problems/opal-api-error"), problemDetail.getType());
-        assertNotNull(problemDetail.getInstance());
+        assertCommonProblemDetailProperties(problemDetail, false);
 
         assertTrue(response.getHeaders().getContentType().toString()
                        .contains(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
@@ -342,7 +342,7 @@ class GlobalExceptionHandlerTest {
         assertEquals("Service Unavailable", problemDetail.getTitle());
         assertEquals("Opal Fines Database is currently unavailable", problemDetail.getDetail());
         assertEquals(URI.create("https://hmcts.gov.uk/problems/database-unavailable"), problemDetail.getType());
-        assertNotNull(problemDetail.getInstance());
+        assertCommonProblemDetailProperties(problemDetail, false);
 
         assertTrue(response.getHeaders().getContentType().toString()
                        .contains(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
@@ -490,7 +490,7 @@ class GlobalExceptionHandlerTest {
         assertEquals("DraftAccount", problemDetail.getProperties().get("resourceType"));
         assertEquals("123", problemDetail.getProperties().get("resourceId"));
         assertEquals("BusinessUnits mismatch", problemDetail.getProperties().get("conflictReason"));
-        assertNotNull(problemDetail.getInstance());
+        assertCommonProblemDetailProperties(problemDetail, false);
 
         assertTrue(response.getHeaders().getContentType().toString()
                        .contains(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
@@ -526,6 +526,7 @@ class GlobalExceptionHandlerTest {
         assertThat(pd.getDetail()).isEqualTo("Data integrity violation with the requested resource");
         assertThat(pd.getType().toString()).isEqualTo("https://hmcts.gov.uk/problems/resource-conflict");
         assertThat(pd.getProperties().get("constraintViolated")).isEqualTo("constraint-name");
+        assertCommonProblemDetailProperties(pd, false);
     }
 
     @Test
@@ -540,10 +541,20 @@ class GlobalExceptionHandlerTest {
         assertThat(pd.getTitle()).isEqualTo("Conflict");
         assertThat(pd.getDetail()).isEqualTo("Data integrity violation with the requested resource");
         assertThat(pd.getType().toString()).isEqualTo("https://hmcts.gov.uk/problems/resource-conflict");
-        assertThat(pd.getProperties()).isNull();
+        assertThat(pd.getProperties()).containsEntry("retriable", false).containsKey("operation_id");
+        assertCommonProblemDetailProperties(pd, false);
     }
 
     public static void sampleMethod(Integer testParam) {
         // Sample method to simulate the method parameter
+    }
+
+    private static void assertCommonProblemDetailProperties(ProblemDetail problemDetail, boolean retriable) {
+        assertNotNull(problemDetail.getInstance());
+        assertThat(problemDetail.getProperties()).containsEntry("retriable", retriable).containsKey("operation_id");
+
+        String operationId = String.valueOf(problemDetail.getProperties().get("operation_id"));
+        assertThat(problemDetail.getInstance().toString())
+            .isEqualTo("https://hmcts.gov.uk/problems/instance/" + operationId);
     }
 }

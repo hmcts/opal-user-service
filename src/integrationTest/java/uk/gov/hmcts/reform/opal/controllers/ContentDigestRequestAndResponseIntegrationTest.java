@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("Content-Digest request and response integration tests")
@@ -18,7 +20,10 @@ class ContentDigestRequestAndResponseIntegrationTest extends AbstractContentDige
 
     @Test
     void invalidHeaderWhenEnforced_returnsContentDigestProblemResponse() throws Exception {
-        MvcResult result = mockMvc.perform(get(ROOT_ENDPOINT).header(CONTENT_DIGEST, invalidDigest()))
+        MvcResult result = mockMvc.perform(post(POST_ENDPOINT)
+            .contentType(APPLICATION_JSON)
+            .content(POST_BODY)
+            .header(CONTENT_DIGEST, invalidDigest()))
             .andExpect(status().isBadRequest())
             .andReturn();
 
@@ -29,7 +34,10 @@ class ContentDigestRequestAndResponseIntegrationTest extends AbstractContentDige
 
     @Test
     void malformedHeaderWhenEnforced_returnsContentDigestProblemResponse() throws Exception {
-        MvcResult result = mockMvc.perform(get(ROOT_ENDPOINT).header(CONTENT_DIGEST, malformedDigest()))
+        MvcResult result = mockMvc.perform(post(POST_ENDPOINT)
+            .contentType(APPLICATION_JSON)
+            .content(POST_BODY)
+            .header(CONTENT_DIGEST, malformedDigest()))
             .andExpect(status().isBadRequest())
             .andReturn();
 

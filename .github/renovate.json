@@ -189,6 +189,18 @@
       ]
     }
   ],
-  "description": "Schedule for Wednesdays only.",
-  "schedule": [ "* * * * 3" ]
+  "description": "Run Renovate out of hours only (UK time).",
+  "timezone": "Europe/London",
+  "updateNotScheduled": false,
+  "platformAutomerge": false,
+  "schedule": [
+    "* 17-23 * * 1-5",
+    "* 0-8 * * 1-5",
+    "* * * * 0,6"
+  ],
+  "automergeSchedule": [
+    "* 17-23 * * 1-5",
+    "* 0-8 * * 1-5",
+    "* * * * 0,6"
+  ]
 }

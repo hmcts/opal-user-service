@@ -26,6 +26,18 @@ class PermissionsTest {
     }
 
     @Test
+    void toPermissionOrNull_returnsViewInterfaceFilesPermission() {
+        Permissions permission = Permissions.toPermissionOrNull("View Interface Files");
+        assertEquals(Permissions.VIEW_INTERFACE_FILES, permission);
+    }
+
+    @Test
+    void toPermissionOrNull_returnsCreateInterfaceFilesPermission() {
+        Permissions permission = Permissions.toPermissionOrNull("Create Interface Files");
+        assertEquals(Permissions.CREATE_INTERFACE_FILES, permission);
+    }
+
+    @Test
     void toPermissionOrNull_returnsNullForInvalidDescription() {
         Permissions permission = Permissions.toPermissionOrNull("NOT_A_PERMISSION");
         assertNull(permission);

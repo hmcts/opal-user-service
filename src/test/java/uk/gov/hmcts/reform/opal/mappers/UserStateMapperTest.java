@@ -53,6 +53,8 @@ class UserStateMapperTest {
     String permCVDA = Permissions.CHECK_VALIDATE_DRAFT_ACCOUNTS.description;
     String permCO = Permissions.COLLECTION_ORDER.description;
     String permSAVA = Permissions.SEARCH_AND_VIEW_ACCOUNTS.description;
+    String permVIF = Permissions.VIEW_INTERFACE_FILES.description;
+    String permCIF = Permissions.CREATE_INTERFACE_FILES.description;
     String permBadName = "BAD_NAME";
 
     private final LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
@@ -371,6 +373,30 @@ class UserStateMapperTest {
         // Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expectedUserStateWithNoBusinessUnits()));
+    }
+
+    @Test
+    void toUserStateV2Dto_mapsInterfaceFilePermissions() {
+
+        // Arrange
+        RoleEntity role = buildRole("file-handler-role", List.of(permVIF, permCIF));
+        Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
+            buildBusinessUnitUserEntity("FILE123", fines, (short) 41, Set.of(role))
+        );
+        when(user.getBusinessUnitUsers()).thenReturn(businessUnitUserEntityList);
+
+        // Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        // Assert
+        assertThat(dto.getDomains().get(Domain.FINES).getBusinessUnitUsers())
+            .singleElement()
+            .satisfies(businessUnitUserDto -> assertThat(businessUnitUserDto.getPermissions())
+                .extracting("permissionId", "permissionName")
+                .containsExactly(
+                    org.assertj.core.groups.Tuple.tuple(18L, "View Interface Files"),
+                    org.assertj.core.groups.Tuple.tuple(19L, "Create Interface Files")
+                ));
     }
 
     // ===== Helpers =====

@@ -21,7 +21,9 @@ public enum Permissions {
     OPERATIONAL_REPORT_BY_ENFORCEMENT(14, "Operational report by enforcement"),
     OPERATIONAL_REPORT_BY_PAYMENTS(15, "Operational report by payments"),
     PROCESS_AND_ALLOCATE_PAYMENTS(16, "Process and Allocate Payments"),
-    AUTO_ENFORCEMENT(17, "Auto Enforcement");
+    AUTO_ENFORCEMENT(17, "Auto Enforcement"),
+    VIEW_INTERFACE_FILES(18, "View Interface Files"),
+    CREATE_INTERFACE_FILES(19, "Create Interface Files");
 
     public final long id;
 

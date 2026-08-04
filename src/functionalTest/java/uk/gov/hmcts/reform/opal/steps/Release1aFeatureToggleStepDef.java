@@ -1,10 +1,10 @@
-package uk.gov.hmcts.opal.steps;
+package uk.gov.hmcts.reform.opal.steps;
 
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import net.serenitybdd.core.Serenity;
-import uk.gov.hmcts.opal.actions.Release1aFeatureToggleActions;
-import uk.gov.hmcts.opal.utils.TestHttpClient.TestHttpResponse;
+import uk.gov.hmcts.reform.opal.actions.Release1aFeatureToggleActions;
+import uk.gov.hmcts.reform.opal.utils.TestHttpClient.TestHttpResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

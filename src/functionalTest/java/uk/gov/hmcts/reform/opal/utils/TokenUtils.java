@@ -1,4 +1,4 @@
-package uk.gov.hmcts.opal.utils;
+package uk.gov.hmcts.reform.opal.utils;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;

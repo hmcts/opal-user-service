@@ -102,4 +102,17 @@
     <cve>CVE-2026-55831</cve>
     <cve>CVE-2026-55833</cve>
   </suppress>
+  <suppress until="2026-10-31Z">
+    <notes><![CDATA[
+    Reviewed 2026-08-10.
+    CVE-2026-66299 is a Low severity DoS in the Tomcat WebSocket chat example.
+    Apache lists the fix under Tomcat 11.0.25, but that release is not currently
+    available in Maven Central. This service embeds Tomcat and does not ship
+    Tomcat's examples web application, so the vulnerable example is not part of
+    the deployed application. Keep this suppression only for Tomcat 11.0.24
+    embed artifacts until a released Tomcat 11.0.25 or later is available.
+    ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat\.embed/tomcat\-embed\-(core|websocket)@11\.0\.24$</packageUrl>
+    <cve>CVE-2026-66299</cve>
+  </suppress>
 </suppressions>

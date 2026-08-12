@@ -4,6 +4,7 @@ import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A;
 import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_ENABLED_PROPERTY;
 import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildResponse;
 
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,10 @@ public class UserPermissionsV2Controller {
     @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
     public ResponseEntity<UserStateV2Dto> getUserStateV2(
         @PathVariable Long userId,
-        @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) {
+        @RequestHeader(value = X_NEW_LOGIN, required = false) Boolean newLogin) throws InterruptedException {
+
+        System.out.println("\n\n\n Sleeping for 60 seconds \n\n\n");
+        Thread.sleep(Duration.ofSeconds(60));
 
         log.debug(":GET:getUserStateV2: userId: {}, new login: {}", userId, newLogin);
         if (!CURRENT_USER_ID.equals(userId)) {

@@ -4,7 +4,6 @@ import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A;
 import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_ENABLED_PROPERTY;
 import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildResponse;
 
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

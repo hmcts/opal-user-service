@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.opal.service.opal;
 
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,12 +13,10 @@ import uk.gov.hmcts.common.exceptions.standard.UnauthorizedException;
 import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
 import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
-import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsersV2;
+import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -49,7 +48,7 @@ class UserStateLookupDatabaseIntegrationTest extends AbstractIntegrationTest {
 
         assertEquals(500000000L, result.getUserId());
         assertEquals("opal-test@HMCTS.NET", result.getUsername());
-        DomainBusinessUnitUsersV2 domainBusinessUnitUsers = result.getDomainBusinessUnitUsers(Domain.FINES);
+        DomainBusinessUnitUsers domainBusinessUnitUsers = result.getDomainBusinessUnitUsers(Domain.FINES);
         assertEquals(7, domainBusinessUnitUsers.getBusinessUnitUsers().size());
 
         assertTrue(domainBusinessUnitUsers.getBusinessUnitUserForBusinessUnit((short) 70).isPresent());

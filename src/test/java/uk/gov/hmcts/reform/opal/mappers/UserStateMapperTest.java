@@ -14,7 +14,7 @@ import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
-import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsersV2;
+import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
@@ -120,24 +120,6 @@ class UserStateMapperTest {
           "version": 321,
           "cache_name": null,
           "domains": {
-            "confiscation": {
-              "business_unit_users": [
-                {
-                  "business_unit_user_id": "GHI789",
-                  "business_unit_id": 51,
-                  "permissions": [
-                    {
-                      "permission_id": 3,
-                      "permission_name": "Account Enquiry"
-                    },
-                    {
-                      "permission_id": 6,
-                      "permission_name": "Search and view accounts"
-                    }
-                  ]
-                }
-              ]
-            },
             "fines": {
               "business_unit_users": [
                 {
@@ -145,20 +127,20 @@ class UserStateMapperTest {
                   "business_unit_id": 41,
                   "permissions": [
                     {
-                      "permission_id": 2,
-                      "permission_name": "Account Enquiry - Account Notes"
-                    },
-                    {
-                      "permission_id": 3,
+                      "permission_code": "ACCOUNT_ENQUIRY",
                       "permission_name": "Account Enquiry"
                     },
                     {
-                      "permission_id": 4,
-                      "permission_name": "Collection Order"
+                      "permission_code": "ACCOUNT_ENQUIRY_NOTES",
+                      "permission_name": "Account Enquiry - Account Notes"
                     },
                     {
-                      "permission_id": 5,
+                      "permission_code": "CHECK_VALIDATE_DRAFT_ACCOUNTS",
                       "permission_name": "Check and Validate Draft Accounts"
+                    },
+                    {
+                      "permission_code": "COLLECTION_ORDER",
+                      "permission_name": "Collection Order"
                     }
                   ]
                 },
@@ -167,15 +149,33 @@ class UserStateMapperTest {
                   "business_unit_id": 42,
                   "permissions": [
                     {
-                      "permission_id": 2,
+                      "permission_code": "ACCOUNT_ENQUIRY_NOTES",
                       "permission_name": "Account Enquiry - Account Notes"
                     },
                     {
-                      "permission_id": 4,
+                      "permission_code": "COLLECTION_ORDER",
                       "permission_name": "Collection Order"
                     },
                     {
-                      "permission_id": 6,
+                      "permission_code": "SEARCH_AND_VIEW_ACCOUNTS",
+                      "permission_name": "Search and view accounts"
+                    }
+                  ]
+                }
+              ]
+            },
+            "confiscation": {
+              "business_unit_users": [
+                {
+                  "business_unit_user_id": "GHI789",
+                  "business_unit_id": 51,
+                  "permissions": [
+                    {
+                      "permission_code": "ACCOUNT_ENQUIRY",
+                      "permission_name": "Account Enquiry"
+                    },
+                    {
+                      "permission_code": "SEARCH_AND_VIEW_ACCOUNTS",
                       "permission_name": "Search and view accounts"
                     }
                   ]
@@ -188,6 +188,7 @@ class UserStateMapperTest {
 
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expected));
+
         assertThat(expected).doesNotContain(permBadName);
     }
 
@@ -225,7 +226,7 @@ class UserStateMapperTest {
                           "business_unit_id": 51,
                           "permissions": [
                             {
-                              "permission_id": 6,
+                              "permission_code": "SEARCH_AND_VIEW_ACCOUNTS",
                               "permission_name": "Search and view accounts"
                             }
                           ]
@@ -263,7 +264,7 @@ class UserStateMapperTest {
             .version(321L)
             .cacheName("USER_STATE_subject-123")
             .domains(java.util.Map.of(
-                Domain.FINES, DomainBusinessUnitUsersV2.builder()
+                Domain.FINES, DomainBusinessUnitUsers.builder()
                     .businessUnitUsers(List.of(
                         BusinessUnitUserV2.builder()
                             .businessUnitUserId("ABC123")
@@ -334,8 +335,14 @@ class UserStateMapperTest {
                           "business_unit_user_id": "ABC123",
                           "business_unit_id": 41,
                           "permissions": [
-                            {"permission_id": 2, "permission_name": "Account Enquiry - Account Notes"},
-                            {"permission_id": 3, "permission_name": "Account Enquiry"}
+                            {
+                              "permission_code": "ACCOUNT_ENQUIRY",
+                              "permission_name": "Account Enquiry"
+                            },
+                            {
+                              "permission_code": "ACCOUNT_ENQUIRY_NOTES",
+                              "permission_name": "Account Enquiry - Account Notes"
+                            }
                           ]
                         }
                       ]

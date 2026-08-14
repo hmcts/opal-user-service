@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.opal.dto.businessevent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class FunctionsAssociatedToRoleAmendedEventTest {

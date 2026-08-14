@@ -58,7 +58,6 @@ public class BusinessEventService implements BusinessEventServiceInterface {
         eventData.put("subjectUserId", subjectUserId);
         eventData.put("initiatorUserId", initiatorUserId);
 
-        BusinessEventEntity savedBusinessEvent = businessEventRepository.saveAndFlush(businessEventEntity);
         securityEventLoggingService.logEvent(
             businessEventLogType.getSecurityEventName(),
             businessEventLogType.getSecurityEventOutcome(),
@@ -67,7 +66,7 @@ public class BusinessEventService implements BusinessEventServiceInterface {
             businessEventEntity.getEventDate(),
             eventData
         );
-        return savedBusinessEvent;
+        return businessEventRepository.saveAndFlush(businessEventEntity);
 
     }
 

@@ -20,8 +20,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -188,7 +186,6 @@ class BusinessEventServiceTest {
 
         ArgumentCaptor<BusinessEventEntity> entityCaptor = ArgumentCaptor.forClass(BusinessEventEntity.class);
         verify(businessEventRepository).saveAndFlush(entityCaptor.capture());
-        BusinessEventEntity capturedEntity = entityCaptor.getValue();
 
         Map<String, Object> expectedEventData = new HashMap<>();
         expectedEventData.put("roleId", 201L);
@@ -197,6 +194,7 @@ class BusinessEventServiceTest {
         expectedEventData.put("subjectUserId", 42L);
         expectedEventData.put("initiatorUserId", 47L);
 
+        BusinessEventEntity capturedEntity = entityCaptor.getValue();
         verify(securityEventLoggingService).logEvent(
             "User Management Function - Role assigned to user",
             "Success",

@@ -7,8 +7,7 @@ import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 public interface BusinessEventServiceInterface {
 
     <T extends BusinessEvent> BusinessEventEntity logBusinessEvent(
-        BusinessEventLogType businessEventLogType, Long subjectUserId, T eventDetails,
-        BusinessEventServiceProxy businessEventServiceProxy);
+        BusinessEventLogType businessEventLogType, Long subjectUserId, T eventDetails);
 
     <T extends BusinessEvent> BusinessEventEntity logBusinessEvent(
         BusinessEventLogType businessEventLogType, Long subjectUserId, Long initiatorUserId, T eventDetails);

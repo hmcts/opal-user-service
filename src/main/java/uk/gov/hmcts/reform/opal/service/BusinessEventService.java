@@ -1,25 +1,27 @@
 package uk.gov.hmcts.reform.opal.service;
 
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToJson;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.common.exceptions.standard.InternalServerErrorException;
+import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.reform.opal.config.LegacyModeConfiguration;
 import uk.gov.hmcts.reform.opal.dto.businessevent.BusinessEvent;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToJson;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.BusinessEventServiceInterface")
-public class BusinessEventService implements BusinessEventServiceInterface, BusinessEventServiceProxy {
+public class BusinessEventService implements BusinessEventServiceInterface {
 
     // OPAL system user
     private static final long SYSTEM_USER_ID = -1L;
@@ -27,17 +29,14 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
     private final UserPermissionsService userPermissionsService;
     private final LegacyModeConfiguration legacyModeConfiguration;
     private final Clock clock;
+    private final SecurityEventLoggingService securityEventLoggingService;
 
-    @Transactional
+
     @Override
+    @Transactional
     public <T extends BusinessEvent> BusinessEventEntity logBusinessEvent(
-        BusinessEventLogType businessEventLogType, Long subjectUserId, T eventDetails,
-        BusinessEventServiceProxy businessEventServiceProxy) {
-
-        return businessEventServiceProxy.logBusinessEvent(
-            businessEventLogType, subjectUserId,
-            resolveInitiatorUserId(), eventDetails
-        );
+        BusinessEventLogType businessEventLogType, Long subjectUserId, T eventDetails) {
+        return logBusinessEvent(businessEventLogType, subjectUserId, resolveInitiatorUserId(), eventDetails);
     }
 
     @Transactional
@@ -55,12 +54,19 @@ public class BusinessEventService implements BusinessEventServiceInterface, Busi
             .eventDate(LocalDateTime.now(clock))
             .build();
 
-        BusinessEventEntity savedBusinessEvent = businessEventRepository.saveAndFlush(businessEventEntity);
-        log.debug("Logged business event {} for subject user {} by initiator user {}",
-            savedBusinessEvent.getEventType(),
-            savedBusinessEvent.getSubjectUserId(),
-            savedBusinessEvent.getInitiatorUserId());
+        Map<String, Object> eventData = new HashMap<>(eventDetails.getSecurityEventData());
+        eventData.put("subjectUserId", subjectUserId);
+        eventData.put("initiatorUserId", initiatorUserId);
 
+        BusinessEventEntity savedBusinessEvent = businessEventRepository.saveAndFlush(businessEventEntity);
+        securityEventLoggingService.logEvent(
+            businessEventLogType.getSecurityEventName(),
+            businessEventLogType.getSecurityEventOutcome(),
+            null,
+            businessEventLogType.getSecurityEventOperationType(),
+            businessEventEntity.getEventDate(),
+            eventData
+        );
         return savedBusinessEvent;
 
     }

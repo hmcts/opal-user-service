@@ -1,7 +1,17 @@
 package uk.gov.hmcts.reform.opal.service;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.IS_LEGACY_MODE_PROPERTY;
+
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,25 +24,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
-import uk.gov.hmcts.reform.opal.dto.businessevent.AccountSuspensionAttributesAmendedEvent;
+import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.repository.BusinessEventRepository;
-
-import java.time.Duration;
-import java.time.OffsetDateTime;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TEST_CLASS;
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
-import static uk.gov.hmcts.reform.opal.util.FeatureFlags.IS_LEGACY_MODE_PROPERTY;
 
 @ActiveProfiles({"integration"})
 @Sql(scripts = "classpath:db.reset/clean_test_data.sql", executionPhase = BEFORE_TEST_CLASS)
@@ -61,6 +60,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     })
     @Nested
     public class LegacyMode extends AbstractIntegrationTest {
+
         @Test
         @DisplayName("Should use system user when legacy mode")
         void logBusinessEvent_usesSystemUserWhenLegacyMode() {
@@ -69,8 +69,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             BusinessEventEntity result = businessEventService.logBusinessEvent(
                 BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
                 500000000L,
-                eventDetails,
-                businessEventService
+                eventDetails
             );
 
             assertEquals(-1L, result.getInitiatorUserId());
@@ -83,6 +82,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
     })
     @Nested
     public class OpalMode extends AbstractIntegrationTest {
+
         @Test
         @DisplayName("Should create and persist a business event when all parameters are provided")
         void logBusinessEvent_persistsExplicitEventDetails() throws JacksonException {
@@ -120,8 +120,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             BusinessEventEntity result = businessEventService.logBusinessEvent(
                 BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
                 500000000L,
-                eventDetails,
-                businessEventService
+                eventDetails
             );
 
             assertNotNull(result.getBusinessEventId());
@@ -146,7 +145,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
         @Test
         @DisplayName("Should reject event details when they do not match the business event type")
         void logBusinessEvent_rejectsMismatchedEventDetailsType() {
-            AccountSuspensionAttributesAmendedEvent eventDetails = new AccountSuspensionAttributesAmendedEvent();
+            RoleUnassignedFromUserEvent eventDetails = new RoleUnassignedFromUserEvent(null, null, null);
             long businessEventCountBeforeCall = businessEventRepository.count();
 
             IllegalArgumentException exception = assertThrows(
@@ -175,8 +174,7 @@ class BusinessEventServiceIntegrationTest extends AbstractIntegrationTest {
             BusinessEventEntity result = businessEventService.logBusinessEvent(
                 BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
                 500000000L,
-                eventDetails,
-                businessEventService
+                eventDetails
             );
 
             assertEquals(500000003L, result.getInitiatorUserId());

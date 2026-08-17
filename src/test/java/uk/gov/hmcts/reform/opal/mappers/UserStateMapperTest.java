@@ -15,9 +15,9 @@ import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
 import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
+import uk.gov.hmcts.opal.common.user.authorisation.model.PermissionV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
-import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
@@ -48,13 +48,13 @@ class UserStateMapperTest {
     private final DomainEntity fines = DomainEntity.builder().name("fines").build();
     private final DomainEntity confiscations = DomainEntity.builder().name("confiscation").build();
 
-    String permAE = Permissions.ACCOUNT_ENQUIRY.description;
-    String permAEN = Permissions.ACCOUNT_ENQUIRY_NOTES.description;
-    String permCVDA = Permissions.CHECK_VALIDATE_DRAFT_ACCOUNTS.description;
-    String permCO = Permissions.COLLECTION_ORDER.description;
-    String permSAVA = Permissions.SEARCH_AND_VIEW_ACCOUNTS.description;
-    String permVIF = Permissions.VIEW_INTERFACE_FILES.description;
-    String permCIF = Permissions.CREATE_INTERFACE_FILES.description;
+    String permAE = PermissionV2.ACCOUNT_ENQUIRY.getPermissionName();
+    String permAEN = PermissionV2.ACCOUNT_ENQUIRY_NOTES.getPermissionName();
+    String permCVDA = PermissionV2.CHECK_VALIDATE_DRAFT_ACCOUNTS.getPermissionName();
+    String permCO = PermissionV2.COLLECTION_ORDER.getPermissionName();
+    String permSAVA = PermissionV2.SEARCH_AND_VIEW_ACCOUNTS.getPermissionName();
+    String permVIF = PermissionV2.VIEW_INTERFACE_FILES.getPermissionName();
+    String permCIF = PermissionV2.CREATE_INTERFACE_FILES.getPermissionName();
     String permBadName = "BAD_NAME";
 
     private final LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
@@ -399,10 +399,10 @@ class UserStateMapperTest {
         assertThat(dto.getDomains().get(Domain.FINES).getBusinessUnitUsers())
             .singleElement()
             .satisfies(businessUnitUserDto -> assertThat(businessUnitUserDto.getPermissions())
-                .extracting("permissionId", "permissionName")
+                .extracting("permissionCode", "permissionName")
                 .containsExactly(
-                    org.assertj.core.groups.Tuple.tuple(18L, "View Interface Files"),
-                    org.assertj.core.groups.Tuple.tuple(19L, "Create Interface Files")
+                    org.assertj.core.groups.Tuple.tuple("CREATE_INTERFACE_FILES", "Create Interface Files"),
+                    org.assertj.core.groups.Tuple.tuple("VIEW_INTERFACE_FILES", "View Interface Files")
                 ));
     }
 

@@ -32,17 +32,16 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import uk.gov.hmcts.opal.common.controllers.advice.OpalProblemDetailFactory;
 import uk.gov.hmcts.opal.common.dto.Versioned;
 import uk.gov.hmcts.opal.common.exception.OpalApiException;
 import uk.gov.hmcts.reform.opal.exception.ResourceConflictException;
 import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsException;
 
 import java.net.ConnectException;
-import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j(topic = "opal.GlobalExceptionHandler")
 @ControllerAdvice
@@ -405,17 +404,7 @@ public class GlobalExceptionHandler {
 
     private ProblemDetail createProblemDetail(HttpStatus status, String title, String detail,
                                               String typeUri, Throwable exception) {
-        String errorId = UUID.randomUUID().toString();
-
-        log.error("Error ID {}: {}", errorId, exception.getMessage());
-        log.error("Error ID {}:", errorId, exception);
-
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
-        problemDetail.setTitle(title);
-        problemDetail.setType(URI.create("https://hmcts.gov.uk/problems/" + typeUri));
-        problemDetail.setInstance(URI.create("https://hmcts.gov.uk/problems/instance/" + errorId));
-
-        return problemDetail;
+        return OpalProblemDetailFactory.createProblemDetail(status, title, detail, typeUri, false, exception, log);
     }
 
     private ResponseEntity<ProblemDetail> responseWithProblemDetail(HttpStatus status, ProblemDetail problemDetail) {

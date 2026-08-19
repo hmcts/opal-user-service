@@ -51,7 +51,7 @@ user-role-mapping-refresh:
   enabled: true
   kind: CronJob
   image: 'hmctsprod.azurecr.io/opal/user-service:latest'
-  schedule: "*/30 * * * *"
+  schedule: "*/15 * * * *"
   concurrencyPolicy: Forbid
   command: ["java", "-jar", "/opt/app/opal-user-service.jar"]
   args:

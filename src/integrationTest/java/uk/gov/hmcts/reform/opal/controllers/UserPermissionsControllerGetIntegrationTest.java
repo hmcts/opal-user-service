@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import uk.gov.hmcts.opal.common.logging.EventLoggingService;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
 
 import java.time.Clock;
@@ -149,10 +150,19 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     @DisplayName("V2 with ID should return Account Maintenance - Minor Creditor for focused role")
     void getV2UserStateWithId_returnsAccountMaintenanceMinorCreditorForFocusedRole() throws Exception {
         String subject = "minorCreditorSubject";
-        Authentication auth = TestHelperUtil.createJwtPrincipal(
-            subject,
-            "minor-creditor-user@HMCTS.NET",
-            "Minor Creditor User"
+        UserEntity authenticatedUser = UserEntity.builder()
+            .userId(500000007L)
+            .username("minor-creditor-user@HMCTS.NET")
+            .tokenSubject(subject)
+            .tokenName("Minor Creditor User")
+            .build();
+        Authentication auth = TestHelperUtil.buildOpalJwtAuthenticationToken(
+            TestHelperUtil.createJwtPrincipal(
+                subject,
+                "minor-creditor-user@HMCTS.NET",
+                "Minor Creditor User"
+            ).getToken(),
+            authenticatedUser
         );
         SecurityContextHolder.getContext().setAuthentication(auth);
         String cacheKey = "USER_STATE_" + subject;

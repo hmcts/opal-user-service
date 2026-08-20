@@ -1,4 +1,4 @@
-package uk.gov.hmcts.opal;
+package uk.gov.hmcts.reform.opal;
 
 import org.junit.platform.suite.api.IncludeEngines;
 import org.junit.platform.suite.api.SelectClasspathResource;

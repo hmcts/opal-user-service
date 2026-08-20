@@ -211,8 +211,20 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
 
         actions.andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
-        assertThat(actions.andReturn().getResponse().getContentAsString())
-            .doesNotContain("Account Maintenance - Minor Creditor");
+        JsonNode userState = objectMapper.readTree(actions.andReturn().getResponse().getContentAsString());
+        assertThat(containsPermissionId(userState, 20)).isFalse();
+    }
+
+    private boolean containsPermissionId(JsonNode node, long permissionId) {
+        if (Long.toString(permissionId).equals(node.path("permission_id").asText())) {
+            return true;
+        }
+        for (JsonNode child : node) {
+            if (containsPermissionId(child, permissionId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Test

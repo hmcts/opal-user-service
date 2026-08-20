@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.opal.repository;
 
 import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -109,7 +110,20 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
         UserEntity user = userRepository.findIdWithPermissions(500000000L).orElseThrow();
         UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
-        assertThat(objectMapper.writeValueAsString(dto)).doesNotContain("Account Maintenance - Minor Creditor");
+        JsonNode userState = objectMapper.readTree(objectMapper.writeValueAsString(dto));
+        assertThat(containsPermissionId(userState, 20)).isFalse();
+    }
+
+    private boolean containsPermissionId(JsonNode node, long permissionId) {
+        if (Long.toString(permissionId).equals(node.path("permission_id").asText())) {
+            return true;
+        }
+        for (JsonNode child : node) {
+            if (containsPermissionId(child, permissionId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static final String EXPECTED_V2_USER_STATE =

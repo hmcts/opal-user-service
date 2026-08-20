@@ -50,7 +50,8 @@ VALUES ('L065JG', 70, 500000000),
 
 INSERT INTO roles (role_id, version_number, opal_domain_id, role_name, application_function_list)
 VALUES (1,1, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry - Account Notes','Account Maintenance']),
-       (1,2, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry','Account Maintenance']),
+       (1,2, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry','Account Maintenance',
+                                        'Account Maintenance - Minor Creditor']),
        (2,1, 1, 'Fines_Role_2',  ARRAY['Collection Order','Account Maintenance']),
        (2,2, 1, 'Fines_Role_2',  ARRAY['Check and Validate Draft Accounts', 'Search and view accounts']),
        (2,3, 1, 'Fines_Role_2',  ARRAY['Collection Order', 'Check and Validate Draft Accounts', 'Search and view accounts']),

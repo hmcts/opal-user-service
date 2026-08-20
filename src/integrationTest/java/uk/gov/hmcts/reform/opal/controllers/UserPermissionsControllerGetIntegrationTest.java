@@ -271,6 +271,9 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
                     }, {
                        "permission_id": 7,
                        "permission_name": "Account Maintenance"
+                     }, {
+                       "permission_id": 20,
+                       "permission_name": "Account Maintenance - Minor Creditor"
                      } ]
                   }, {
                     "business_unit_user_id" : "L066JG",

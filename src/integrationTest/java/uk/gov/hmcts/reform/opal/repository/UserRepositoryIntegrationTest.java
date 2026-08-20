@@ -68,6 +68,50 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
              """));
     }
 
+    @Test
+    @DisplayName("Test UserStateV2Dto includes Account Maintenance - Minor Creditor for focused role")
+    void testUserStateV2DtoIncludesAccountMaintenanceMinorCreditor() throws JacksonException {
+        UserEntity user = userRepository.findIdWithPermissions(500000007L).orElseThrow();
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
+            .isEqualTo(objectMapper.readTree("""
+                {
+                  "user_id": 500000007,
+                  "username": "minor-creditor-user@HMCTS.NET",
+                  "name": "Minor Creditor User",
+                  "status": "PENDING",
+                  "version": 0,
+                  "cache_name": null,
+                  "domains": {
+                    "fines": {
+                      "business_unit_users": [
+                        {
+                          "business_unit_user_id": "L083JG",
+                          "business_unit_id": 74,
+                          "permissions": [
+                            {
+                              "permission_id": 20,
+                              "permission_name": "Account Maintenance - Minor Creditor"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+            """));
+    }
+
+    @Test
+    @DisplayName("Test UserStateV2Dto excludes Account Maintenance - Minor Creditor from roles without it")
+    void testUserStateV2DtoExcludesAccountMaintenanceMinorCreditorWhenRoleDoesNotHaveIt() throws JacksonException {
+        UserEntity user = userRepository.findIdWithPermissions(500000000L).orElseThrow();
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        assertThat(objectMapper.writeValueAsString(dto)).doesNotContain("Account Maintenance - Minor Creditor");
+    }
+
     public static final String EXPECTED_V2_USER_STATE =
         """
             {
@@ -107,10 +151,6 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                         {
                           "permission_id": 7,
                           "permission_name": "Account Maintenance"
-                        },
-                        {
-                          "permission_id": 20,
-                          "permission_name": "Account Maintenance - Minor Creditor"
                         }
                       ]
                     },

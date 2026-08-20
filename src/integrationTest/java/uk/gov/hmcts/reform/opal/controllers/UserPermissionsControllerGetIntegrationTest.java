@@ -146,6 +146,66 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
     }
 
     @Test
+    @DisplayName("V2 with ID should return Account Maintenance - Minor Creditor for focused role")
+    void getV2UserStateWithId_returnsAccountMaintenanceMinorCreditorForFocusedRole() throws Exception {
+        String subject = "minorCreditorSubject";
+        Authentication auth = TestHelperUtil.createJwtPrincipal(
+            subject,
+            "minor-creditor-user@HMCTS.NET",
+            "Minor Creditor User"
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        String cacheKey = "USER_STATE_" + subject;
+        redisTemplate.delete(cacheKey);
+
+        ResultActions actions = mockMvc.perform(get(V2_CURRENT_USER_STATE_URI));
+
+        actions.andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        String body = actions.andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(body))
+            .isEqualTo(objectMapper.readTree("""
+                {
+                  "user_id" : 500000007,
+                  "username" : "minor-creditor-user@HMCTS.NET",
+                  "name" : "Minor Creditor User",
+                  "status" : "PENDING",
+                  "version" : 0,
+                  "cache_name" : "USER_STATE_minorCreditorSubject",
+                  "domains" : {
+                    "fines" : {
+                      "business_unit_users" : [ {
+                        "business_unit_user_id" : "L083JG",
+                        "business_unit_id" : 74,
+                        "permissions" : [ {
+                          "permission_id" : 20,
+                          "permission_name" : "Account Maintenance - Minor Creditor"
+                        } ]
+                      } ]
+                    }
+                  }
+                }
+            """));
+    }
+
+    @Test
+    @DisplayName("V2 with ID should not return Account Maintenance - Minor Creditor without focused role")
+    void getV2UserStateWithId_doesNotReturnAccountMaintenanceMinorCreditorWithoutFocusedRole() throws Exception {
+        String subject = "k9LpT2xVqR8m";
+        Authentication auth = TestHelperUtil.createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        redisTemplate.delete("USER_STATE_" + subject);
+
+        ResultActions actions = mockMvc.perform(get(V2_CURRENT_USER_STATE_URI));
+
+        actions.andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        assertThat(actions.andReturn().getResponse().getContentAsString())
+            .doesNotContain("Account Maintenance - Minor Creditor");
+    }
+
+    @Test
     @DisplayName("PO-2835 AC2: should refresh cached user state and TTL")
     void getV2UserStateViaPrincipal_refreshesTtlOfRedisEntry() throws Exception {
         String subject = "k9LpT2xVqR8m";
@@ -271,9 +331,6 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
                     }, {
                        "permission_id": 7,
                        "permission_name": "Account Maintenance"
-                     }, {
-                       "permission_id": 20,
-                       "permission_name": "Account Maintenance - Minor Creditor"
                      } ]
                   }, {
                     "business_unit_user_id" : "L066JG",

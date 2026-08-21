@@ -55,6 +55,7 @@ class UserStateMapperTest {
     String permSAVA = Permissions.SEARCH_AND_VIEW_ACCOUNTS.description;
     String permVIF = Permissions.VIEW_INTERFACE_FILES.description;
     String permCIF = Permissions.CREATE_INTERFACE_FILES.description;
+    String permAMMC = Permissions.ACCOUNT_MAINTENANCE_MINOR_CREDITOR.description;
     String permBadName = "BAD_NAME";
 
     private final LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
@@ -99,7 +100,7 @@ class UserStateMapperTest {
         RoleEntity role2 = buildRole("role2", List.of(permAE, permCVDA, permCO));
         RoleEntity role3 = buildRole("role3", List.of(permSAVA, permCO));
         RoleEntity role4 = buildRole("role4", List.of(permCO, permAEN));
-        RoleEntity role5 = buildRole("role5", List.of(permSAVA, permAE));
+        RoleEntity role5 = buildRole("role5", List.of(permSAVA, permAE, permAMMC));
 
         Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role1, role2)),
@@ -135,6 +136,10 @@ class UserStateMapperTest {
                     {
                       "permission_id": 6,
                       "permission_name": "Search and view accounts"
+                    },
+                    {
+                      "permission_id": 20,
+                      "permission_name": "Account Maintenance - Minor Creditor"
                     }
                   ]
                 }

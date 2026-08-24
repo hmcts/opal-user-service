@@ -1,6 +1,23 @@
 package uk.gov.hmcts.reform.opal.service.opal;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Clock;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,9 +30,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
+import uk.gov.hmcts.reform.opal.dto.businessevent.BusinessUnitsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
-import uk.gov.hmcts.reform.opal.dto.businessevent.UnitsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.search.UserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
@@ -28,24 +45,6 @@ import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRoleRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.BusinessEventService;
-
-import java.time.Clock;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -170,11 +169,10 @@ class UserServiceTest {
 
         verify(businessEventService).logBusinessEvent(
             eq(BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED), eq(123L),
-            argThat((UnitsAssociatedToRoleAmendedEvent event) ->
+            argThat((BusinessUnitsAssociatedToRoleAmendedEvent event) ->
                 event.roleId().equals(201L)
                     && event.addedBusinessUnitIds().equals(Set.of((short) 14, (short) 15))
-                    && event.removedBusinessUnitIds().equals(Set.of((short) 12, (short) 13))),
-            eq(businessEventService)
+                    && event.removedBusinessUnitIds().equals(Set.of((short) 12, (short) 13)))
         );
     }
 
@@ -189,8 +187,8 @@ class UserServiceTest {
         when(roleService.requireRole(201L)).thenReturn(role(201L));
         when(roleService.getExistingAssignments(123L, 201L)).thenReturn(List.of());
         when(businessEventService.logBusinessEvent(
-            eq(BusinessEventLogType.ROLE_ASSIGNED_TO_USER), eq(123L), any(RoleAssignedToUserEvent.class),
-            eq(businessEventService))).thenReturn(BusinessEventEntity.builder().businessEventId(2L).build());
+            eq(BusinessEventLogType.ROLE_ASSIGNED_TO_USER), eq(123L), any(RoleAssignedToUserEvent.class)
+        )).thenReturn(BusinessEventEntity.builder().businessEventId(2L).build());
 
         userService.addOrReplaceRoleInformationOnUser(user, 201L, requestedBusinessUnitIds);
 
@@ -198,8 +196,7 @@ class UserServiceTest {
             eq(BusinessEventLogType.ROLE_ASSIGNED_TO_USER), eq(123L),
             argThat((RoleAssignedToUserEvent event) ->
                 event.roleId().equals(201L)
-                    && event.addedBusinessUnitIds().equals(Set.of((short) 11, (short) 14, (short) 15))),
-            eq(businessEventService)
+                    && event.addedBusinessUnitIds().equals(Set.of((short) 11, (short) 14, (short) 15)))
         );
     }
 
@@ -246,8 +243,7 @@ class UserServiceTest {
         when(businessEventService.logBusinessEvent(
             eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
             eq(123L),
-            any(RoleUnassignedFromUserEvent.class),
-            eq(businessEventService)
+            any(RoleUnassignedFromUserEvent.class)
         )).thenReturn(BusinessEventEntity.builder().businessEventId(3L).build());
 
         userService.deleteRoleFromUser(user, 201L);
@@ -259,8 +255,7 @@ class UserServiceTest {
             argThat((RoleUnassignedFromUserEvent event) ->
                 event.roleId().equals(201L)
                     && event.businessUnitIds().equals(Set.of((short) 11, (short) 12, (short) 13))
-                    && event.roleVersion().equals(4L)),
-            eq(businessEventService)
+                    && event.roleVersion().equals(4L))
         );
     }
 
@@ -303,8 +298,7 @@ class UserServiceTest {
             argThat((RoleUnassignedFromUserEvent event) ->
                 event.roleId().equals(201L)
                     && event.businessUnitIds().equals(Set.of((short) 11, (short) 12))
-                    && event.roleVersion().equals(4L)),
-            eq(businessEventService)
+                    && event.roleVersion().equals(4L))
         );
         verify(businessEventService).logBusinessEvent(
             eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
@@ -312,8 +306,7 @@ class UserServiceTest {
             argThat((RoleUnassignedFromUserEvent event) ->
                 event.roleId().equals(202L)
                     && event.businessUnitIds().equals(Set.of((short) 11))
-                    && event.roleVersion().equals(6L)),
-            eq(businessEventService)
+                    && event.roleVersion().equals(6L))
         );
         verify(businessUnitUserRoleRepository).deleteAllByBusinessUnitUser_BusinessUnitUserIdIn(
             List.of("BU001", "BU002")
@@ -341,9 +334,8 @@ class UserServiceTest {
             eq(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED),
             eq(123L),
             argThat((AccountActivationInitiatedEvent event) ->
-                        event.accountActivationDate().equals(fixedDateTime)
-            ),
-            eq(businessEventService)
+                event.accountActivationDate().equals(fixedDateTime)
+            )
         );
     }
 
@@ -363,9 +355,8 @@ class UserServiceTest {
             eq(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED),
             eq(123L),
             argThat((AccountActivationInitiatedEvent event) ->
-                        event.accountActivationDate().equals(activationDate)
-            ),
-            eq(businessEventService)
+                event.accountActivationDate().equals(activationDate)
+            )
         );
     }
 
@@ -441,7 +432,7 @@ class UserServiceTest {
         when(roleService.getExistingAssignments(123L, 201L)).thenReturn(existingAssignments);
         when(businessEventService.logBusinessEvent(
             eq(BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED), eq(123L),
-            any(UnitsAssociatedToRoleAmendedEvent.class),
-            eq(businessEventService))).thenReturn(BusinessEventEntity.builder().businessEventId(1L).build());
+            any(BusinessUnitsAssociatedToRoleAmendedEvent.class)))
+            .thenReturn(BusinessEventEntity.builder().businessEventId(1L).build());
     }
 }

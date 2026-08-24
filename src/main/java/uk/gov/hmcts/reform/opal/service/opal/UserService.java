@@ -1,6 +1,16 @@
 package uk.gov.hmcts.reform.opal.service.opal;
 
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Clock;
+import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,9 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
 import uk.gov.hmcts.opal.common.util.SecurityUtil;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
+import uk.gov.hmcts.reform.opal.dto.businessevent.BusinessUnitsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
-import uk.gov.hmcts.reform.opal.dto.businessevent.UnitsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.search.UserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventLogType;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
@@ -29,17 +39,6 @@ import uk.gov.hmcts.reform.opal.service.BusinessEventService;
 import uk.gov.hmcts.reform.opal.service.UserServiceInterface;
 import uk.gov.hmcts.reform.opal.service.UserServiceProxy;
 import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsException;
-
-import java.time.Clock;
-import java.time.OffsetDateTime;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -145,8 +144,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
         businessEventService.logBusinessEvent(
             BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER,
             user.getUserId(),
-            new RoleUnassignedFromUserEvent(roleId, removedBusinessUnitIds, role.getVersionNumber()),
-            businessEventService
+            new RoleUnassignedFromUserEvent(roleId, role.getVersionNumber(), removedBusinessUnitIds)
         );
     }
 
@@ -167,7 +165,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
     }
 
     private void logBusinessEvent(List<BusinessUnitUserRoleEntity> existingAssignments, UserEntity user,
-                                  RoleEntity role, Set<Short> businessUnitIds) {
+        RoleEntity role, Set<Short> businessUnitIds) {
 
         Set<Short> existingBusinessUnitIds = existingAssignments.stream()
             .map(assignment -> assignment.getBusinessUnitUser().getBusinessUnitId()).collect(
@@ -183,8 +181,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
             log.debug(":logBusinessEvent: assigned business units: {}", addedBusinessUnitIds);
             businessEventService.logBusinessEvent(
                 BusinessEventLogType.ROLE_ASSIGNED_TO_USER, user.getUserId(),
-                new RoleAssignedToUserEvent(role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds),
-                businessEventService);
+                new RoleAssignedToUserEvent(role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds));
         } else if (!addedBusinessUnitIds.isEmpty() || !removedBusinessUnitIds.isEmpty()) {
             log.debug(
                 ":logBusinessEvent: amended business units: added {}, removed {}",
@@ -193,9 +190,8 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
             );
             businessEventService.logBusinessEvent(
                 BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED, user.getUserId(),
-                new UnitsAssociatedToRoleAmendedEvent(
-                    role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds, removedBusinessUnitIds),
-                businessEventService);
+                new BusinessUnitsAssociatedToRoleAmendedEvent(
+                    role.getRoleId(), role.getVersionNumber(), addedBusinessUnitIds, removedBusinessUnitIds));
         } else {
             log.debug(":logBusinessEvent: no business unit changes for role {}", role.getRoleId());
         }
@@ -218,8 +214,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
         businessEventService.logBusinessEvent(
             BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED,
             user.getUserId(),
-            new AccountActivationInitiatedEvent(activationDate),
-            businessEventService);
+            new AccountActivationInitiatedEvent(activationDate));
     }
 
     @Transactional
@@ -261,7 +256,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
                 RoleEntity role = assignment.getRole();
                 if (role == null || role.getRoleId() == null || role.getVersionNumber() == null) {
                     throw new SynchronisePermissionsException(user, SYNC_STAGE,
-                                                              "stale business unit user role is missing role details");
+                        "stale business unit user role is missing role details");
                 }
 
                 removedBusinessUnitIdsByRole
@@ -276,9 +271,7 @@ public class UserService implements UserServiceInterface, UserServiceProxy {
             businessEventService.logBusinessEvent(
                 BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER,
                 user.getUserId(),
-                new RoleUnassignedFromUserEvent(roleId, entry.getValue(), roleVersionsByRole.get(roleId)),
-                businessEventService
-            );
+                new RoleUnassignedFromUserEvent(roleId, roleVersionsByRole.get(roleId), entry.getValue()));
         }
     }
 }

@@ -7,18 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.time.OffsetDateTime;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import uk.gov.hmcts.reform.opal.dto.businessevent.AccountActivationInitiatedEvent;
-import uk.gov.hmcts.reform.opal.dto.businessevent.AccountDeactivationDateAmendedEvent;
-import uk.gov.hmcts.reform.opal.dto.businessevent.AccountSuspensionAttributesAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.BusinessEvent;
+import uk.gov.hmcts.reform.opal.dto.businessevent.BusinessUnitsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.FunctionsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
-import uk.gov.hmcts.reform.opal.dto.businessevent.UnitsAssociatedToRoleAmendedEvent;
 
 class BusinessEventLogTypeTest {
 
@@ -47,28 +44,20 @@ class BusinessEventLogTypeTest {
             Arguments.of(BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED, new AccountActivationInitiatedEvent(
                 OffsetDateTime.now())),
             Arguments.of(
-                BusinessEventLogType.ACCOUNT_SUSPENSION_ATTRIBUTES_AMENDED,
-                new AccountSuspensionAttributesAmendedEvent()
-            ),
-            Arguments.of(
-                BusinessEventLogType.ACCOUNT_DEACTIVATION_DATE_AMENDED,
-                new AccountDeactivationDateAmendedEvent()
-            ),
-            Arguments.of(
                 BusinessEventLogType.ROLE_ASSIGNED_TO_USER,
                 new RoleAssignedToUserEvent(101L, 1L, Set.of((short) 11))
             ),
             Arguments.of(
                 BusinessEventLogType.BUSINESS_UNITS_ASSOCIATED_TO_ROLE_AMENDED,
-                new UnitsAssociatedToRoleAmendedEvent(101L, 1L, Set.of((short) 11), Set.of((short) 12))
+                new BusinessUnitsAssociatedToRoleAmendedEvent(101L, 1L, Set.of((short) 11), Set.of((short) 12))
             ),
             Arguments.of(
                 BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER,
-                new RoleUnassignedFromUserEvent(101L, Set.of((short) 11, (short) 12), 4L)
+                new RoleUnassignedFromUserEvent(101L, 4L, Set.of((short) 11, (short) 12))
             ),
             Arguments.of(
                 BusinessEventLogType.FUNCTIONS_ASSOCIATED_TO_ROLE_AMENDED,
-                new FunctionsAssociatedToRoleAmendedEvent()
+                new FunctionsAssociatedToRoleAmendedEvent(101L, 1L)
             )
         );
     }
@@ -81,7 +70,7 @@ class BusinessEventLogTypeTest {
             .map(arguments -> Arguments.of(
                 arguments[0],
                 arguments[0] == BusinessEventLogType.ACCOUNT_ACTIVATION_INITIATED
-                    ? new RoleUnassignedFromUserEvent(101L, Set.of((short) 11), 4L)
+                    ? new RoleUnassignedFromUserEvent(101L, 4L, Set.of((short) 11))
                     : activationEvent
             ));
     }

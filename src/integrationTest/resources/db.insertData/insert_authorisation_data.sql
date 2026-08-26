@@ -54,14 +54,22 @@ VALUES ('L065JG', 70, 500000000),
 -- Granting a subset for a focused test
 
 INSERT INTO roles (role_id, version_number, opal_domain_id, role_name, application_function_list)
-VALUES (1,1, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry - Account Notes','Account Maintenance']),
-       (1,2, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry','Account Maintenance']),
-       (2,1, 1, 'Fines_Role_2',  ARRAY['Collection Order','Account Maintenance']),
-       (2,2, 1, 'Fines_Role_2',  ARRAY['Check and Validate Draft Accounts', 'Search and view accounts']),
-       (2,3, 1, 'Fines_Role_2',  ARRAY['Collection Order', 'Check and Validate Draft Accounts', 'Search and view accounts']),
-       (3,1, 2, 'Confiscation_Role_3',  ARRAY['Create and Manage Draft Accounts']),
-       (3,2, 2, 'Confiscation_Role_3',  ARRAY['Create and Manage Draft Accounts', 'Collection Order']),
-       (20,1, 1, 'Fines_Role_20', ARRAY['Account Maintenance - Minor Creditor']);
+VALUES (1,1, 1, 'Fines_Role_1',
+        ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'ACCOUNT_ENQUIRY_NOTES', 'ACCOUNT_MAINTENANCE']::t_permissions_enum[]),
+       (1,2, 1, 'Fines_Role_1',
+        ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'ACCOUNT_ENQUIRY', 'ACCOUNT_MAINTENANCE']::t_permissions_enum[]),
+       (2,1, 1, 'Fines_Role_2',
+        ARRAY['COLLECTION_ORDER', 'ACCOUNT_MAINTENANCE']::t_permissions_enum[]),
+       (2,2, 1, 'Fines_Role_2',
+        ARRAY['CHECK_VALIDATE_DRAFT_ACCOUNTS', 'SEARCH_AND_VIEW_ACCOUNTS']::t_permissions_enum[]),
+       (2,3, 1, 'Fines_Role_2',
+        ARRAY['COLLECTION_ORDER', 'CHECK_VALIDATE_DRAFT_ACCOUNTS', 'SEARCH_AND_VIEW_ACCOUNTS']::t_permissions_enum[]),
+       (3,1, 2, 'Confiscation_Role_3',
+        ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS']::t_permissions_enum[]),
+       (3,2, 2, 'Confiscation_Role_3',
+        ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'COLLECTION_ORDER']::t_permissions_enum[]),
+       (20,1, 1, 'Fines_Role_20',
+        ARRAY['ACCOUNT_MAINTENANCE_MINOR_CREDITOR']::t_permissions_enum[]);
 
 INSERT INTO business_unit_user_roles(business_unit_user_role_id, business_unit_user_id, role_id)
 VALUES (1,'L065JG', 1),

@@ -254,23 +254,23 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
                     "business_unit_user_id" : "L065JG",
                     "business_unit_id" : 70,
                     "permissions" : [ {
-                      "permission_id" : 1,
-                      "permission_name" : "Create and Manage Draft Accounts"
-                    }, {
-                      "permission_id" : 3,
+                      "permission_code" : "ACCOUNT_ENQUIRY",
                       "permission_name" : "Account Enquiry"
                     }, {
-                      "permission_id" : 4,
-                      "permission_name" : "Collection Order"
+                      "permission_code" : "ACCOUNT_MAINTENANCE",
+                      "permission_name" : "Account Maintenance"
                     }, {
-                      "permission_id" : 5,
+                      "permission_code" : "CHECK_VALIDATE_DRAFT_ACCOUNTS",
                       "permission_name" : "Check and Validate Draft Accounts"
                     }, {
-                      "permission_id" : 6,
-                      "permission_name" : "Search and view accounts"
+                      "permission_code" : "COLLECTION_ORDER",
+                      "permission_name" : "Collection Order"
                     }, {
-                       "permission_id": 7,
-                       "permission_name": "Account Maintenance"
+                      "permission_code" : "CREATE_MANAGE_DRAFT_ACCOUNTS",
+                      "permission_name" : "Create and Manage Draft Accounts"
+                    }, {
+                       "permission_code" : "SEARCH_AND_VIEW_ACCOUNTS",
+                       "permission_name" : "Search and view accounts"
                      } ]
                   }, {
                     "business_unit_user_id" : "L066JG",
@@ -301,7 +301,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
               }
             }""";
 
-    private JsonNode expectedV2UserState(boolean newLogin) throws Exception {
+    private JsonNode  expectedV2UserState(boolean newLogin) throws Exception {
         ObjectNode expectedNode = (ObjectNode) objectMapper.readTree(EXPECTED_V2_USER_STATE);
         expectedNode.put("version", newLogin ? 1 : 0);
         return expectedNode;

@@ -14,6 +14,12 @@ class PermissionsTest {
     }
 
     @Test
+    void toPermissionOrNull_returnsPermissionForValidEnumName() {
+        Permissions permission = Permissions.toPermissionOrNull(Permissions.ACCOUNT_ENQUIRY.name());
+        assertEquals(Permissions.ACCOUNT_ENQUIRY, permission);
+    }
+
+    @Test
     void toPermissionOrNull_returnsProcessAndAllocatePaymentsPermission() {
         Permissions permission = Permissions.toPermissionOrNull("Process and Allocate Payments");
         assertEquals(Permissions.PROCESS_AND_ALLOCATE_PAYMENTS, permission);

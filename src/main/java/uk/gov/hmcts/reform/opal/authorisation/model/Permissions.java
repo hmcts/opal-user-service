@@ -51,7 +51,7 @@ public enum Permissions {
 
     public static Permissions toPermissionOrNull(String functionDescription) {
         for (Permissions permission : Permissions.values()) {
-            if (permission.description.equals(functionDescription)) {
+            if (permission.description.equals(functionDescription) || permission.name().equals(functionDescription)) {
                 return permission;
             }
         }

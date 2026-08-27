@@ -38,6 +38,12 @@ class PermissionsTest {
     }
 
     @Test
+    void toPermissionOrNull_returnsAccountMaintenanceMinorCreditorPermission() {
+        Permissions permission = Permissions.toPermissionOrNull("Account Maintenance - Minor Creditor");
+        assertEquals(Permissions.ACCOUNT_MAINTENANCE_MINOR_CREDITOR, permission);
+    }
+
+    @Test
     void toPermissionOrNull_returnsNullForInvalidDescription() {
         Permissions permission = Permissions.toPermissionOrNull("NOT_A_PERMISSION");
         assertNull(permission);

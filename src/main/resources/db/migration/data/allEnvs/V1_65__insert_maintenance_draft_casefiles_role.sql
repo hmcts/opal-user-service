@@ -47,12 +47,11 @@ BEGIN
       FROM public.roles r
      WHERE r.role_name = 'Maintenance Draft Casefiles'
        AND r.opal_domain_id = v_maintenance_domain_id
-       AND r.version_number = 1
        AND r.role_id <> 55;
 
     IF v_competing_identity_count <> 0 THEN
         RAISE EXCEPTION
-            'Maintenance Draft Casefiles version 1 already exists under a role ID other than 55';
+            'Maintenance Draft Casefiles already exists under a role ID other than 55';
     END IF;
 
     IF v_role_id_count = 0 THEN

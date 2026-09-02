@@ -70,12 +70,11 @@ BEGIN
       INTO v_count
       FROM public.roles r
      WHERE r.role_name = 'Maintenance Draft Casefiles'
-       AND r.opal_domain_id = v_maintenance_domain_id
-       AND r.version_number = 1;
+       AND r.opal_domain_id = v_maintenance_domain_id;
 
     IF v_count <> 1 THEN
         RAISE EXCEPTION
-            'Expected one Maintenance Draft Casefiles version 1 identity, found %',
+            'Expected one Maintenance Draft Casefiles identity across all versions, found %',
             v_count;
     END IF;
 

@@ -24,7 +24,7 @@ ext {
   logbackVersion = "1.5.12"
   serenityVersion = "5.3.11"
   cucumberVersion = "7.23.0" // Serenity (Integration Tests) 4.2.34 needs cucumber version 7.23.0 (see renovate.json)
-  set('spring-framework.version', "7.0.8")
+  set('spring-framework.version', "7.0.9")
 }
 
 group = 'uk.gov.hmcts.reform'

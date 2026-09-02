@@ -14,27 +14,27 @@
     <!-- We do not use the mail api-->
     <cve>CVE-2025-7962</cve>
   </suppress>
-  <suppress until="2026-08-31Z">
+  <suppress until="2026-12-10Z">
     <notes><![CDATA[
-    Reviewed 2026-04-01.
+    Reviewed 2026-09-02.
     CVE-2025-15104 relates to nu.validator:validator, which is not present in this repo's runtime classpath.
     Keep this suppression only for Dependency-Check false positives where validator libraries are mapped to the
     generic CPE "validator:validator".
-    Runtime review found org.hibernate.validator:hibernate-validator:9.0.1.Final and
-    com.networknt:json-schema-validator:1.5.9, but no nu.validator:validator dependency.
+    Runtime review found com.networknt:json-schema-validator:3.0.3, but no nu.validator:validator dependency.
     ]]></notes>
     <!-- Matches: cpe:2.3:a:validator:validator:<any>:*:*:*:*:*:*:* -->
     <cpe>cpe:2.3:a:validator:validator:*:*:*:*:*:*:*:*</cpe>
     <cve>CVE-2025-15104</cve>
   </suppress>
-  <suppress until="2026-08-31Z">
+  <suppress until="2026-12-10Z">
     <notes><![CDATA[
-    Reviewed 2026-05-22.
+    Reviewed 2026-09-02.
     CVE-2025-21199 applies to Microsoft Azure Agent Installer products under the CPE family
     cpe:2.3:a:microsoft:azure_agent:* and the NVD affected-software entries are for the "backup"
     and "site_recovery" products. This repo contains the Java libraries
     com.microsoft.azure:applicationinsights-core and com.microsoft.azure:applicationinsights-web,
     which are being mapped to the generic azure_agent CPE by Dependency-Check.
+    No newer com.microsoft.azure:applicationinsights-web release is currently available beyond 3.7.9.
     Keep this suppression only for that false-positive CPE match.
     ]]></notes>
     <packageUrl regex="true">^pkg:maven/com\.microsoft\.azure/applicationinsights\-(core|web)@.*$</packageUrl>

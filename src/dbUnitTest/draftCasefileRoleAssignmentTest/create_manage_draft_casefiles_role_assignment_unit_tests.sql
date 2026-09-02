@@ -20,8 +20,6 @@ DECLARE
     v_count integer;
     v_expected_digest text;
     v_actual_digest text;
-    v_sequence_last_value bigint;
-    v_sequence_is_called boolean;
     v_sequence_next_value bigint;
     v_max_role_id bigint;
 BEGIN
@@ -81,10 +79,13 @@ BEGIN
             v_count;
     END IF;
 
-    SELECT s.last_value + CASE WHEN s.is_called THEN 1 ELSE 0 END,
+    SELECT s.last_value
+           + CASE WHEN s.is_called THEN seq.seqincrement ELSE 0 END,
            (SELECT max(r.role_id) FROM public.roles r)
       INTO v_sequence_next_value, v_max_role_id
-      FROM public.role_id_seq s;
+      FROM public.role_id_seq s
+      JOIN pg_sequence seq
+        ON seq.seqrelid = 'public.role_id_seq'::regclass;
 
     IF v_sequence_next_value <= COALESCE(v_max_role_id, 0) THEN
         RAISE EXCEPTION

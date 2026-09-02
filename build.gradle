@@ -24,7 +24,7 @@ ext {
   logbackVersion = "1.5.12"
   serenityVersion = "5.3.11"
   cucumberVersion = "7.23.0" // Serenity (Integration Tests) 4.2.34 needs cucumber version 7.23.0 (see renovate.json)
-  set('spring-framework.version', "7.0.8")
+  set('spring-framework.version', "7.0.9")
 }
 
 group = 'uk.gov.hmcts.reform'
@@ -401,15 +401,15 @@ dependencies {
   }
   implementation 'org.postgresql:postgresql'
 
-  compileOnly 'org.projectlombok:lombok:1.18.46'
-  annotationProcessor 'org.projectlombok:lombok:1.18.46'
+  compileOnly 'org.projectlombok:lombok:1.18.48'
+  annotationProcessor 'org.projectlombok:lombok:1.18.48'
   annotationProcessor 'org.hibernate.orm:hibernate-processor:7.4.7.Final'
 
-  testCompileOnly 'org.projectlombok:lombok:1.18.46'
-  testAnnotationProcessor 'org.projectlombok:lombok:1.18.46'
+  testCompileOnly 'org.projectlombok:lombok:1.18.48'
+  testAnnotationProcessor 'org.projectlombok:lombok:1.18.48'
 
-  integrationTestCompileOnly 'org.projectlombok:lombok:1.18.46'
-  integrationTestAnnotationProcessor 'org.projectlombok:lombok:1.18.46'
+  integrationTestCompileOnly 'org.projectlombok:lombok:1.18.48'
+  integrationTestAnnotationProcessor 'org.projectlombok:lombok:1.18.48'
 
   implementation 'org.mapstruct:mapstruct:1.6.3'
   annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
@@ -440,9 +440,9 @@ dependencies {
   testImplementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
 
   implementation 'org.openapitools:jackson-databind-nullable:0.2.11'
-  openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.47"
-  openapiImplementation "io.swagger.core.v3:swagger-models:2.2.54"
-  openapiImplementation "io.swagger.core.v3:swagger-core:2.2.54"
+  openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.48"
+  openapiImplementation "io.swagger.core.v3:swagger-models:2.2.55"
+  openapiImplementation "io.swagger.core.v3:swagger-core:2.2.55"
   openapiImplementation "tools.jackson.core:jackson-databind"
   openapiImplementation "tools.jackson.dataformat:jackson-dataformat-yaml"
 

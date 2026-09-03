@@ -38,6 +38,21 @@ Clone the `opal-dev-agent-skills` repository and follow its README to install th
   [OpenAPI Guidelines](docs/OPENAPI_GUIDELINES.md), and review work to
   [Code Review Guidelines](docs/CODE_REVIEW_GUIDELINES.md).
 
+## CRITICAL: Master protection and branch upstream safety
+
+- Never push, merge, or commit directly to `master`.
+- Never run a plain `git push` or use an IDE or GUI "Sync Changes" operation.
+- Before any pull or push, verify the current branch and its upstream with
+  `git branch --show-current` and `git rev-parse --abbrev-ref '@{upstream}'`.
+- If a feature branch tracks `origin/master`, stop immediately. Do not pull,
+  push, or sync until the upstream configuration is corrected.
+- Create feature and stacked branches with `--no-track`.
+- A pull-request base does not require the local branch to track that base
+  branch.
+- Push only when explicitly requested, using a fully specified destination
+  whose branch name matches the local branch.
+- Never push a feature branch to `refs/heads/master`.
+
 ## Always
 
 - Keep changes focused, preserve behaviour, follow nearby maintained patterns,

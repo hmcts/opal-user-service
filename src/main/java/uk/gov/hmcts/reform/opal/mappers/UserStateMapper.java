@@ -234,8 +234,6 @@ public interface UserStateMapper {
             .map(PermissionV2::fromPermissionName)
             .filter(Objects::nonNull)
             .distinct()
-            .sorted(Comparator.comparing(PermissionV2::getPermissionName))
-            .map(permissionV2 -> PermissionV2.fromPermissionName(permissionV2.getPermissionName()))
             .collect(Collectors.toSet());
     }
 

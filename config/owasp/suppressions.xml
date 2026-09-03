@@ -14,27 +14,27 @@
     <!-- We do not use the mail api-->
     <cve>CVE-2025-7962</cve>
   </suppress>
-  <suppress until="2026-08-31Z">
+  <suppress until="2026-12-10Z">
     <notes><![CDATA[
-    Reviewed 2026-04-01.
+    Reviewed 2026-09-02.
     CVE-2025-15104 relates to nu.validator:validator, which is not present in this repo's runtime classpath.
     Keep this suppression only for Dependency-Check false positives where validator libraries are mapped to the
     generic CPE "validator:validator".
-    Runtime review found org.hibernate.validator:hibernate-validator:9.0.1.Final and
-    com.networknt:json-schema-validator:1.5.9, but no nu.validator:validator dependency.
+    Runtime review found com.networknt:json-schema-validator:3.0.3, but no nu.validator:validator dependency.
     ]]></notes>
     <!-- Matches: cpe:2.3:a:validator:validator:<any>:*:*:*:*:*:*:* -->
     <cpe>cpe:2.3:a:validator:validator:*:*:*:*:*:*:*:*</cpe>
     <cve>CVE-2025-15104</cve>
   </suppress>
-  <suppress until="2026-08-31Z">
+  <suppress until="2026-12-10Z">
     <notes><![CDATA[
-    Reviewed 2026-05-22.
+    Reviewed 2026-09-02.
     CVE-2025-21199 applies to Microsoft Azure Agent Installer products under the CPE family
     cpe:2.3:a:microsoft:azure_agent:* and the NVD affected-software entries are for the "backup"
     and "site_recovery" products. This repo contains the Java libraries
     com.microsoft.azure:applicationinsights-core and com.microsoft.azure:applicationinsights-web,
     which are being mapped to the generic azure_agent CPE by Dependency-Check.
+    No newer com.microsoft.azure:applicationinsights-web release is currently available beyond 3.7.9.
     Keep this suppression only for that false-positive CPE match.
     ]]></notes>
     <packageUrl regex="true">^pkg:maven/com\.microsoft\.azure/applicationinsights\-(core|web)@.*$</packageUrl>
@@ -101,48 +101,5 @@
     <cve>CVE-2026-44891</cve>
     <cve>CVE-2026-55831</cve>
     <cve>CVE-2026-55833</cve>
-  </suppress>
-  <suppress until="2026-09-30Z">
-    <notes><![CDATA[
-    Reviewed 2026-07-21.
-    Branch-only temporary suppression requested while upstream remediation is assessed.
-    Local dependency-check report dated 2026-07-10 flags org.postgresql:postgresql:42.7.11
-    for CVE-2026-54291.
-    ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.postgresql/postgresql@.*$</packageUrl>
-    <cve>CVE-2026-54291</cve>
-  </suppress>
-  <suppress until="2026-09-30Z">
-    <notes><![CDATA[
-    Reviewed 2026-07-21.
-    Branch-only temporary suppression requested while upstream remediation is assessed.
-    CVE-2026-59083 was requested for suppression but no matching artifact was present in the
-    checked-in dependency-check report dated 2026-07-10, so this remains a short-lived
-    fallback suppression pending the next scan or a package-specific remediation.
-    ]]></notes>
-    <cve>CVE-2026-59083</cve>
-  </suppress>
-  <suppress until="2026-09-30Z">
-    <notes><![CDATA[
-    Reviewed 2026-07-21.
-    Branch-only temporary suppression requested while upstream remediation is assessed.
-    CVE-2026-59084 was requested for suppression but no matching artifact was present in the
-    checked-in dependency-check report dated 2026-07-10, so this remains a short-lived
-    fallback suppression pending the next scan or a package-specific remediation.
-    ]]></notes>
-    <cve>CVE-2026-59084</cve>
-  </suppress>
-  <suppress until="2026-10-31Z">
-    <notes><![CDATA[
-    Reviewed 2026-08-10.
-    CVE-2026-66299 is a Low severity DoS in the Tomcat WebSocket chat example.
-    Apache lists the fix under Tomcat 11.0.25, but that release is not currently
-    available in Maven Central. This service embeds Tomcat and does not ship
-    Tomcat's examples web application, so the vulnerable example is not part of
-    the deployed application. Keep this suppression only for Tomcat 11.0.24
-    embed artifacts until a released Tomcat 11.0.25 or later is available.
-    ]]></notes>
-    <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat\.embed/tomcat\-embed\-(core|websocket)@11\.0\.24$</packageUrl>
-    <cve>CVE-2026-66299</cve>
   </suppress>
 </suppressions>

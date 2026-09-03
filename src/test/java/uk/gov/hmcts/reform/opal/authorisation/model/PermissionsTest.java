@@ -14,6 +14,12 @@ class PermissionsTest {
     }
 
     @Test
+    void toPermissionOrNull_returnsPermissionForValidEnumName() {
+        Permissions permission = Permissions.toPermissionOrNull(Permissions.ACCOUNT_ENQUIRY.name());
+        assertEquals(Permissions.ACCOUNT_ENQUIRY, permission);
+    }
+
+    @Test
     void toPermissionOrNull_returnsProcessAndAllocatePaymentsPermission() {
         Permissions permission = Permissions.toPermissionOrNull("Process and Allocate Payments");
         assertEquals(Permissions.PROCESS_AND_ALLOCATE_PAYMENTS, permission);
@@ -35,6 +41,12 @@ class PermissionsTest {
     void toPermissionOrNull_returnsCreateInterfaceFilesPermission() {
         Permissions permission = Permissions.toPermissionOrNull("Create Interface Files");
         assertEquals(Permissions.CREATE_INTERFACE_FILES, permission);
+    }
+
+    @Test
+    void toPermissionOrNull_returnsAccountMaintenanceMinorCreditorPermission() {
+        Permissions permission = Permissions.toPermissionOrNull("Account Maintenance - Minor Creditor");
+        assertEquals(Permissions.ACCOUNT_MAINTENANCE_MINOR_CREDITOR, permission);
     }
 
     @Test

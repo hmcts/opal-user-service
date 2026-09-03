@@ -25,4 +25,5 @@ spring:
       - org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration
       - org.springframework.boot.security.autoconfigure.actuate.web.servlet.ManagementWebSecurityAutoConfiguration
       - org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration
+      - org.springframework.boot.security.oauth2.server.resource.autoconfigure.web.OAuth2ResourceServerWebSecurityAutoConfiguration
       - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration

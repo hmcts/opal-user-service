@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import uk.gov.hmcts.opal.common.logging.EventLoggingService;
 import uk.gov.hmcts.reform.opal.AbstractIntegrationTest;
+import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.service.synchronise.TestHelperUtil;
 
 import java.time.Clock;
@@ -143,6 +144,87 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
         } else {
             assertThat(after).isEqualTo(before);
         }
+    }
+
+    @Test
+    @DisplayName("V2 with ID should return Account Maintenance - Minor Creditor for focused role")
+    void getV2UserStateWithId_returnsAccountMaintenanceMinorCreditorForFocusedRole() throws Exception {
+        String subject = "minorCreditorSubject";
+        UserEntity authenticatedUser = UserEntity.builder()
+            .userId(500000007L)
+            .username("minor-creditor-user@HMCTS.NET")
+            .tokenSubject(subject)
+            .tokenName("Minor Creditor User")
+            .build();
+        Authentication auth = TestHelperUtil.buildOpalJwtAuthenticationToken(
+            TestHelperUtil.createJwtPrincipal(
+                subject,
+                "minor-creditor-user@HMCTS.NET",
+                "Minor Creditor User"
+            ).getToken(),
+            authenticatedUser
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        String cacheKey = "USER_STATE_" + subject;
+        redisTemplate.delete(cacheKey);
+
+        ResultActions actions = mockMvc.perform(get(V2_CURRENT_USER_STATE_URI));
+
+        actions.andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        String body = actions.andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(body))
+            .isEqualTo(objectMapper.readTree("""
+                {
+                  "user_id" : 500000007,
+                  "username" : "minor-creditor-user@HMCTS.NET",
+                  "name" : "Minor Creditor User",
+                  "status" : "PENDING",
+                  "version" : 0,
+                  "cache_name" : "USER_STATE_minorCreditorSubject",
+                  "domains" : {
+                    "fines" : {
+                      "business_unit_users" : [ {
+                        "business_unit_user_id" : "L083JG",
+                        "business_unit_id" : 74,
+                        "permissions" : [ {
+                          "permission_id" : 20,
+                          "permission_name" : "Account Maintenance - Minor Creditor"
+                        } ]
+                      } ]
+                    }
+                  }
+                }
+            """));
+    }
+
+    @Test
+    @DisplayName("V2 with ID should not return Account Maintenance - Minor Creditor without focused role")
+    void getV2UserStateWithId_doesNotReturnAccountMaintenanceMinorCreditorWithoutFocusedRole() throws Exception {
+        String subject = "k9LpT2xVqR8m";
+        Authentication auth = TestHelperUtil.createJwtPrincipal(subject, "opal-test@HMCTS.NET", "Pablo");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        redisTemplate.delete("USER_STATE_" + subject);
+
+        ResultActions actions = mockMvc.perform(get(V2_CURRENT_USER_STATE_URI));
+
+        actions.andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        JsonNode userState = objectMapper.readTree(actions.andReturn().getResponse().getContentAsString());
+        assertThat(containsPermissionId(userState, 20)).isFalse();
+    }
+
+    private boolean containsPermissionId(JsonNode node, long permissionId) {
+        if (Long.toString(permissionId).equals(node.path("permission_id").asText())) {
+            return true;
+        }
+        for (JsonNode child : node) {
+            if (containsPermissionId(child, permissionId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Test

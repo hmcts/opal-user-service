@@ -69,7 +69,7 @@ public class UserPermissionsService {
         UserEntity user = getUserFromAuthentication();
         Long userId = user.getUserId();
 
-        if (legacyModeConfiguration.isLegacyMode()) {
+        if (legacyModeConfiguration.isLegacyMode() && !user.isSystemUser()) {
             synchronisePermissionsService.synchronise(user);
             // synchronise() was processed in a different transaction, so we need to refresh user entity
             userService.refreshUser(user);
@@ -89,14 +89,16 @@ public class UserPermissionsService {
         return dto;
     }
 
-    private UserEntity getUserFromAuthentication() {
-        Jwt jwt = SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().getToken();
+    UserEntity getUserFromAuthentication() {
         UserEntity user = userService.getUser(getAuthenticatedUserId());
-        validateAuthenticatedUser(user, jwt);
+        if (!user.isSystemUser()) {
+            Jwt jwt = SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().getToken();
+            validateAuthenticatedUser(user, jwt);
+        }
         return user;
     }
 
-    private void validateAuthenticatedUser(UserEntity user, Jwt jwt) {
+    void validateAuthenticatedUser(UserEntity user, Jwt jwt) {
         String username = JwtUtil.extractClaim(jwt, PREFERRED_USERNAME_CLAIM);
         compare(username, user.getUsername(), user.getUserId(), "Preferred Username mismatch:", user);
         String name = JwtUtil.extractClaim(jwt, NAME_CLAIM);

@@ -49,7 +49,7 @@ class UserPermissionsV2ControllerTest {
 
     @Test
     @DisplayName("controller.getUserStateV2 should treat null X-New-Login as false")
-    void testGetUserStateV2TreatsNullNewLoginAsFalse() {
+    void testGetUserStateV2TreatsNullNewLoginAsFalse() throws InterruptedException {
         // Arrange
         Long userId = 0L;
         Boolean newLogin = null;

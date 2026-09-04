@@ -1,8 +1,8 @@
-package uk.gov.hmcts.opal.steps;
+package uk.gov.hmcts.reform.opal.steps;
 
 import io.cucumber.java.en.When;
-import uk.gov.hmcts.opal.actions.CreateUser;
-import uk.gov.hmcts.opal.actions.GetUserState;
+import uk.gov.hmcts.reform.opal.actions.CreateUser;
+import uk.gov.hmcts.reform.opal.actions.GetUserState;
 
 /**
  * Defines user-service steps used by the core functional scenarios.

@@ -30,16 +30,16 @@ public class UserRoleMappingCacheService {
     // USER MAPPING CACHE
     // -------------------------
 
-    public void putUserMapping(String tokenSubject, Object payload) {
-        write(buildUserKey(tokenSubject), payload, properties.getUserTtl());
+    public void putUserMapping(String email, Object payload) {
+        write(buildUserKey(email), payload, properties.getUserTtl());
     }
 
-    public String getUserMapping(String tokenSubject) {
-        return redisTemplate.opsForValue().get(buildUserKey(tokenSubject));
+    public String getUserMapping(String email) {
+        return redisTemplate.opsForValue().get(buildUserKey(email));
     }
 
-    public void deleteUserMapping(String tokenSubject) {
-        redisTemplate.delete(buildUserKey(tokenSubject));
+    public void deleteUserMapping(String email) {
+        redisTemplate.delete(buildUserKey(email));
     }
 
     public void deleteStaleUserMappings(Set<String> refreshedSubjects) {
@@ -103,8 +103,8 @@ public class UserRoleMappingCacheService {
     // INTERNALS
     // -------------------------
 
-    private String buildUserKey(String tokenSubject) {
-        return ROLE_MAPPING_USER_PREFIX + tokenSubject;
+    private String buildUserKey(String email) {
+        return ROLE_MAPPING_USER_PREFIX + email;
     }
 
     private void write(String cacheKey, Object payload, Duration ttl) {

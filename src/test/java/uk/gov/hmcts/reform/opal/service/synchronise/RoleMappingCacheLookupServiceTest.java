@@ -29,8 +29,10 @@ class RoleMappingCacheLookupServiceTest {
 
     private static final long USER_ID = 123L;
     private static final String TOKEN_SUBJECT = "subject-123";
+    private static final String EMAIL = "subject-123@email.com";
     private static final Type ROLE_MAPPING_CACHE_TYPE =
-        new TypeReference<Map<String, Set<String>>>() { }.getType();
+        new TypeReference<Map<String, Set<String>>>() {
+        }.getType();
     private static final String SYNC_STAGE = "parse role mapping cache";
     private static final String PAYLOAD_NULL_REASON = "payload resolved to null";
     private static final String PARSE_JSON_REASON = "could not parse JSON";
@@ -52,14 +54,14 @@ class RoleMappingCacheLookupServiceTest {
     void getRoleMappingByTokenSubject_throwsUserMissingFromCacheException_whenCachePayloadIsMissing() {
 
         // Arrange
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(null);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(null);
 
         // Act / Assert
         UserMissingFromCacheException exception = assertThrows(
             UserMissingFromCacheException.class,
             () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
-        assertEquals("Nothing in cache for : " + TOKEN_SUBJECT, exception.getMessage());
+        assertEquals("Nothing in cache for : " + EMAIL, exception.getMessage());
     }
 
     // happy path
@@ -72,7 +74,7 @@ class RoleMappingCacheLookupServiceTest {
             "101", Set.of("7", "8"),
             "202", Set.of("9")
         );
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
         when(roleService.roleExists(101L)).thenReturn(true);
         when(roleService.roleExists(202L)).thenReturn(true);
@@ -88,7 +90,7 @@ class RoleMappingCacheLookupServiceTest {
             ),
             result
         );
-        verify(userRoleMappingCacheService).getUserMapping(TOKEN_SUBJECT);
+        verify(userRoleMappingCacheService).getUserMapping(EMAIL);
     }
 
     @Test
@@ -96,7 +98,7 @@ class RoleMappingCacheLookupServiceTest {
 
         // Arrange
         String cachePayload = "null";
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(null);
 
         // Act / Assert
@@ -115,7 +117,7 @@ class RoleMappingCacheLookupServiceTest {
         String cachePayload = "invalid-json";
         JacksonException jsonProcessingException = new JacksonException("invalid-json") {
         };
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference()))
             .thenThrow(jsonProcessingException);
 
@@ -136,7 +138,7 @@ class RoleMappingCacheLookupServiceTest {
         String cachePayload = "{\"101\":[\"7\"]}";
         JacksonException jsonProcessingException = new JacksonException("boom") {
         };
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference()))
             .thenThrow(jsonProcessingException);
 
@@ -158,7 +160,7 @@ class RoleMappingCacheLookupServiceTest {
         // Arrange
         String cachePayload = "{\"101\":[\"7\"]}";
         IllegalArgumentException illegalArgumentException = new IllegalArgumentException("bad type");
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference()))
             .thenThrow(illegalArgumentException);
 
@@ -177,14 +179,14 @@ class RoleMappingCacheLookupServiceTest {
     void getRoleMappingByTokenSubject_throwsUserMissingFromCacheException_whenCachePayloadIsBlank() {
 
         // Arrange
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn("   ");
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn("   ");
 
         // Act / Assert
         UserMissingFromCacheException exception = assertThrows(
             UserMissingFromCacheException.class,
             () -> roleMappingCacheLookupService.getRoleMappingByTokenSubject(user())
         );
-        assertEquals("Nothing in cache for : " + TOKEN_SUBJECT, exception.getMessage());
+        assertEquals("Nothing in cache for : " + EMAIL, exception.getMessage());
     }
 
     @Test
@@ -194,7 +196,7 @@ class RoleMappingCacheLookupServiceTest {
         String cachePayload = "{\"101\":null}";
         Map<String, Set<String>> cacheMap = new java.util.HashMap<>();
         cacheMap.put("101", null);
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
         when(roleService.roleExists(101L)).thenReturn(true);
 
@@ -215,7 +217,7 @@ class RoleMappingCacheLookupServiceTest {
             "999", Set.of("8"),
             "202", Set.of("9")
         );
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
         when(roleService.roleExists(101L)).thenReturn(true);
         when(roleService.roleExists(202L)).thenReturn(true);
@@ -226,16 +228,16 @@ class RoleMappingCacheLookupServiceTest {
 
         // Assert
         assertEquals(Map.of(101L, Set.of((short) 7), 202L, Set.of((short) 9)), result);
-        verify(userRoleMappingCacheService).getUserMapping(TOKEN_SUBJECT);
+        verify(userRoleMappingCacheService).getUserMapping(EMAIL);
     }
 
     @Test
-    void getRoleMappingByTokenSubject_throwsLegacyRefreshException_whenRoleIdsAreNotNumeric() throws Exception {
+    void getRoleMappingByTokenSubject_throwsLegacyRefreshException_whenRoleIdsAreNotNumeric()  {
 
         // Arrange
         String cachePayload = "{\"role-1\":[\"7\"]}";
         Map<String, Set<String>> cacheMap = Map.of("role-1", Set.of("7"));
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
 
         // Act / Assert
@@ -246,13 +248,12 @@ class RoleMappingCacheLookupServiceTest {
     }
 
     @Test
-    void getRoleMappingByTokenSubject_throwsLegacyRefreshException_whenBusinessUnitIdsAreNotNumeric()
-        throws Exception {
+    void getRoleMappingByTokenSubject_throwsLegacyRefreshException_whenBusinessUnitIdsAreNotNumeric() {
 
         // Arrange
         String cachePayload = "{\"101\":[\"business-unit-7\"]}";
         Map<String, Set<String>> cacheMap = Map.of("101", Set.of("business-unit-7"));
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenReturn(cachePayload);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenReturn(cachePayload);
         when(objectMapper.readValue(eq(cachePayload), roleMappingCacheTypeReference())).thenReturn(cacheMap);
         when(roleService.roleExists(101L)).thenReturn(true);
 
@@ -268,7 +269,7 @@ class RoleMappingCacheLookupServiceTest {
 
         // Arrange
         RuntimeException runtimeException = new RuntimeException("redis boom");
-        when(userRoleMappingCacheService.getUserMapping(TOKEN_SUBJECT)).thenThrow(runtimeException);
+        when(userRoleMappingCacheService.getUserMapping(EMAIL)).thenThrow(runtimeException);
 
         // Act
         SynchronisePermissionsException exception = assertThrows(
@@ -290,6 +291,7 @@ class RoleMappingCacheLookupServiceTest {
     private UserEntity user() {
         return UserEntity.builder()
             .userId(USER_ID)
+            .username(EMAIL)
             .tokenSubject(TOKEN_SUBJECT)
             .build();
     }

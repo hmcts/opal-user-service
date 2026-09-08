@@ -30,6 +30,7 @@ import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapperImplementation;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
+import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingRefreshService;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
@@ -48,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,6 +77,9 @@ class UserPermissionsServiceTest {
 
     @Mock
     private SecurityEventLoggingService securityEventLoggingService;
+
+    @Mock
+    private UserRoleMappingRefreshService roleMappingRefreshService;
 
     @Spy
     private Clock clock = Clock.fixed(Instant.parse("2026-04-02T12:30:00Z"), ZoneOffset.UTC);
@@ -165,6 +170,7 @@ class UserPermissionsServiceTest {
         assertEquals("John Smith", response.getName());
         assertEquals("pending", response.getStatus());
         assertEquals(BigInteger.valueOf(4L), response.getVersion());
+        verify(roleMappingRefreshService).forceRefreshOnNextRun();
     }
 
     @Test

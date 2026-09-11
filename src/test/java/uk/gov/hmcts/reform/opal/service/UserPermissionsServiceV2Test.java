@@ -1,6 +1,37 @@
 package uk.gov.hmcts.reform.opal.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
+
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,35 +59,6 @@ import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
 import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsService;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
 
 @ExtendWith(MockitoExtension.class)
 class UserPermissionsServiceV2Test {
@@ -287,6 +289,27 @@ class UserPermissionsServiceV2Test {
     }
 
     @Test
+    void getUserStateV2_whenSystemUserInLegacyMode_doesNotCallLegacySynchronisationServices() {
+
+        // Arrange
+        setJwtAuthentication(TOKEN_SUBJECT, TOKEN_PREFERRED_USERNAME, TOKEN_NAME);
+        userEntity.setSystemUser(true);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
+        when(userRepository.findIdWithPermissions(USER_ID)).thenReturn(Optional.of(userEntity));
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
+        when(legacyModeConfiguration.isLegacyMode()).thenReturn(true);
+
+        // Act
+        UserStateV2Dto result = service.getUserStateV2(false);
+
+        // Assert
+        assertThat(result).isEqualTo(dto);
+        verifyNoInteractions(synchronisePermissionsService);
+        verify(userService, never()).refreshUser(userEntity);
+        assertDtoWasCachedForSubject(TOKEN_SUBJECT);
+    }
+
+    @Test
     void getUserStateV2_NewLogin_NotJwtAuthenticationToken() {
 
         // Arrange
@@ -387,6 +410,21 @@ class UserPermissionsServiceV2Test {
         assertEquals("User", ex.getResourceType());
         assertEquals(String.valueOf(USER_ID), ex.getResourceId());
         assertThat(ex.getConflictReason()).startsWith("Preferred Username mismatch:");
+    }
+
+    @Test
+    void getUserFromAuthentication_whenSystemUser_doesNotValidateAuthenticatedUser() {
+        service = spy(service);
+        // Arrange
+        userEntity.setSystemUser(true);
+        when(userService.getUser(USER_ID)).thenReturn(userEntity);
+        doReturn(USER_ID).when(service).getAuthenticatedUserId();
+
+        // Act
+        UserEntity result = service.getUserFromAuthentication();
+        // Assert
+        assertThat(result).isEqualTo(userEntity);
+        verify(service, never()).validateAuthenticatedUser(any(), any());
     }
 
     private void setJwtAuthentication(String subject, String preferredUsername, String name) {

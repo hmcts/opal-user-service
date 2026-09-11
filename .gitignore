@@ -36,3 +36,17 @@ applicationinsights-agent-*.jar
 # Bruno
 # Ignore real Bruno environment files
 bruno/environments/*.bru
+
+# Codex-local configuration
+.codex/*
+
+# Local Superpowers planning and agent evidence
+superpowers/
+.superpowers/
+**/superpowers/
+**/.superpowers/
+docs/designs/
+docs/plans/
+
+# Local linked worktrees
+/.worktrees/

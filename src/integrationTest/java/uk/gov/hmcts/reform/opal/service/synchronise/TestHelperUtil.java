@@ -89,6 +89,7 @@ public final class TestHelperUtil {
         return UserEntity.builder()
             .userId(userId)
             .tokenSubject(tokenSubject)
+            .username(userId + "@email.com")
             .build();
     }
 

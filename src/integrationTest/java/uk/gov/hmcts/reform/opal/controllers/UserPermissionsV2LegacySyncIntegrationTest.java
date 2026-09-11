@@ -153,7 +153,7 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             List.of(TestHelperUtil.legacyBusinessUnitUser(BUSINESS_UNIT_USER_ID, BUSINESS_UNIT_ID))
         );
         userRoleMappingCacheService.putUserMapping(
-            user.getTokenSubject(),
+            user.getEmail(),
             Map.of(
                 "1", Set.of("69"),
                 "999", Set.of("70")

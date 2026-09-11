@@ -115,6 +115,16 @@ class UserRoleMappingCacheServiceTest {
     }
 
     @Test
+    void clearLastUpdateAtDelegatesToRedis() {
+
+        // ACT
+        cacheService.clearLastUpdateAt();
+
+        // ASSERT
+        verify(redisTemplate).delete("USER_MAPPING_FILE_LAST_UPDATE_AT");
+    }
+
+    @Test
     void refreshAllTtlsExpiresUserKeysAndLastUpdateKey() {
 
         // ARRANGE

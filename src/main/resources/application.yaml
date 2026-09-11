@@ -120,7 +120,7 @@ opal:
     password: ${OPAL_TEST_USER_PASSWORD}
   common:
     system-users:
-      token-url: https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/token
+      token-url: https://login.microsoftonline.com/${AAD_TENANT_ID:}/oauth2/v2.0/token
       users:
         opal-system-user:
           client-id: ${OPAL_SYSTEM_USER_CLIENT_ID:}

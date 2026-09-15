@@ -24,7 +24,9 @@ public enum Permissions {
     AUTO_ENFORCEMENT(17, "Auto Enforcement"),
     VIEW_INTERFACE_FILES(18, "View Interface Files"),
     CREATE_INTERFACE_FILES(19, "Create Interface Files"),
-    ACCOUNT_MAINTENANCE_MINOR_CREDITOR(20, "Account Maintenance - Minor Creditor");
+    ACCOUNT_MAINTENANCE_MINOR_CREDITOR(20, "Account Maintenance - Minor Creditor"),
+    VIEW_SUSPENSE_ITEMS(21, "View suspense items"),
+    MANAGE_SUSPENSE_ITEMS(22, "Manage suspense items");
 
     public final long id;
 

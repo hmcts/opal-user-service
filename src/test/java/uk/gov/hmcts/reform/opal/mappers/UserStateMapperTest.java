@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.mappers;
 
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -55,6 +56,8 @@ class UserStateMapperTest {
     String permVIF = Permissions.VIEW_INTERFACE_FILES.description;
     String permCIF = Permissions.CREATE_INTERFACE_FILES.description;
     String permAMMC = Permissions.ACCOUNT_MAINTENANCE_MINOR_CREDITOR.description;
+    String permVSI = Permissions.VIEW_SUSPENSE_ITEMS.description;
+    String permMSI = Permissions.MANAGE_SUSPENSE_ITEMS.description;
     String permBadName = "BAD_NAME";
 
     private final LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
@@ -402,8 +405,32 @@ class UserStateMapperTest {
             .satisfies(businessUnitUserDto -> assertThat(businessUnitUserDto.getPermissions())
                 .extracting("permissionId", "permissionName")
                 .containsExactly(
-                    org.assertj.core.groups.Tuple.tuple(18L, "View Interface Files"),
-                    org.assertj.core.groups.Tuple.tuple(19L, "Create Interface Files")
+                    tuple(18L, "View Interface Files"),
+                    tuple(19L, "Create Interface Files")
+                ));
+    }
+
+    @Test
+    void toUserStateV2Dto_mapsSuspensePermissions() {
+
+        // Arrange
+        RoleEntity role = buildRole("suspense-role", List.of(permVSI, permMSI));
+        Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
+            buildBusinessUnitUserEntity("SUS123", fines, (short) 41, Set.of(role))
+        );
+        when(user.getBusinessUnitUsers()).thenReturn(businessUnitUserEntityList);
+
+        // Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        // Assert
+        assertThat(dto.getDomains().get(Domain.FINES).getBusinessUnitUsers())
+            .singleElement()
+            .satisfies(businessUnitUserDto -> assertThat(businessUnitUserDto.getPermissions())
+                .extracting("permissionId", "permissionName")
+                .containsExactly(
+                    tuple(21L, "View suspense items"),
+                    tuple(22L, "Manage suspense items")
                 ));
     }
 

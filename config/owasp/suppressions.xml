@@ -40,21 +40,21 @@
     <packageUrl regex="true">^pkg:maven/com\.microsoft\.azure/applicationinsights\-(core|web)@.*$</packageUrl>
     <cve>CVE-2025-21199</cve>
   </suppress>
-  <suppress until="2026-09-15Z">
+  <suppress until="2026-12-10Z">
     <notes><![CDATA[
-    Reviewed 2026-06-26.
+    Reviewed 2026-09-16.
+    CVE-2026-33117 affects the Azure SDK for Java Key Vault Keys library's local
+    cryptographic verification path and is fixed in azure-security-keyvault-keys 4.10.6.
     User-service uses Azure Blob Storage only for reading the role-mapping file via
     BlobServiceClientBuilder.connectionString(...), then reading blob properties and content.
     Current runtime artifacts flagged for CVE-2026-33117 are:
-    - com.azure:azure-core:1.58.1
-    - com.azure:azure-core-http-netty:1.16.5
+    - com.azure:azure-core:1.59.0
+    - com.azure:azure-core-http-netty:1.16.6
     - com.azure:azure-json:1.5.1
     The opal-common-lib transitive applicationinsights-spring-boot-starter path has been excluded,
     so this suppression now covers only the direct Azure Storage SDK runtime path.
-    Local dependency review still found no newer GA Azure Storage SDK chain available in the current
-    resolved Gradle cache used by this repo.
-    No public MSRC/NVD advisory detail was found during review, so this remains treated as a narrow
-    dependency-check/CPE match for this repo's limited Azure Blob Storage usage.
+    This remains a narrow dependency-check/CPE match: the flagged shared Azure Core artifacts are
+    not the affected Key Vault Keys artifact, and this repo has no Key Vault Keys dependency or usage.
     Risk is considered low for this service because the affected Azure SDK path is used only by
     role-mapping file retrieval from configured blob storage, not for processing arbitrary
     user-supplied Azure SDK requests or exposing an Azure SDK endpoint.

@@ -40,10 +40,10 @@ public class RoleMappingCacheLookupService {
     public Map<Long, Set<Short>> getRoleMappingByTokenSubject(UserEntity user)
         throws UserMissingFromCacheException {
         try {
-            String tokenSubject = user.getTokenSubject();
-            String roleMappingCacheString = userRoleMappingCacheService.getUserMapping(tokenSubject);
+            String email = user.getEmail();
+            String roleMappingCacheString = userRoleMappingCacheService.getUserMapping(email);
             if (roleMappingCacheString == null || roleMappingCacheString.isBlank()) {
-                throw new UserMissingFromCacheException("Nothing in cache for : " + tokenSubject);
+                throw new UserMissingFromCacheException("Nothing in cache for : " + email);
             }
             Map<String, Set<String>> cacheMap = readCacheMap(user, roleMappingCacheString);
             return convertCacheMap(user, cacheMap);

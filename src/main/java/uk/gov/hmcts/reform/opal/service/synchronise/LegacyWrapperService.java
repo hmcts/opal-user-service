@@ -44,7 +44,7 @@ public class LegacyWrapperService {
     //1. Fetch Libra user id's from the legacy system
     private List<String> fetchLibraUserIds(UserEntity user) {
         GatewayService.Response<LegacyGetUserResponse> legacyGetUserGatewayResponse = legacyUserService.getUser(
-            new LegacyGetUserRequest(user.getUsername()));
+            new LegacyGetUserRequest(user.getEmail()));
         LegacyGetUserResponse legacyGetUserResponse = requireSuccessfulResponse(
             user,
             legacyGetUserGatewayResponse,

@@ -1,7 +1,15 @@
 package uk.gov.hmcts.reform.opal.service;
 
+import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
+import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
+import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
+
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -23,17 +31,9 @@ import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
+import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingRefreshService;
 import uk.gov.hmcts.reform.opal.service.synchronise.SynchronisePermissionsService;
 import uk.gov.hmcts.reform.opal.util.JwtUtil;
-
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import static uk.gov.hmcts.opal.common.dto.ToJsonString.objectToPrettyJson;
-import static uk.gov.hmcts.opal.common.logging.LogUtil.getRequestTimestamp;
-import static uk.gov.hmcts.reform.opal.util.VersionUtils.verifyIfMatch;
 
 
 @Service
@@ -57,6 +57,8 @@ public class UserPermissionsService {
     private final SynchronisePermissionsService synchronisePermissionsService;
     private final LegacyModeConfiguration legacyModeConfiguration;
     private final UserService userService;
+
+    private final UserRoleMappingRefreshService roleMappingRefreshService;
 
     public Long getAuthenticatedUserId() {
         return SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().getUserId();
@@ -162,6 +164,7 @@ public class UserPermissionsService {
                 .build());
 
         log.debug(":createUser: name: {}, new id: {}", userEntity.getTokenName(), userEntity.getUserId());
+        roleMappingRefreshService.forceRefreshOnNextRun();
         return userMapper.toUserDto(userEntity, clock);
     }
 

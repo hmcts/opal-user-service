@@ -1,9 +1,9 @@
-package uk.gov.hmcts.opal.steps;
+package uk.gov.hmcts.reform.opal.steps;
 
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Then;
 import net.serenitybdd.core.Serenity;
-import uk.gov.hmcts.opal.utils.TestHttpClient.TestHttpResponse;
+import uk.gov.hmcts.reform.opal.utils.TestHttpClient.TestHttpResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

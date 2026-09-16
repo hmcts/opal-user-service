@@ -1,4 +1,4 @@
-package uk.gov.hmcts.opal.steps;
+package uk.gov.hmcts.reform.opal.steps;
 
 /**
  * Provides shared test-environment configuration for functional step definition classes.

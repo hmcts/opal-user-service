@@ -1,18 +1,18 @@
-package uk.gov.hmcts.opal.steps;
+package uk.gov.hmcts.reform.opal.steps;
 
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import net.serenitybdd.core.Serenity;
-import uk.gov.hmcts.opal.utils.TestHttpClient;
-import uk.gov.hmcts.opal.utils.TestHttpClient.TestHttpResponseDetails;
+import uk.gov.hmcts.reform.opal.utils.TestHttpClient;
+import uk.gov.hmcts.reform.opal.utils.TestHttpClient.TestHttpResponseDetails;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static uk.gov.hmcts.opal.utils.ContentDigestUtils.contentDigestHeaderFor;
-import static uk.gov.hmcts.opal.utils.ContentDigestUtils.contentDigestHeaderForEmptyBody;
-import static uk.gov.hmcts.opal.utils.ContentDigestUtils.invalidContentDigestHeader;
-import static uk.gov.hmcts.opal.utils.ContentDigestUtils.malformedContentDigestHeader;
+import static uk.gov.hmcts.reform.opal.utils.ContentDigestUtils.contentDigestHeaderFor;
+import static uk.gov.hmcts.reform.opal.utils.ContentDigestUtils.contentDigestHeaderForEmptyBody;
+import static uk.gov.hmcts.reform.opal.utils.ContentDigestUtils.invalidContentDigestHeader;
+import static uk.gov.hmcts.reform.opal.utils.ContentDigestUtils.malformedContentDigestHeader;
 
 public class ContentDigestStepDef extends BaseStepDef {
 

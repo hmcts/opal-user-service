@@ -1,4 +1,4 @@
-package uk.gov.hmcts.opal.utils;
+package uk.gov.hmcts.reform.opal.utils;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;

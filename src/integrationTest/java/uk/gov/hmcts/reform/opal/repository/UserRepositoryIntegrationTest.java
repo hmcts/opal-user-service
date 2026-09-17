@@ -64,6 +64,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                      "status": "PENDING",
                      "version": 0,
                      "cache_name": null,
+                     "is_system_user" : false,
                      "domains": {}
                    }
              """));
@@ -84,6 +85,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                   "status": "PENDING",
                   "version": 0,
                   "cache_name": null,
+                  "is_system_user":false,
                   "domains": {
                     "fines": {
                       "business_unit_users": [
@@ -135,6 +137,7 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
               "status": "PENDING",
               "version": 0,
               "cache_name": null,
+              "is_system_user" : false,
               "domains": {
                 "fines": {
                   "business_unit_users": [

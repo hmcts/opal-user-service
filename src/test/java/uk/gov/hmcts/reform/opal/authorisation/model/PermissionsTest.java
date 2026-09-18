@@ -50,8 +50,23 @@ class PermissionsTest {
     }
 
     @Test
+    void suspensePermissions_haveExpectedDescriptorsAndCanBeResolved() {
+        assertPermission(Permissions.VIEW_SUSPENSE_ITEMS, 21L, "View suspense items");
+        assertPermission(Permissions.MANAGE_SUSPENSE_ITEMS, 22L, "Manage suspense items");
+    }
+
+    @Test
     void toPermissionOrNull_returnsNullForInvalidDescription() {
         Permissions permission = Permissions.toPermissionOrNull("NOT_A_PERMISSION");
         assertNull(permission);
+    }
+
+    private void assertPermission(Permissions permission, long expectedId, String expectedDescription) {
+        assertEquals(expectedId, permission.id);
+        assertEquals(expectedDescription, permission.description);
+        assertEquals(permission, Permissions.toPermissionOrNull(expectedDescription));
+        assertEquals(permission, Permissions.toPermissionOrNull(permission.name()));
+        assertEquals(expectedId, permission.getDescriptor().getId());
+        assertEquals(expectedDescription, permission.getDescriptor().getDescription());
     }
 }

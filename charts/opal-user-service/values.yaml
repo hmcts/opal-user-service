@@ -34,6 +34,10 @@ java:
           alias: REDIS_CONNECTION_STRING
         - name: launch-darkly-sdk-key
           alias: LAUNCH_DARKLY_SDK_KEY
+        - name: opal-system-user-client-id
+          alias: OPAL_SYSTEM_USER_CLIENT_ID
+        - name: opal-system-user-client-secret
+          alias: OPAL_SYSTEM_USER_CLIENT_SECRET
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true
     OPAL_FRONTEND_URL: https://opal-frontend.{{ .Values.global.environment }}.apps.hmcts.net

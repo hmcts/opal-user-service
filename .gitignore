@@ -36,3 +36,4 @@ applicationinsights-agent-*.jar
 # Bruno
 # Ignore real Bruno environment files
 bruno/environments/*.bru
+/.codex/

@@ -1,7 +1,17 @@
 package uk.gov.hmcts.reform.opal.mappers;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
+import static java.util.Collections.emptySet;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.math.BigInteger;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,6 +19,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
@@ -18,25 +30,14 @@ import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers
 import uk.gov.hmcts.opal.common.user.authorisation.model.PermissionV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
+import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
 import uk.gov.hmcts.reform.opal.entity.DomainEntity;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
-
-import java.math.BigInteger;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Set;
-
-import static java.util.Collections.emptySet;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserStateMapperTest {
@@ -80,7 +81,7 @@ class UserStateMapperTest {
         List<BusinessUnitUserDto> businessUnitUsers = List.of(buu1, buu2);
 
         // Act
-        UserStateDto dto = mapper.toUserStateDto(user, List.of(buu1, buu2), clock);
+        UserStateDto dto = mapper.toUserStateDto(user, businessUnitUsers, clock);
 
         // Assert
         assertThat(dto.getUserId()).isEqualTo(123L);
@@ -99,7 +100,7 @@ class UserStateMapperTest {
         RoleEntity role2 = buildRole("role2", List.of(permAE, permCVDA, permCO));
         RoleEntity role3 = buildRole("role3", List.of(permSAVA, permCO));
         RoleEntity role4 = buildRole("role4", List.of(permCO, permAEN));
-        RoleEntity role5 = buildRole("role5", List.of(permSAVA, permAE));
+        RoleEntity role5 = buildRole("role5", List.of(permSAVA, permAE, permAMMC));
 
         Set<BusinessUnitUserEntity> businessUnitUserEntityList = Set.of(
             buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role1, role2)),
@@ -121,6 +122,7 @@ class UserStateMapperTest {
           "status": "ACTIVE",
           "version": 321,
           "cache_name": null,
+          "is_system_user": false,
           "domains": {
             "fines": {
               "business_unit_users": [
@@ -220,6 +222,7 @@ class UserStateMapperTest {
                   "status": "ACTIVE",
                   "version": 321,
                   "cache_name": null,
+                  "is_system_user": false,
                   "domains": {
                     "confiscation": {
                       "business_unit_users": [
@@ -264,6 +267,7 @@ class UserStateMapperTest {
             .name("token")
             .status(UserStatus.ACTIVE)
             .version(321L)
+            .systemUser(true)
             .cacheName("USER_STATE_subject-123")
             .domains(java.util.Map.of(
                 Domain.FINES, DomainBusinessUnitUsers.builder()
@@ -292,6 +296,7 @@ class UserStateMapperTest {
                   "status": "ACTIVE",
                   "version": 321,
                   "cache_name": null,
+                  "is_system_user": true,
                   "domains": {
                     "fines": {
                       "business_unit_users": [
@@ -330,6 +335,7 @@ class UserStateMapperTest {
                   "status": "ACTIVE",
                   "version": 321,
                   "cache_name": null,
+                  "is_system_user": false,
                   "domains": {
                     "fines": {
                       "business_unit_users": [
@@ -441,6 +447,7 @@ class UserStateMapperTest {
               "status": "ACTIVE",
               "version": 321,
               "cache_name": null,
+              "is_system_user": false,
               "domains": {}
             }
             """;

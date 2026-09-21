@@ -18,6 +18,9 @@ VALUES (500000001, 'opal-test-2@HMCTS.NET', 'GfsHbIMt49WjQ', 'User with no busin
        (500000005, 'update-user@HMCTS.NET', 'QeJjwoWnY-kBmMfm', 'Test User for testing \`update\`', 'Pablo', 7,
         CURRENT_TIMESTAMP, NULL),
        (500000006, 'no-go-user@HMCTS.NET', '8hqucbw874fg3', 'User with business units but no entitlements', 'No Permissions', 3,
+        CURRENT_TIMESTAMP, NULL),
+       (500000007, 'minor-creditor-user@HMCTS.NET', 'minorCreditorSubject', 'User with minor creditor permission',
+        'Minor Creditor User', 0,
         CURRENT_TIMESTAMP, NULL);
 
 
@@ -30,7 +33,8 @@ VALUES (61, 'Test BU 61', 'T61', 'Accounting Division', 1),
        (69, 'Test BU 69', 'T69', 'Accounting Division', 1),
        (70, 'Test BU 70', 'T70', 'Accounting Division', 1),
        (71, 'Test BU 71', 'T71', 'Accounting Division', 1),
-       (73, 'Test BU 73', 'T73', 'Accounting Division', 1);
+       (73, 'Test BU 73', 'T73', 'Accounting Division', 1),
+       (74, 'Test BU 74', 'T74', 'Accounting Division', 1);
 
 
 -- Link User 500000000 to Business Units from Flyway script V20240730_005
@@ -43,23 +47,34 @@ VALUES ('L065JG', 70, 500000000),
        ('L078JG', 69, 500000000),
        ('L080JG', 61, 500000000),
        ('L081JG', 67, 500000006),
-       ('L082JG', 69, 500000006);
+       ('L082JG', 69, 500000006),
+       ('L083JG', 74, 500000007);
 
 -- Grant permissions to User 500000000 from Flyway script V20240730_007
 -- Granting a subset for a focused test
 
 INSERT INTO roles (role_id, version_number, opal_domain_id, role_name, application_function_list)
-VALUES (1,1, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry - Account Notes','Account Maintenance']),
-       (1,2, 1, 'Fines_Role_1',  ARRAY['Create and Manage Draft Accounts', 'Account Enquiry','Account Maintenance']),
-       (2,1, 1, 'Fines_Role_2',  ARRAY['Collection Order','Account Maintenance']),
-       (2,2, 1, 'Fines_Role_2',  ARRAY['Check and Validate Draft Accounts', 'Search and view accounts']),
-       (2,3, 1, 'Fines_Role_2',  ARRAY['Collection Order', 'Check and Validate Draft Accounts', 'Search and view accounts']),
-       (3,1, 2, 'Confiscation_Role_3',  ARRAY['Create and Manage Draft Accounts']),
-       (3,2, 2, 'Confiscation_Role_3',  ARRAY['Create and Manage Draft Accounts', 'Collection Order']);
+VALUES (1,1, 1, 'Fines_Role_1',
+        ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'ACCOUNT_ENQUIRY_NOTES', 'ACCOUNT_MAINTENANCE']::t_permissions_enum[]),
+       (1,2, 1, 'Fines_Role_1',
+        ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'ACCOUNT_ENQUIRY', 'ACCOUNT_MAINTENANCE']::t_permissions_enum[]),
+       (2,1, 1, 'Fines_Role_2',
+        ARRAY['COLLECTION_ORDER', 'ACCOUNT_MAINTENANCE']::t_permissions_enum[]),
+       (2,2, 1, 'Fines_Role_2',
+       ARRAY['CHECK_VALIDATE_DRAFT_ACCOUNTS', 'SEARCH_AND_VIEW_ACCOUNTS']::t_permissions_enum[]),
+       (2,3, 1, 'Fines_Role_2',
+        ARRAY['COLLECTION_ORDER', 'CHECK_VALIDATE_DRAFT_ACCOUNTS', 'SEARCH_AND_VIEW_ACCOUNTS']::t_permissions_enum[]),
+       (3,1, 2, 'Confiscation_Role_3',
+        ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS']::t_permissions_enum[]),
+       (3,2, 2, 'Confiscation_Role_3',
+        ARRAY['CREATE_MANAGE_DRAFT_ACCOUNTS', 'COLLECTION_ORDER']::t_permissions_enum[]),
+       (20,1, 1, 'Fines_Role_20',
+        ARRAY['ACCOUNT_MAINTENANCE_MINOR_CREDITOR']::t_permissions_enum[]);
 
 INSERT INTO business_unit_user_roles(business_unit_user_role_id, business_unit_user_id, role_id)
 VALUES (1,'L065JG', 1),
-       (2,'L065JG', 2);
+       (2,'L065JG', 2),
+       (3,'L083JG', 20);
 
 SELECT setval(
     'business_unit_user_role_id_seq',

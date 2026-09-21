@@ -25,7 +25,6 @@ public class UserRoleMappingCacheService {
     private final RoleMappingCacheProperties properties;
     private final ObjectMapper objectMapper;
 
-
     // -------------------------
     // USER MAPPING CACHE
     // -------------------------
@@ -80,6 +79,10 @@ public class UserRoleMappingCacheService {
             value,
             properties.getLastUpdateTtl()
         );
+    }
+
+    public void clearLastUpdateAt() {
+        redisTemplate.delete(USER_MAPPING_FILE_LAST_UPDATE_AT);
     }
 
     // -------------------------

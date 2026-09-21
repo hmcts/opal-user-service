@@ -34,13 +34,13 @@ class RoleRepositoryIntegrationTest extends BaseIntegrationTest {
 
         assertThat(finesRole1.getVersionNumber()).isEqualTo(2);
         assertThat(finesRole1.getApplicationFunctionList()).containsExactly(
-            "Create and Manage Draft Accounts", "Account Enquiry", "Account Maintenance");
+            "CREATE_MANAGE_DRAFT_ACCOUNTS", "ACCOUNT_ENQUIRY", "ACCOUNT_MAINTENANCE");
         assertThat(finesRole2.getVersionNumber()).isEqualTo(3);
         assertThat(finesRole2.getApplicationFunctionList()).containsExactly(
-            "Collection Order", "Check and Validate Draft Accounts", "Search and view accounts");
+            "COLLECTION_ORDER", "CHECK_VALIDATE_DRAFT_ACCOUNTS", "SEARCH_AND_VIEW_ACCOUNTS");
         assertThat(confiscationRole3.getVersionNumber()).isEqualTo(2);
         assertThat(confiscationRole3.getApplicationFunctionList()).containsExactly(
-            "Create and Manage Draft Accounts", "Collection Order");
+            "CREATE_MANAGE_DRAFT_ACCOUNTS", "COLLECTION_ORDER");
     }
 
     @Test

@@ -1,4 +1,4 @@
-package uk.gov.hmcts.opal;
+package uk.gov.hmcts.reform.opal;
 
 import static io.cucumber.junit.platform.engine.Constants.FILTER_TAGS_PROPERTY_NAME;
 

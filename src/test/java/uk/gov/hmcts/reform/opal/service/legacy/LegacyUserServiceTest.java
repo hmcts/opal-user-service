@@ -7,10 +7,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.opal.common.legacy.model.ErrorResponse;
 import uk.gov.hmcts.opal.common.legacy.service.GatewayService;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyGetUserRequest;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyGetUserResponse;
+import uk.gov.hmcts.reform.opal.util.FeatureFlags;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -22,6 +24,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LegacyUserServiceTest {
+
+    @Mock
+    private FeatureToggleApi featureToggleApi;
 
     @Mock
     private GatewayService gatewayService;
@@ -43,6 +48,51 @@ class LegacyUserServiceTest {
             isNull())).thenReturn(expected);
 
         GatewayService.Response<LegacyGetUserResponse> result = legacyUserService.getUser("legacy.user@hmcts.net");
+
+        assertSame(expected, result);
+    }
+
+    @Test
+    void getUser_lowercasesEmailAddressBeforeSendingRequest() {
+        LegacyGetUserRequest request = LegacyGetUserRequest.builder().emailAddress("Another.User@HMCTS.NET").build();
+        GatewayService.Response<LegacyGetUserResponse> expected =
+            new GatewayService.Response<>(HttpStatus.OK, (LegacyGetUserResponse) null);
+
+        when(featureToggleApi.isFeatureEnabledWithPropertyValueDefault(
+            FeatureFlags.RELEASE_1A_1_1,
+            FeatureFlags.RELEASE_1A_1_1_ENABLED_PROPERTY
+        )).thenReturn(true);
+
+        when(gatewayService.postToGateway(
+            eq("getLibraSystemUserIDs"),
+            eq(LegacyGetUserResponse.class),
+            eq(LegacyGetUserRequest.builder().emailAddress("another.user@hmcts.net").build()),
+            isNull())).thenReturn(expected);
+
+        GatewayService.Response<LegacyGetUserResponse> result = legacyUserService.getUser(request);
+
+        assertSame(expected, result);
+        assertEquals("Another.User@HMCTS.NET", request.getEmailAddress());
+    }
+
+    @Test
+    void getUser_preservesEmailAddressWhenLowercaseFeatureIsDisabled() {
+        LegacyGetUserRequest request = LegacyGetUserRequest.builder().emailAddress("Another.User@HMCTS.NET").build();
+        GatewayService.Response<LegacyGetUserResponse> expected =
+            new GatewayService.Response<>(HttpStatus.OK, (LegacyGetUserResponse) null);
+
+        when(featureToggleApi.isFeatureEnabledWithPropertyValueDefault(
+            FeatureFlags.RELEASE_1A_1_1,
+            FeatureFlags.RELEASE_1A_1_1_ENABLED_PROPERTY
+        )).thenReturn(false);
+
+        when(gatewayService.postToGateway(
+            eq("getLibraSystemUserIDs"),
+            eq(LegacyGetUserResponse.class),
+            eq(request),
+            isNull())).thenReturn(expected);
+
+        GatewayService.Response<LegacyGetUserResponse> result = legacyUserService.getUser(request);
 
         assertSame(expected, result);
     }

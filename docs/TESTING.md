@@ -60,3 +60,20 @@ treat YAML parsing alone as sufficient contract validation.
 - For every relevant check not run, record the reason, required setup, scenario,
   and expected result.
 - A successful pipeline is not evidence that every changed scenario executed.
+
+## Database SQL tests
+
+Run `./gradlew dbUnitTest --no-daemon` for SQL/pgTAP tests. This task is included
+in `check` and `build`. It requires Docker and builds a PostgreSQL 17 image with
+pgTAP and `pg_prove`; Flyway uses the version pinned by `build.gradle`.
+
+Only a newly created disposable database is used. External database connection
+settings are rejected, and cleanup runs on both success and failure. TAP, Flyway,
+framework-failure detection and cleanup reports appear in `build/reports/dbUnitTest`.
+Tests use the `*_pgtap_tests.sql` suffix. The deliberate failing fixture is run
+separately to prove failures are detected. Flyway applies the full migration chain
+before pgTAP; there is no staged predecessor or pre-migration snapshot. Casefiles
+checks preserve unrelated data within their controlled post-migration fixtures,
+not across the initial Flyway run. See the suite's
+[README](../src/dbUnitTest/draftCasefileRoleAssignmentTest/README.md) for coverage
+and provisional migration references.

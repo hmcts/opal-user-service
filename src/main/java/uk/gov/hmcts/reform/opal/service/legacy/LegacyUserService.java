@@ -34,7 +34,7 @@ public class LegacyUserService {
         GatewayService.Response<LegacyGetUserResponse> response = gatewayService.postToGateway(
             GET_USER,
             LegacyGetUserResponse.class,
-            normalizeRequestIfFeatureEnabled(request),
+            normalizeRequestEmailAddress(request),
             null
         );
 
@@ -53,7 +53,7 @@ public class LegacyUserService {
         return response;
     }
 
-    private LegacyGetUserRequest normalizeRequestIfFeatureEnabled(LegacyGetUserRequest request) {
+    private LegacyGetUserRequest normalizeRequestEmailAddress(LegacyGetUserRequest request) {
         if (featureToggleApi.isFeatureEnabledWithPropertyValueDefault(
             FeatureFlags.RELEASE_1A_1_1,
             FeatureFlags.RELEASE_1A_1_1_ENABLED_PROPERTY

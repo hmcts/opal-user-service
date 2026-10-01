@@ -30,8 +30,6 @@ import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers
 import uk.gov.hmcts.opal.common.user.authorisation.model.PermissionV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
-import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
-import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
@@ -56,6 +54,7 @@ class UserStateMapperTest {
     String permSAVA = PermissionV2.SEARCH_AND_VIEW_ACCOUNTS.getPermissionName();
     String permVIF = PermissionV2.VIEW_INTERFACE_FILES.getPermissionName();
     String permCIF = PermissionV2.CREATE_INTERFACE_FILES.getPermissionName();
+    String permAMMC = PermissionV2.ACCOUNT_MAINTENANCE_MINOR_CREDITOR.getPermissionName();
     String permBadName = "BAD_NAME";
 
     private final LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
@@ -177,6 +176,10 @@ class UserStateMapperTest {
                     {
                       "permission_code": "ACCOUNT_ENQUIRY",
                       "permission_name": "Account Enquiry"
+                    },
+                    {
+                        "permission_code":"ACCOUNT_MAINTENANCE_MINOR_CREDITOR",
+                        "permission_name":"Account Maintenance Minor Creditor"
                     },
                     {
                       "permission_code": "SEARCH_AND_VIEW_ACCOUNTS",

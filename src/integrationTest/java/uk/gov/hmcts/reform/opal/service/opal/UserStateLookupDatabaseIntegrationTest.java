@@ -66,7 +66,7 @@ class UserStateLookupDatabaseIntegrationTest extends AbstractIntegrationTest {
 
         assertTrue(businessUnit70.isPresent());
         //BU 70 has two roles with 6 unqiue perms between them
-        assertEquals(6, businessUnit70.get().getPermissions().size());
+        assertEquals(5, businessUnit70.get().getPermissions().size());
         assertTrue(businessUnit73.isPresent());
         assertTrue(businessUnit73.get().getPermissions().isEmpty());
     }

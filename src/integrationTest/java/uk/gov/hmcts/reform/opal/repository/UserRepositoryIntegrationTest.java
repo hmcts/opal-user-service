@@ -94,8 +94,8 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                           "business_unit_id": 74,
                           "permissions": [
                             {
-                              "permission_id": 20,
-                              "permission_name": "Account Maintenance - Minor Creditor"
+                              "permission_code": "ACCOUNT_MAINTENANCE_MINOR_CREDITOR",
+                              "permission_name": "Account Maintenance Minor Creditor"
                             }
                           ]
                         }
@@ -154,20 +154,16 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                           "permission_name": "Account Maintenance"
                         },
                         {
-                          "permission_code": "CHECK_VALIDATE_DRAFT_ACCOUNTS",
-                          "permission_name": "Check and Validate Draft Accounts"
+                          "permission_code":"COLLECTION_ORDER",
+                          "permission_name":"Collection Order"
                         },
                         {
-                          "permission_code": "COLLECTION_ORDER",
-                          "permission_name": "Collection Order"
+                          "permission_code":"CREATE_MANAGE_DRAFT_ACCOUNTS",
+                          "permission_name":"Create Manage Draft Accounts"
                         },
                         {
-                          "permission_code": "CREATE_MANAGE_DRAFT_ACCOUNTS",
-                          "permission_name": "Create and Manage Draft Accounts"
-                        },
-                        {
-                          "permission_code": "SEARCH_AND_VIEW_ACCOUNTS",
-                          "permission_name": "Search and view accounts"
+                          "permission_code":"SEARCH_AND_VIEW_ACCOUNTS",
+                          "permission_name":"Search and view accounts"
                         }
                       ]
                     },

@@ -89,9 +89,9 @@ public class CacheConfig {
             .serializeKeysWith(SerializationPair.fromSerializer(redisKeySerializer()))
             .serializeValuesWith(SerializationPair.fromSerializer(redisValueSerializer()));
 
-        return logCacheDetails(RedisCacheManager.builder(redisConnectionFactory)
+        return RedisCacheManager.builder(redisConnectionFactory)
             .cacheDefaults(redisCacheConfiguration)
-            .build());
+            .build();
     }
 
     @Bean
@@ -111,21 +111,6 @@ public class CacheConfig {
                 return generateKeyParts(param);
             })
             .collect(Collectors.joining("_"));
-    }
-
-    public CacheManager logCacheDetails(CacheManager cacheManager) {
-        log.info("------------------------------");
-        log.info("Cache Configuration Details:");
-        log.info("Redis Url: {}", redisUrl);
-        log.info("Redis TTL (duration): {}", redisTtlDuration());
-        log.info("Cache Manager: {}", cacheManager.getClass().getName());
-        if (cacheManager instanceof RedisCacheManager) {
-            log.info("Using Redis Cache Manager");
-        }
-        log.info("Available Caches:");
-        cacheManager.getCacheNames().forEach(cacheName -> log.debug("- {}", cacheName));
-        log.info("------------------------------");
-        return cacheManager;
     }
 
     private RedisSerializer<Object> redisValueSerializer() {

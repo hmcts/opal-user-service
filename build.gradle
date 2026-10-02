@@ -513,3 +513,5 @@ tasks.register('runAllStyleChecks') {
 checkstyle {
   checkstyleMain.exclude '**uk/gov/hmcts/opal/generated/**'
 }
+
+apply from: "$rootDir/gradle/db-unit-test.gradle"

@@ -1,6 +1,6 @@
 #!groovy
 
-@Library("Infrastructure@2.11.0")
+@Library("Infrastructure@2.11.2")
 
 def type = "java"
 def product = "opal"

@@ -50,6 +50,18 @@ class PermissionsTest {
     }
 
     @Test
+    void toPermissionOrNull_returnsDraftCasefileCreatorPermission() {
+        Permissions permission = Permissions.toPermissionOrNull("Create and Manage Draft Casefiles");
+        assertEquals(Permissions.CREATE_MANAGE_DRAFT_CASEFILES, permission);
+    }
+
+    @Test
+    void toPermissionOrNull_returnsDraftCasefileCheckerPermission() {
+        Permissions permission = Permissions.toPermissionOrNull("Check and validate draft Casefiles");
+        assertEquals(Permissions.CHECK_VALIDATE_DRAFT_CASEFILES, permission);
+    }
+
+    @Test
     void toPermissionOrNull_returnsNullForInvalidDescription() {
         Permissions permission = Permissions.toPermissionOrNull("NOT_A_PERMISSION");
         assertNull(permission);

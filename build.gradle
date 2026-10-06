@@ -326,7 +326,7 @@ dependencyManagement {
   }
 
   dependencies {
-    dependency group: 'com.google.guava', name: 'guava', version: '33.7.1-jre'
+    dependency group: 'com.google.guava', name: 'guava', version: '33.7.2-jre'
   }
 }
 
@@ -403,7 +403,7 @@ dependencies {
 
   compileOnly 'org.projectlombok:lombok:1.18.48'
   annotationProcessor 'org.projectlombok:lombok:1.18.48'
-  annotationProcessor 'org.hibernate.orm:hibernate-processor:7.4.8.Final'
+  annotationProcessor 'org.hibernate.orm:hibernate-processor:7.4.11.Final'
 
   testCompileOnly 'org.projectlombok:lombok:1.18.48'
   testAnnotationProcessor 'org.projectlombok:lombok:1.18.48'
@@ -439,7 +439,7 @@ dependencies {
   testImplementation "net.serenity-bdd:serenity-cucumber:${serenityVersion}"
   testImplementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
 
-  implementation 'org.openapitools:jackson-databind-nullable:0.2.11'
+  implementation 'org.openapitools:jackson-databind-nullable:0.2.12'
   openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.48"
   openapiImplementation "io.swagger.core.v3:swagger-models:2.2.55"
   openapiImplementation "io.swagger.core.v3:swagger-core:2.2.55"
@@ -452,7 +452,7 @@ dependencies {
   implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.26'
   implementation 'org.apache.tomcat.embed:tomcat-embed-el:11.0.26'
   implementation 'org.apache.tomcat:tomcat-annotations-api:11.0.26'
-  implementation 'org.apache.commons:commons-lang3:3.20.0'
+  implementation 'org.apache.commons:commons-lang3:3.21.0'
 
 }
 
@@ -513,3 +513,5 @@ tasks.register('runAllStyleChecks') {
 checkstyle {
   checkstyleMain.exclude '**uk/gov/hmcts/opal/generated/**'
 }
+
+apply from: "$rootDir/gradle/db-unit-test.gradle"

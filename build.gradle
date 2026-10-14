@@ -411,7 +411,7 @@ dependencies {
   testImplementation 'org.springframework.boot:spring-boot-devtools'
   testImplementation 'org.springframework.boot:spring-boot-testcontainers'
   testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-  testImplementation 'com.auth0:java-jwt:4.6.1'
+  testImplementation 'com.auth0:java-jwt:4.6.2'
   testImplementation 'org.testcontainers:junit-jupiter:1.21.4'
   testImplementation 'org.testcontainers:testcontainers-postgresql'
   testImplementation 'com.redis:testcontainers-redis'

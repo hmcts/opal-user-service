@@ -106,6 +106,7 @@ launchdarkly:
   enabled: ${LAUNCH_DARKLY_ENABLED:true}
   default-flag-values:
     release-1a: ${RELEASE_1A_ENABLED:false}
+    release-1a-1-1: ${RELEASE_1A_1_1_ENABLED:false}
     is-legacy-mode: ${IS_LEGACY_MODE:true}
 
 opal:

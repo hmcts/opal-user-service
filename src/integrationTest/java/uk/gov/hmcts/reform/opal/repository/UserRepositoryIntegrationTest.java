@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.opal.repository;
 
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationProvider;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.reform.opal.BaseIntegrationTest;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
@@ -27,6 +29,9 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @DisplayName("UserRepository integration tests")
 class UserRepositoryIntegrationTest extends BaseIntegrationTest {
+
+    @MockitoBean
+    private OpalJwtAuthenticationProvider opalJwtAuthenticationProvider;
 
     @Autowired
     private UserRepository userRepository;
@@ -94,8 +99,8 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                           "business_unit_id": 74,
                           "permissions": [
                             {
-                              "permission_id": 20,
-                              "permission_name": "Account Maintenance - Minor Creditor"
+                              "permission_code": "ACCOUNT_MAINTENANCE_MINOR_CREDITOR",
+                              "permission_name": "Account Maintenance Minor Creditor"
                             }
                           ]
                         }
@@ -146,28 +151,24 @@ class UserRepositoryIntegrationTest extends BaseIntegrationTest {
                       "business_unit_id": 70,
                       "permissions": [
                         {
-                          "permission_id": 1,
-                          "permission_name": "Create and Manage Draft Accounts"
-                        },
-                        {
-                          "permission_id": 3,
+                          "permission_code": "ACCOUNT_ENQUIRY",
                           "permission_name": "Account Enquiry"
                         },
                         {
-                          "permission_id": 4,
-                          "permission_name": "Collection Order"
-                        },
-                        {
-                          "permission_id": 5,
-                          "permission_name": "Check and Validate Draft Accounts"
-                        },
-                        {
-                          "permission_id": 6,
-                          "permission_name": "Search and view accounts"
-                        },
-                        {
-                          "permission_id": 7,
+                          "permission_code": "ACCOUNT_MAINTENANCE",
                           "permission_name": "Account Maintenance"
+                        },
+                        {
+                          "permission_code":"COLLECTION_ORDER",
+                          "permission_name":"Collection Order"
+                        },
+                        {
+                          "permission_code":"CREATE_MANAGE_DRAFT_ACCOUNTS",
+                          "permission_name":"Create Manage Draft Accounts"
+                        },
+                        {
+                          "permission_code":"SEARCH_AND_VIEW_ACCOUNTS",
+                          "permission_name":"Search and view accounts"
                         }
                       ]
                     },

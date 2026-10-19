@@ -12,6 +12,7 @@ import uk.gov.hmcts.opal.actions.GetUserState;
 import uk.gov.hmcts.opal.utils.TestHttpClient.TestHttpResponseDetails;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.StreamSupport;
 
 /**
@@ -32,6 +33,36 @@ public class RmUserStateStepDef extends BaseStepDef {
         String token = new BearerTokenStepDef().getAccessTokenForUser(userEmail);
         assertThat(token).as("Testing-support token issuance must succeed").isNotBlank();
         recordResponse(GetUserState.getUserStateV2(getTestUrl(), token));
+    }
+
+    /**
+     * Requests User State with no Authorization header, irrespective of earlier scenarios.
+     */
+    @When("I request V2 User State without authentication")
+    public void requestWithoutAuthentication() {
+        recordResponse(GetUserState.getUserStateV2(getTestUrl(), null));
+    }
+
+    /**
+     * Verifies the authentication error contract without exposing user-state data.
+     */
+    @Then("the User State response is an authentication problem without assignment data")
+    public void authenticationProblem() throws JacksonException {
+        assertThat(response).as("An unauthenticated request must precede this assertion").isNotNull();
+        String mediaType = response.firstHeader("Content-Type").orElse("")
+            .split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
+        assertThat(mediaType).isEqualTo("application/problem+json");
+
+        JsonNode problem = responseBody();
+        assertThat(problem.isObject()).isTrue();
+        assertThat(problem.path("status").intValue()).isEqualTo(401);
+        assertThat(problem.path("title").asString()).isEqualTo("Unauthorized");
+        assertThat(problem.path("detail").asString()).isNotBlank();
+        for (String field : List.of("user_id", "username", "name", "domains", "business_unit_users",
+            "business_unit_id", "permissions", "permission_id", "permission_name", "trace", "stackTrace",
+            "stack_trace")) {
+            assertThat(problem.findValues(field)).as("Authentication errors must not expose %s", field).isEmpty();
+        }
     }
 
     /**

@@ -100,6 +100,27 @@ Serenity HTML output is copied to:
 functional-test-report/index.html
 ```
 
+#### Maintenance User State coverage (PO-10302)
+
+`features/functional/UserStateRmDomain.feature` runs in the existing `functionalOpal` suite.
+It checks the creator permission for `opal-test@dev.platform.hmcts.net` in Maintenance BU44,
+its absence for `opal-test-4@dev.platform.hmcts.net` in Maintenance BU111 (Houghton),
+and a direct User State request without an Authorization header.
+
+Use a non-production environment with the normal authentication filter chain enabled,
+the NLE migrations through V1_67 applied, and testing-support token issuance available
+for both identities. The fixtures are selected without changing roles or memberships.
+Requests use `X-New-Login: false` and include a valid Content-Digest.
+
+The server must run in Opal mode with release-1a enabled. For a locally started service
+using offline flags, configure `LAUNCH_DARKLY_ENABLED=false`, `RELEASE_1A_ENABLED=true`,
+`IS_LEGACY_MODE=false` and `TESTING_SUPPORT_ENDPOINTS_ENABLED=true` on the server process.
+The Gradle task's `IS_LEGACY_MODE` setting applies to the test process only.
+Supply identity-provider/test credentials through the existing environment setup.
+
+Run `TEST_URL=http://localhost:4555 ./gradlew functionalOpal`, substituting the configured
+service URL when needed. A successful compilation alone does not prove these live scenarios.
+
 ### Alternative script to run application
 
 To skip all the setting up and building, just execute the following command:

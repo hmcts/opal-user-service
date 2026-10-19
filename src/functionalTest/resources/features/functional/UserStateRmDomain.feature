@@ -13,3 +13,8 @@ Feature: Maintenance permissions in User State
     And my User State belongs to user 500000003
     And my Maintenance Business Unit 111 includes permission 3 named "Account Enquiry"
     And no Maintenance Business Unit grants permission 21 named "Create and Manage Draft Casefiles"
+
+  Scenario: User State requires authentication
+    When I request V2 User State without authentication
+    Then The response returns the status code 401
+    And the User State response is an authentication problem without assignment data

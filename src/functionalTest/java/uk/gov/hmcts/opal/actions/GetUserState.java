@@ -8,6 +8,7 @@ import uk.gov.hmcts.opal.utils.TestHttpClient;
 import uk.gov.hmcts.opal.utils.TestHttpClient.TestHttpResponse;
 import uk.gov.hmcts.opal.utils.TestHttpClient.TestHttpResponseDetails;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -38,17 +39,20 @@ public class GetUserState {
     }
 
     /**
-     * Retrieves V2 state using the supplied bearer token without recording a new login.
+     * Retrieves V2 state without recording a new login.
      *
      * @param baseUri base URL of the service under test.
-     * @param token bearer token for the selected synthetic user.
+     * @param token selected user's token, or null to omit authentication deliberately.
      * @return response status, body bytes and headers.
      */
     public static TestHttpResponseDetails getUserStateV2(String baseUri, String token) {
-        return TestHttpClient.getWithResponseDetails(baseUri + USER_STATE_V2_URI, Map.of(
-            "Accept", "application/json",
-            "Authorization", "Bearer " + token,
-            "X-New-Login", "false",
-            CONTENT_DIGEST, contentDigestHeaderForEmptyBody()));
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Accept", "application/json");
+        headers.put("X-New-Login", "false");
+        headers.put(CONTENT_DIGEST, contentDigestHeaderForEmptyBody());
+        if (token != null) {
+            headers.put("Authorization", "Bearer " + token);
+        }
+        return TestHttpClient.getWithResponseDetails(baseUri + USER_STATE_V2_URI, headers);
     }
 }

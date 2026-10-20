@@ -50,10 +50,12 @@
       "allowedVersions": "<3.0.0"
     },
     {
-      "description": "opal-common-lib updates are coordinated manually across consuming services",
+      "description": "Review opal-common-lib updates for consumer compatibility",
       "matchManagers": ["gradle"],
       "matchPackageNames": ["uk.gov.hmcts:opal-common-lib"],
-      "enabled": false
+      "enabled": true,
+      "automerge": false,
+      "platformAutomerge": false
     },
     {
       "description": "Group all Gradle plugins - Minor/Patch",

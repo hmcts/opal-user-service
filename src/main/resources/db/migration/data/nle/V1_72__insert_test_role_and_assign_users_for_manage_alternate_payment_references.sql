@@ -10,13 +10,14 @@
 * Date          Author         Version     Nature of Change
 * ----------    -----------    --------    ----------------------------------------------------------------------------
 * 20/10/2026    T Tang         1.0         PO-10881 - Create new permission for Manage Alternate Payment References
-*
+* 21/10/2026    T Tang         1.1         PO-10881 - Updated to address review comments:
+*                                             Include 'Confiscation' domain and exclude opal-system-user
 **/
 
 WITH target_domains AS (
     SELECT d.opal_domain_id
     FROM domain d
-    WHERE d.opal_domain_name = 'Fines'
+    WHERE d.opal_domain_name IN ('Fines', 'Confiscation') 
 ),
 maybe_inserted_roles AS (
     INSERT INTO roles (
@@ -73,15 +74,12 @@ target_assignments AS (
         ON bu.business_unit_id = buu.business_unit_id
       JOIN target_roles tr
         ON tr.opal_domain_id = bu.opal_domain_id
-     WHERE u.token_name = 'opal-system-user'
-        OR (
-            u.token_name LIKE 'opal-test%'
+     WHERE u.token_name LIKE 'opal-test%'
             AND u.token_name <> 'opal-test-2'
             AND NOT (
                 u.token_name = 'opal-test-10'
                 AND bu.business_unit_name = 'H&F, K&C (West London)'
             )
-        )
 )
 INSERT INTO business_unit_user_roles (
     business_unit_user_role_id,

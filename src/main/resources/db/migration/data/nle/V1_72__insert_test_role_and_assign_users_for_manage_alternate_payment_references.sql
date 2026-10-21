@@ -32,7 +32,7 @@ maybe_inserted_roles AS (
         1,
         td.opal_domain_id,
         'TEST ONLY - Manage Alternate Payment References',
-        ARRAY['Manage Alternate Payment References']::varchar(200)[]
+        ARRAY['MANAGE_ALTERNATE_PAYMENT_REFERENCES']::t_permissions_enum[]
     FROM target_domains td
     WHERE NOT EXISTS (
         SELECT 1

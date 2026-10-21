@@ -14,4 +14,4 @@
 **/
 
 ALTER TYPE t_permissions_enum
-    ADD VALUE IF NOT EXISTS 'Manage Alternate Payment References';
+    ADD VALUE IF NOT EXISTS 'MANAGE_ALTERNATE_PAYMENT_REFERENCES';

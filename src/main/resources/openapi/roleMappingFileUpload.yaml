@@ -1,0 +1,102 @@
+
+openapi: 3.1.1
+
+info:
+  title: Opal User Service - Rolemapping File Upload
+  version: "0.0.1"
+
+paths:
+  /users/role-mapping/upload:
+    post:
+      operationId: uploadRoleMappingFile
+      summary: Upload Rolemapping File
+      description: >
+        Uploads a Rolemapping CSV file to Azure Blob Storage
+        for processing by the Tactical User Management service.
+      tags:
+        - User Management
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoleMappingUploadRequest'
+            encoding:
+              file:
+                contentType: text/csv
+
+      responses:
+        '204':
+          description: File successfully uploaded
+
+        '400':
+          description: Invalid request or CSV file
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '401':
+          description: Unauthorized
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '403':
+          description: User does not have the role_mapping permission
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '413':
+          description: File exceeds maximum permitted size
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '415':
+          description: Unsupported file type
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '429':
+          description: Too many requests
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '500':
+          description: Internal server error
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '503':
+          description: Service unavailable
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+components:
+  schemas:
+    RoleMappingUploadRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: >
+            CSV file containing user Roles and
+            Business Unit assignments.

@@ -26,7 +26,9 @@ public enum Permissions {
     CREATE_INTERFACE_FILES(19, "Create Interface Files"),
     ACCOUNT_MAINTENANCE_MINOR_CREDITOR(20, "Account Maintenance - Minor Creditor"),
     CREATE_MANAGE_DRAFT_CASEFILES(21, "Create and Manage Draft Casefiles"),
-    CHECK_VALIDATE_DRAFT_CASEFILES(22, "Check and validate draft Casefiles");
+    CHECK_VALIDATE_DRAFT_CASEFILES(22, "Check and validate draft Casefiles"),
+    VIEW_SUSPENSE_ITEMS(23, "View suspense items"),
+    MANAGE_SUSPENSE_ITEMS(24, "Manage suspense items");
 
     public final long id;
 

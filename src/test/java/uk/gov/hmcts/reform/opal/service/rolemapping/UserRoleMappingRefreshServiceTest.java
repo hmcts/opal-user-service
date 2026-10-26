@@ -114,4 +114,21 @@ class UserRoleMappingRefreshServiceTest {
 
         verify(cacheService).setLastUpdateAt(LAST_UPDATE_AT);
     }
+
+    @Test
+    void forceRefreshOnNextRunClearsLastUpdateAt() {
+
+        // ACT
+        refreshService.forceRefreshOnNextRun();
+
+        // ASSERT
+        verify(cacheService).clearLastUpdateAt();
+    }
+
+    private UserEntity user(String username, String subject) {
+        UserEntity user = new UserEntity();
+        user.setUsername(username);
+        user.setTokenSubject(subject);
+        return user;
+    }
 }

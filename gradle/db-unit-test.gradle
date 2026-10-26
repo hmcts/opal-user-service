@@ -1,0 +1,371 @@
+import java.util.concurrent.TimeUnit
+import org.gradle.api.GradleException
+import org.gradle.api.tasks.PathSensitivity
+
+def dbUnitTestDockerfile = file("${rootDir}/docker/postgres-pgtap.Dockerfile")
+def dbUnitTestMigrationDirectories = [
+  file("${rootDir}/src/main/resources/db/migration/ddl"),
+  file("${rootDir}/src/main/resources/db/migration/data/allEnvs"),
+  file("${rootDir}/src/main/resources/db/migration/data/nle")
+]
+def dbUnitTestSqlFiles = fileTree("${rootDir}/src/dbUnitTest") {
+  include '**/*_pgtap_tests.sql'
+}
+def dbUnitTestFailureFixture = file(
+  "${rootDir}/src/dbUnitTest/framework/failing_pgtap_test.sql"
+)
+def dbUnitTestFixtures = fileTree("${rootDir}/src/dbUnitTest") {
+  include '**/*.csv'
+}
+
+def runDbUnitTestCommand = { List<String> command ->
+  def execOutput = providers.exec {
+    commandLine command
+    ignoreExitValue = true
+  }
+  def result = execOutput.result.get()
+
+  [
+    exitCode: result.exitValue,
+    stdout: execOutput.standardOutput.asText.get(),
+    stderr: execOutput.standardError.asText.get()
+  ]
+}
+
+def requireSuccessfulDbUnitTestCommand = { String description, List<String> command ->
+  def result = runDbUnitTestCommand(command)
+  if (result.exitCode != 0) {
+    throw new GradleException(
+      "${description} failed with exit code ${result.exitCode}:\n${result.stdout}${result.stderr}"
+    )
+  }
+  result
+}
+
+tasks.register('dbUnitTest') {
+  description = 'Runs database-owned pgTAP tests against disposable PostgreSQL'
+  group = 'Verification'
+
+  inputs.file(dbUnitTestDockerfile).withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.files(dbUnitTestMigrationDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.files(dbUnitTestSqlFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.file(dbUnitTestFailureFixture).withPathSensitivity(PathSensitivity.RELATIVE)
+  inputs.files(dbUnitTestFixtures).withPathSensitivity(PathSensitivity.RELATIVE)
+  outputs.dir(layout.buildDirectory.dir('reports/dbUnitTest'))
+  outputs.upToDateWhen { false }
+
+  doLast {
+    def sqlFiles = dbUnitTestSqlFiles.files.findAll { it.isFile() }.sort { it.path }
+    if (sqlFiles.isEmpty()) {
+      throw new GradleException('No pgTAP test files found beneath src/dbUnitTest')
+    }
+    dbUnitTestMigrationDirectories.each { migrationDirectory ->
+      if (!migrationDirectory.isDirectory()) {
+        throw new GradleException("Required migration directory does not exist: ${migrationDirectory}")
+      }
+    }
+    def expectedMigrationScripts = dbUnitTestMigrationDirectories.collectMany { migrationDirectory ->
+      fileTree(migrationDirectory) {
+        include 'V*__*.sql'
+      }.files.collect { migrationFile -> migrationFile.name }
+    }.sort()
+    if (expectedMigrationScripts.isEmpty()) {
+      throw new GradleException('No Flyway migrations found in the dbUnitTest locations')
+    }
+
+    def reportDirectory = layout.buildDirectory.dir('reports/dbUnitTest').get().asFile
+    reportDirectory.mkdirs()
+    def pgProveReport = new File(reportDirectory, 'pg-prove.log')
+    def frameworkSelfTestReport = new File(reportDirectory, 'framework-self-test.log')
+    def summaryReport = new File(reportDirectory, 'summary.txt')
+    pgProveReport.text = ''
+    frameworkSelfTestReport.text = ''
+    summaryReport.text = 'Result: NOT COMPLETED\nDatabase container not started\n'
+
+    def imageName = 'opal-user-db-unit-test-postgres:17'
+    def flywayVersion = project.buildscript.configurations.classpath.allDependencies.find {
+      it.group == 'org.flywaydb' && it.name == 'flyway-database-postgresql'
+    }?.version
+    if (!flywayVersion) {
+      throw new GradleException('Cannot find the project-pinned PostgreSQL Flyway dependency')
+    }
+    def flywayImageName = "flyway/flyway:${flywayVersion}"
+    def containerName = "opal-user-db-unit-test-${UUID.randomUUID()}"
+    def databaseName = 'opal_user_db_unit_test'
+    def containerStarted = false
+    def cleanupConfirmed = true
+    def evidence = []
+    def startedAt = System.nanoTime()
+    Throwable primaryFailure = null
+
+    try {
+      def externalDatabaseSettings = System.getenv().findAll { name, value ->
+        (name.startsWith('FLYWAY_') || name.startsWith('OPAL_USER_DB_')
+          || name.startsWith('SPRING_DATASOURCE_') || name.startsWith('SPRING_FLYWAY_')
+          || name in ['PGHOST', 'PGPORT', 'PGDATABASE', 'PGUSER', 'PGPASSWORD', 'PGSERVICE', 'PGSERVICEFILE'])
+          && value != null && !value.isBlank()
+      }.keySet().toList()
+      externalDatabaseSettings.addAll(project.properties.keySet().findAll {
+        it == 'dburl' || it.startsWith('flyway.') || it.startsWith('spring.datasource.')
+      })
+      if (!externalDatabaseSettings.isEmpty()) {
+        throw new GradleException(
+          'dbUnitTest refuses external database settings: '
+            + externalDatabaseSettings.join(', ')
+        )
+      }
+
+      requireSuccessfulDbUnitTestCommand(
+        'Building the pgTAP PostgreSQL image',
+        [
+          'docker', 'build',
+          '--file', dbUnitTestDockerfile.absolutePath,
+          '--tag', imageName,
+          dbUnitTestDockerfile.parentFile.absolutePath
+        ]
+      )
+
+      requireSuccessfulDbUnitTestCommand(
+        'Starting disposable PostgreSQL',
+        [
+          'docker', 'run', '--detach', '--rm', '--network', 'none',
+          '--name', containerName,
+          '--env', 'POSTGRES_HOST_AUTH_METHOD=trust',
+          '--env', "POSTGRES_DB=${databaseName}",
+          imageName
+        ]
+      )
+      containerStarted = true
+      cleanupConfirmed = false
+
+      boolean databaseReady = false
+      for (int attempt = 1; attempt <= 60; attempt++) {
+        def postgresProcessResult = runDbUnitTestCommand(
+          ['docker', 'exec', containerName, 'cat', '/proc/1/comm']
+        )
+        if (postgresProcessResult.exitCode == 0 && postgresProcessResult.stdout.trim() == 'postgres') {
+          def readinessResult = runDbUnitTestCommand(
+            ['docker', 'exec', containerName, 'pg_isready', '-U', 'postgres', '-d', databaseName]
+          )
+          if (readinessResult.exitCode == 0) {
+            databaseReady = true
+            break
+          }
+        }
+        TimeUnit.SECONDS.sleep(1)
+      }
+      if (!databaseReady) {
+        throw new GradleException('Disposable PostgreSQL did not become ready within 60 seconds')
+      }
+
+      def initialObjectCount = requireSuccessfulDbUnitTestCommand(
+        'Confirming the database starts empty',
+        [
+          'docker', 'exec', containerName,
+          'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-At',
+          '-U', 'postgres', '-d', databaseName,
+          '-c', "SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public'"
+        ]
+      ).stdout.trim()
+      if (initialObjectCount != '0') {
+        throw new GradleException(
+          "Disposable PostgreSQL did not start empty: found ${initialObjectCount} public tables"
+        )
+      }
+
+      def flywayMounts = [
+        [dbUnitTestMigrationDirectories[0], '/flyway/sql/ddl'],
+        [dbUnitTestMigrationDirectories[1], '/flyway/sql/allEnvs'],
+        [dbUnitTestMigrationDirectories[2], '/flyway/sql/nle']
+      ]
+      def flywayBaseCommand = [
+        'docker', 'run', '--rm',
+        '--network', "container:${containerName}"
+      ]
+      flywayMounts.each { mount ->
+        flywayBaseCommand.addAll(['--volume', "${mount[0].absolutePath}:${mount[1]}:ro"])
+      }
+      flywayBaseCommand.addAll([
+        flywayImageName,
+        '-url=jdbc:postgresql://localhost:5432/' + databaseName,
+        '-user=postgres',
+        '-locations=filesystem:/flyway/sql/ddl,filesystem:/flyway/sql/allEnvs,filesystem:/flyway/sql/nle',
+        '-defaultSchema=public',
+        '-baselineOnMigrate=false',
+        '-cleanDisabled=true'
+      ])
+
+      requireSuccessfulDbUnitTestCommand(
+        'Preparing the pgTAP test directory',
+        ['docker', 'exec', containerName, 'mkdir', '-p', '/tmp/opal-db-unit-test']
+      )
+      requireSuccessfulDbUnitTestCommand(
+        'Copying pgTAP tests into the disposable database container',
+        ['docker', 'cp', "${rootDir}/src/dbUnitTest/.", "${containerName}:/tmp/opal-db-unit-test"]
+      )
+      requireSuccessfulDbUnitTestCommand(
+        'Copying actual migrations for direct SQL rerun tests',
+        [
+          'docker', 'cp',
+          "${rootDir}/src/main/resources/db/migration/.",
+          "${containerName}:/tmp/opal-db-migrations"
+        ]
+      )
+
+      def migrationResult = requireSuccessfulDbUnitTestCommand(
+        'Applying Flyway migrations',
+        flywayBaseCommand + ['migrate']
+      )
+      new File(reportDirectory, 'flyway.log').text = migrationResult.stdout + migrationResult.stderr
+      def appliedMigrationScripts = requireSuccessfulDbUnitTestCommand(
+        'Reading the applied Flyway migrations',
+        [
+          'docker', 'exec', containerName,
+          'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-At',
+          '-U', 'postgres', '-d', databaseName,
+          '-c', 'SELECT script FROM public.flyway_schema_history WHERE success IS TRUE ORDER BY installed_rank'
+        ]
+      ).stdout.readLines().collect { it.trim() }.findAll { !it.isEmpty() }
+      if (appliedMigrationScripts.sort() != expectedMigrationScripts) {
+        throw new GradleException(
+          'Flyway applied an unexpected migration set. Expected '
+            + expectedMigrationScripts.join(', ')
+            + '; applied '
+            + appliedMigrationScripts.join(', ')
+        )
+      }
+
+      requireSuccessfulDbUnitTestCommand(
+        'Validating Flyway migrations',
+        flywayBaseCommand + ['validate']
+      )
+      requireSuccessfulDbUnitTestCommand(
+        'Re-running Flyway migrations',
+        flywayBaseCommand + ['migrate']
+      )
+      def secondMigrationScripts = requireSuccessfulDbUnitTestCommand(
+        'Confirming the second Flyway run is a no-op',
+        [
+          'docker', 'exec', containerName,
+          'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-At',
+          '-U', 'postgres', '-d', databaseName,
+          '-c', 'SELECT script FROM public.flyway_schema_history WHERE success IS TRUE ORDER BY installed_rank'
+        ]
+      ).stdout.readLines().collect { it.trim() }.findAll { !it.isEmpty() }.sort()
+      if (secondMigrationScripts != appliedMigrationScripts) {
+        throw new GradleException(
+          'Flyway migration set changed on the second run: '
+            + appliedMigrationScripts.join(', ')
+            + ' to '
+            + secondMigrationScripts.join(', ')
+        )
+      }
+
+      def containerSqlFiles = sqlFiles.collect { sqlFile ->
+        def relativePath = file("${rootDir}/src/dbUnitTest").toPath().relativize(sqlFile.toPath())
+        "/tmp/opal-db-unit-test/${relativePath.toString().replace(File.separator, '/')}"
+      }
+      def failureFixturePath = '/tmp/opal-db-unit-test/framework/failing_pgtap_test.sql'
+      def frameworkSelfTestResult = runDbUnitTestCommand(
+        [
+          'docker', 'exec', containerName,
+          'pg_prove', '--verbose',
+          '-h', 'localhost', '-U', 'postgres', '-d', databaseName,
+          failureFixturePath
+        ]
+      )
+      frameworkSelfTestReport.text =
+        frameworkSelfTestResult.stdout + frameworkSelfTestResult.stderr
+      if (frameworkSelfTestResult.exitCode == 0) {
+        throw new GradleException('The deliberate failing pgTAP fixture did not fail pg_prove')
+      }
+      if (!frameworkSelfTestReport.text.contains(
+        'deliberate pgTAP failure used to verify the database unit-test framework'
+      )) {
+        throw new GradleException(
+          "The pgTAP framework self-test failed without the expected diagnostic; see ${frameworkSelfTestReport}"
+        )
+      }
+
+      def pgProveResult = runDbUnitTestCommand(
+        [
+          'docker', 'exec', containerName,
+          'pg_prove', '--verbose',
+          '-h', 'localhost', '-U', 'postgres', '-d', databaseName
+        ] + containerSqlFiles
+      )
+      pgProveReport.text = pgProveResult.stdout + pgProveResult.stderr
+      if (pgProveResult.exitCode != 0) {
+        throw new GradleException(
+          "pg_prove failed with exit code ${pgProveResult.exitCode}; see ${pgProveReport}"
+        )
+      }
+      def postgresVersion = requireSuccessfulDbUnitTestCommand(
+        'Reading the PostgreSQL version',
+        ['docker', 'exec', containerName, 'postgres', '--version']
+      ).stdout.trim()
+      evidence.add("PostgreSQL: ${postgresVersion}")
+      evidence.add("Flyway image: ${flywayImageName}")
+      evidence.add('Migration locations: ddl, allEnvs, nle')
+      evidence.add("Migrations applied: ${appliedMigrationScripts.join(', ')}")
+      evidence.add('Second Flyway migrate: no changes')
+      evidence.add('Fail-closed pgTAP framework self-test: passed')
+      evidence.add("pgTAP files executed: ${sqlFiles.size()}")
+      logger.lifecycle("Database unit-test report: ${pgProveReport}")
+    } catch (Throwable failure) {
+      primaryFailure = failure
+      evidence.add("Result: FAILED - ${failure.message}")
+      throw failure
+    } finally {
+      Throwable cleanupFailure = null
+      if (containerStarted) {
+        def removeResult = runDbUnitTestCommand(['docker', 'rm', '--force', containerName])
+        if (removeResult.exitCode != 0) {
+          cleanupFailure = new GradleException(
+            "Unable to destroy disposable PostgreSQL: ${removeResult.stdout}${removeResult.stderr}"
+          )
+        } else {
+          def remainingContainers = runDbUnitTestCommand(
+            ['docker', 'ps', '-a', '--format', '{{.Names}}']
+          )
+          cleanupConfirmed = remainingContainers.exitCode == 0
+            && !remainingContainers.stdout.readLines().contains(containerName.toString())
+          if (!cleanupConfirmed) {
+            cleanupFailure = new GradleException(
+              'Disposable PostgreSQL removal could not be verified: '
+                + remainingContainers.stdout + remainingContainers.stderr
+            )
+          }
+        }
+      }
+
+      if (primaryFailure == null && cleanupFailure == null) {
+        evidence.add('Result: PASS')
+      } else if (primaryFailure == null) {
+        evidence.add("Result: FAILED - ${cleanupFailure.message}")
+      }
+      def durationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt)
+      evidence.add("Duration milliseconds: ${durationMillis}")
+      evidence.add("Cleanup confirmed: ${cleanupConfirmed}")
+      summaryReport.text = evidence.join(System.lineSeparator()) + System.lineSeparator()
+
+      if (cleanupFailure != null) {
+        if (primaryFailure != null) {
+          primaryFailure.addSuppressed(cleanupFailure)
+        } else {
+          throw cleanupFailure
+        }
+      }
+    }
+  }
+}
+
+tasks.register('dbUnitTestFrameworkTest') {
+  description = 'Verifies failing pgTAP assertions fail the database unit-test framework'
+  group = 'Verification'
+  dependsOn tasks.named('dbUnitTest')
+}
+
+tasks.named('check') {
+  dependsOn tasks.named('dbUnitTest')
+}

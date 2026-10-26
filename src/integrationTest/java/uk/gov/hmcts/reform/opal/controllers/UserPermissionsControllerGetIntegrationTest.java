@@ -183,6 +183,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
                   "status" : "PENDING",
                   "version" : 0,
                   "cache_name" : "USER_STATE_minorCreditorSubject",
+                  "is_system_user" : false,
                   "domains" : {
                     "fines" : {
                       "business_unit_users" : [ {
@@ -330,6 +331,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
               "status" : "PENDING",
               "version" : 0,
               "cache_name" : "USER_STATE_k9LpT2xVqR8m",
+              "is_system_user" : false,
               "domains" : {
                 "fines" : {
                   "business_unit_users" : [ {

@@ -84,4 +84,9 @@ public class UserRoleMappingRefreshService {
             );
         }
     }
+
+
+    public void forceRefreshOnNextRun() {
+        cacheService.clearLastUpdateAt();
+    }
 }

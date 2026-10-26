@@ -14,6 +14,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import uk.gov.hmcts.opal.common.spring.security.MethodSecurityConfig;
+import uk.gov.hmcts.opal.common.user.authentication.service.SystemUserAuthenticationService;
 
 @SpringBootApplication
 @ComponentScan(
@@ -24,7 +25,8 @@ import uk.gov.hmcts.opal.common.spring.security.MethodSecurityConfig;
     excludeFilters = {
         @ComponentScan.Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
         @ComponentScan.Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class),
-        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = MethodSecurityConfig.class)
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = MethodSecurityConfig.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SystemUserAuthenticationService.class)
     }
 )
 @EnableFeignClients(basePackages = "uk.gov.hmcts.opal")

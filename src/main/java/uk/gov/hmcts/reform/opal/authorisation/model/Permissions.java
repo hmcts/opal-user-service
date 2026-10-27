@@ -27,7 +27,8 @@ public enum Permissions {
     ACCOUNT_MAINTENANCE_MINOR_CREDITOR(20, "Account Maintenance - Minor Creditor"),
     CREATE_MANAGE_DRAFT_CASEFILES(21, "Create and Manage Draft Casefiles"),
     CHECK_VALIDATE_DRAFT_CASEFILES(22, "Check and validate draft Casefiles"),
-    PUBLISH_FIXED_PENALTIES(23, "Publish Fixed Penalties");
+    PUBLISH_FIXED_PENALTIES(23, "Publish Fixed Penalties"),
+    MANAGE_ALTERNATE_PAYMENT_REFERENCES(24, "Manage Alternate Payment References");
 
     public final long id;
 

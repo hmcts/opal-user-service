@@ -342,7 +342,7 @@ ext['postgresql.version'] = '42.7.12' // Fix CVE-2026-54291
 dependencies {
 
   constraints {
-    openapiImplementation('org.mozilla:rhino:1.9.1') {
+    openapiImplementation('org.mozilla:rhino:1.9.2') {
       because 'Fix CVE-2025-66453 in the OpenAPI dependency chain'
     }
   }

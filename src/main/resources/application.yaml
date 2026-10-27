@@ -106,6 +106,7 @@ launchdarkly:
   enabled: ${LAUNCH_DARKLY_ENABLED:true}
   default-flag-values:
     release-1a: ${RELEASE_1A_ENABLED:false}
+    release-1a-1-1: ${RELEASE_1A_1_1_ENABLED:false}
     is-legacy-mode: ${IS_LEGACY_MODE:true}
 
 opal:
@@ -119,6 +120,14 @@ opal:
     email: ${OPAL_TEST_USER_EMAIL:opal-test@dev.platform.hmcts.net}
     password: ${OPAL_TEST_USER_PASSWORD}
   common:
+    system-users:
+      token-url: https://login.microsoftonline.com/${AAD_TENANT_ID:}/oauth2/v2.0/token
+      users:
+        opal-system-user:
+          client-id: ${OPAL_SYSTEM_USER_CLIENT_ID:}
+          client-secret: ${OPAL_SYSTEM_USER_CLIENT_SECRET:}
+          scope: api://${opal.common.system-users.users.opal-system-user.client-id}/.default
+          grant-type: client_credentials
     domain: user
     content-digest:
       request:

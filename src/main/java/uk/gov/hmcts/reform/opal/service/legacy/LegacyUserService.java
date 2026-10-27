@@ -3,11 +3,14 @@ package uk.gov.hmcts.reform.opal.service.legacy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
 import uk.gov.hmcts.opal.common.legacy.service.GatewayService;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyGetUserRequest;
 import uk.gov.hmcts.reform.opal.dto.legacy.LegacyGetUserResponse;
 
+import java.util.Locale;
 import java.util.Objects;
+import uk.gov.hmcts.reform.opal.util.FeatureFlags;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +19,7 @@ public class LegacyUserService {
 
     private static final String GET_USER = "getLibraSystemUserIDs";
 
+    private final FeatureToggleApi featureToggleApi;
     private final GatewayService gatewayService;
 
     public GatewayService.Response<LegacyGetUserResponse> getUser(String emailAddress) {
@@ -30,7 +34,7 @@ public class LegacyUserService {
         GatewayService.Response<LegacyGetUserResponse> response = gatewayService.postToGateway(
             GET_USER,
             LegacyGetUserResponse.class,
-            request,
+            normalizeRequestEmailAddress(request),
             null
         );
 
@@ -47,5 +51,19 @@ public class LegacyUserService {
         }
 
         return response;
+    }
+
+    private LegacyGetUserRequest normalizeRequestEmailAddress(LegacyGetUserRequest request) {
+        if (featureToggleApi.isFeatureEnabledWithPropertyValueDefault(
+            FeatureFlags.RELEASE_1A_1_1,
+            FeatureFlags.RELEASE_1A_1_1_ENABLED_PROPERTY
+        )) {
+            if (request.getEmailAddress() != null) {
+                return LegacyGetUserRequest.builder()
+                    .emailAddress(request.getEmailAddress().toLowerCase(Locale.ROOT))
+                    .build();
+            }
+        }
+        return request;
     }
 }

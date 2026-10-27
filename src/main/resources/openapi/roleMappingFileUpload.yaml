@@ -1,0 +1,123 @@
+
+openapi: 3.1.1
+
+info:
+  title: Opal User Service - Rolemapping File Upload
+  version: "0.0.1"
+
+paths:
+  /users/role-mapping/upload:
+    post:
+      operationId: uploadRoleMappingFile
+      summary: Upload Rolemapping File
+      description: >
+        Uploads and validates a Rolemapping CSV file,
+        returning valid and invalid email addresses.
+      tags:
+        - User Management
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoleMappingUploadRequest'
+            encoding:
+              file:
+                contentType: text/csv
+
+      responses:
+        '200':
+          description: File uploaded and validated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleMappingUploadResponse'
+
+        '400':
+          description: Invalid request or CSV file
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '401':
+          description: Unauthorized
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '403':
+          description: Forbidden
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '413':
+          description: File exceeds maximum permitted size
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '415':
+          description: Unsupported file type
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '429':
+          description: Too many requests
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '500':
+          description: Internal server error
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+        '503':
+          description: Service unavailable
+          content:
+            application/json+problem:
+              schema:
+                $ref: './common.yaml#/components/schemas/ProblemDetail'
+
+components:
+  schemas:
+    RoleMappingUploadRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: Rolemapping CSV file.
+
+    RoleMappingUploadResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - validEmails
+        - invalidEmails
+      properties:
+        validEmails:
+          type: array
+          description: Email addresses that passed validation.
+          items:
+            type: string
+        invalidEmails:
+          type: array
+          description: Email addresses that failed validation.
+          uniqueItems: true
+          items:
+            type: string

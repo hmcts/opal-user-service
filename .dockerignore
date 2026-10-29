@@ -1,0 +1,2 @@
+# The build-stage cache is not an image input.
+.gradle-user-home/

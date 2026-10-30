@@ -1,7 +1,6 @@
 package uk.gov.hmcts.reform.opal.mappers;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -82,8 +81,7 @@ public interface UserStateMapper {
             .filter(Objects::nonNull)
             .map(permission -> new PermissionV2Dto(permission.getPermissionCode(), permission.getPermissionName()))
             .toList());
-        result.sort((p1, p2) -> (p1.getPermissionCode().compareTo(p2.getPermissionCode())));
-
+        result.sort(Comparator.comparing(PermissionV2Dto::getPermissionCode));
         return result;
     }
 
@@ -233,7 +231,6 @@ public interface UserStateMapper {
             .flatMap(role -> role.getApplicationFunctionList().stream())
             .map(PermissionV2::fromPermissionName)
             .filter(Objects::nonNull)
-            .distinct()
             .collect(Collectors.toSet());
     }
 
@@ -282,31 +279,19 @@ public interface UserStateMapper {
     }
 
     default Map<Domain, DomainDto> toDomainsV2(Map<Domain, DomainBusinessUnitUsers> domains) {
-        Map<Domain, DomainDto> mappedDomains = new HashMap<>(domains.size());
-
-        if (!domains.isEmpty()) {
-            for (Map.Entry<Domain, DomainBusinessUnitUsers> entry : domains.entrySet()) {
-                Domain domain = entry.getKey();
-                DomainBusinessUnitUsers domainBusinessUnitUsers = entry.getValue();
-
-                mappedDomains.put(domain, toDomainV2(domainBusinessUnitUsers));
-            }
-        }
-
-        return mappedDomains;
+        return domains.entrySet().stream().collect(Collectors.toMap(
+            Map.Entry::getKey, entry -> toDomainV2(entry.getValue())));
     }
 
     default DomainDto toDomainV2(DomainBusinessUnitUsers domainBusinessUnitUsers) {
         DomainDto domainDto = new DomainDto();
-
         if (domainBusinessUnitUsers != null) {
-            domainDto.setBusinessUnitUsers(new ArrayList<>());
-
-            for (BusinessUnitUserV2 businessUnitUser:  domainBusinessUnitUsers.getBusinessUnitUsers()) {
-                domainDto.getBusinessUnitUsers().add(toBusinessUnitUserV2Dto(businessUnitUser));
-            }
+            domainDto.setBusinessUnitUsers(
+                domainBusinessUnitUsers.getBusinessUnitUsers().stream()
+                    .map(this::toBusinessUnitUserV2Dto)
+                    .collect(Collectors.toCollection(ArrayList::new))
+            );
         }
-
         return domainDto;
     }
 

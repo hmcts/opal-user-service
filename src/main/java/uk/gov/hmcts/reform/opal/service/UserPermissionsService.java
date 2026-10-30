@@ -86,10 +86,8 @@ public class UserPermissionsService {
             logUserAuthenticationEvent(userId);
             updateLastLogin(user);
         }
-
         UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
         cacheUserState(dto, user);
-
         return dto;
     }
 

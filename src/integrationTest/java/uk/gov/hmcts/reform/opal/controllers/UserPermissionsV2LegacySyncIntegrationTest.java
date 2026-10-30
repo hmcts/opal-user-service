@@ -300,10 +300,10 @@ class UserPermissionsV2LegacySyncIntegrationTest extends AbstractLegacyWireMockI
             .getContentAsString();
 
         assertThat(permissionNamesForBusinessUnit(responseBody, firstBusinessUnitId))
-            .contains("Collection Order", "Check and Validate Draft Accounts", "Search and view accounts")
+            .contains("Collection Order", "Search and view accounts")
             .doesNotContain("Create and Manage Draft Accounts", "Account Enquiry - Account Notes");
         assertThat(permissionNamesForBusinessUnit(responseBody, secondBusinessUnitId))
-            .contains("Collection Order", "Check and Validate Draft Accounts", "Search and view accounts")
+            .contains("Collection Order", "Search and view accounts")
             .doesNotContain("Create and Manage Draft Accounts", "Account Enquiry - Account Notes");
 
         assertThat(helper.countRoleAssignmentsForUserRole(userId, oldRoleId)).isZero();

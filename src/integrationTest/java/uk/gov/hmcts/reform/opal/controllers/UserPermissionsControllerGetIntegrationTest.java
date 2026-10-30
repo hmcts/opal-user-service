@@ -382,7 +382,7 @@ class UserPermissionsControllerGetIntegrationTest extends AbstractIntegrationTes
               }
             }""";
 
-    private JsonNode  expectedV2UserState(boolean newLogin) throws Exception {
+    private JsonNode expectedV2UserState(boolean newLogin) throws Exception {
         ObjectNode expectedNode = (ObjectNode) objectMapper.readTree(EXPECTED_V2_USER_STATE);
         expectedNode.put("version", newLogin ? 1 : 0);
         return expectedNode;

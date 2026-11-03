@@ -27,7 +27,7 @@ public class UserRoleUploadService {
         try (Reader reader = new InputStreamReader(csv.getInputStream(), StandardCharsets.UTF_8)) {
             roleMappingResponseDto = userRoleMappingParser.parse(reader);
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to upload role mapping file", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to parse role mapping file", e);
         }
 
         if (roleMappingResponseDto.invalidEmails().isEmpty()) {

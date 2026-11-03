@@ -29,6 +29,8 @@ public enum Permissions {
     CHECK_VALIDATE_DRAFT_CASEFILES(22, "Check and validate draft Casefiles"),
     PUBLISH_FIXED_PENALTIES(23, "Publish Fixed Penalties"),
     MANAGE_ALTERNATE_PAYMENT_REFERENCES(24, "Manage Alternate Payment References");
+    VIEW_SUSPENSE_ITEMS(25, "View Suspense Items"),
+    MANAGE_SUSPENSE_ITEMS(26, "Manage Suspense Items");
 
     public final long id;
 

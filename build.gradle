@@ -342,12 +342,12 @@ ext['postgresql.version'] = '42.7.12' // Fix CVE-2026-54291
 dependencies {
 
   constraints {
-    openapiImplementation('org.mozilla:rhino:1.9.1') {
+    openapiImplementation('org.mozilla:rhino:1.9.2') {
       because 'Fix CVE-2025-66453 in the OpenAPI dependency chain'
     }
   }
 
-  implementation('uk.gov.hmcts:opal-common-lib:0.3.38') {
+  implementation('uk.gov.hmcts:opal-common-lib:0.3.39') {
     exclude group: 'com.microsoft.azure', module: 'applicationinsights-spring-boot-starter'
   }
   implementation('uk.gov.hmcts:spring-exception-handler:1.0.3') {
@@ -383,10 +383,10 @@ dependencies {
   implementation "org.apache.logging.log4j:log4j-api:${log4JVersion}"
   implementation "org.apache.logging.log4j:log4j-to-slf4j:${log4JVersion}"
 
-  implementation 'com.azure:azure-storage-blob:12.36.0'
+  implementation 'com.azure:azure-storage-blob:12.37.1'
   implementation 'org.apache.commons:commons-csv:1.14.1'
 
-  implementation 'io.rest-assured:rest-assured:6.2.0'
+  implementation 'io.rest-assured:rest-assured:6.3.0'
   implementation 'org.flywaydb:flyway-core:13.11.1'
   runtimeOnly 'org.flywaydb:flyway-database-postgresql:13.11.1', {
     exclude group: 'org.flywaydb', module: 'flyway-core'
@@ -434,8 +434,8 @@ dependencies {
 
   implementation 'org.openapitools:jackson-databind-nullable:0.2.13'
   openapiImplementation "io.swagger.parser.v3:swagger-parser:2.1.48"
-  openapiImplementation "io.swagger.core.v3:swagger-models:2.2.55"
-  openapiImplementation "io.swagger.core.v3:swagger-core:2.2.55"
+  openapiImplementation "io.swagger.core.v3:swagger-models:3.0.0"
+  openapiImplementation "io.swagger.core.v3:swagger-core:3.0.0"
   openapiImplementation "tools.jackson.core:jackson-databind"
   openapiImplementation "tools.jackson.dataformat:jackson-dataformat-yaml"
 

@@ -20,9 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import uk.gov.hmcts.opal.common.launchdarkly.FeatureDisabledException;
 import uk.gov.hmcts.opal.common.launchdarkly.FeatureToggle;
 import uk.gov.hmcts.opal.common.user.authorisation.exception.PermissionNotAllowedException;
 import uk.gov.hmcts.opal.common.util.SecurityUtil;
+import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
+import uk.gov.hmcts.reform.opal.config.LegacyModeConfiguration;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
 import uk.gov.hmcts.reform.opal.service.rolemapping.MappingFileProcessingResult;
@@ -34,6 +37,8 @@ import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleUploadService;
 @RequiredArgsConstructor
 @Slf4j(topic = "opal.UserPermissionsController")
 public class UserPermissionsController {
+
+    private final LegacyModeConfiguration legacyModeConfiguration;
 
     private final UserPermissionsService userPermissionsService;
     private final UserRoleUploadService userRoleUploadService;
@@ -54,8 +59,11 @@ public class UserPermissionsController {
     public ResponseEntity<MappingFileProcessingResult> uploadRoleMapping(@RequestPart("csv") MultipartFile csv) {
         log.debug(":POST:uploadRoleMapping:");
 
-        if (!SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser()
-            .hasPermission("role-mapping")) {
+        if (!legacyModeConfiguration.isLegacyMode()) {
+            throw new FeatureDisabledException("Only accessible in legacy mode");
+        }
+
+        if (!SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().hasPermission(Permissions.ROLE_MAPPING.getDescriptor())) {
             throw new PermissionNotAllowedException();
         }
 

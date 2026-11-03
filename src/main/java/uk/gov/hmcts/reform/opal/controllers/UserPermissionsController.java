@@ -7,7 +7,6 @@ import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_ENABLED_PROP
 import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildCreatedResponse;
 import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildResponse;
 
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -29,7 +28,6 @@ import uk.gov.hmcts.reform.opal.config.LegacyModeConfiguration;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
 import uk.gov.hmcts.reform.opal.service.rolemapping.MappingFileProcessingResult;
-import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingRefreshService;
 import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleUploadService;
 
 @RestController
@@ -42,8 +40,6 @@ public class UserPermissionsController {
 
     private final UserPermissionsService userPermissionsService;
     private final UserRoleUploadService userRoleUploadService;
-
-    private final UserRoleMappingRefreshService service;
 
     @PostMapping()
     @FeatureToggle(feature = RELEASE_1A, defaultValueProperty = RELEASE_1A_ENABLED_PROPERTY)
@@ -68,13 +64,6 @@ public class UserPermissionsController {
         }
 
         return buildResponse(userRoleUploadService.validateAndUploadRoleMappingCsv(csv));
-    }
-
-    @PostMapping(value = "role-mapping/boot")
-    @FeatureToggle(feature = RELEASE_1A_1_2, defaultValueProperty = RELEASE_1A_1_2_ENABLED_PROPERTY)
-    public ResponseEntity<?> uploadRoleMapping() throws IOException {
-        service.refreshMappings();
-        return null;
     }
 
     @PutMapping("/{userId}")

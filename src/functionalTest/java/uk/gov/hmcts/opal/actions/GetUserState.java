@@ -22,10 +22,24 @@ public class GetUserState {
      * @param baseUri base URL of the service under test.
      */
     public static void getUserState(String baseUri) {
+        requestUserState(baseUri, USER_STATE_URI);
+    }
+
+    /**
+     * Retrieves V2 user state using the bearer token stored for the scenario.
+     *
+     * @param baseUri base URL of the service under test.
+     */
+    public static void getUserStateV2(String baseUri) {
+        requestUserState(baseUri, "/v2/users/0/state");
+    }
+
+    private static void requestUserState(String baseUri, String path) {
         // Functional API calls include a valid digest for environments that enforce request validation.
         TestHttpResponse response = TestHttpClient.get(
-            baseUri + USER_STATE_URI,
+            baseUri + path,
             Map.of(
+                "Accept", "application/json",
                 "Content-Type", "application/json",
                 "Authorization", "Bearer " + getToken(),
                 CONTENT_DIGEST, contentDigestHeaderForEmptyBody()

@@ -28,7 +28,10 @@ public enum Permissions {
     CREATE_MANAGE_DRAFT_CASEFILES(21, "Create and Manage Draft Casefiles"),
     CHECK_VALIDATE_DRAFT_CASEFILES(22, "Check and validate draft Casefiles"),
     PUBLISH_FIXED_PENALTIES(23, "Publish Fixed Penalties"),
-    ROLE_MAPPING(24, "Role Mapping");
+    MANAGE_ALTERNATE_PAYMENT_REFERENCES(24, "Manage Alternate Payment References"),
+    VIEW_SUSPENSE_ITEMS(25, "View Suspense Items"),
+    MANAGE_SUSPENSE_ITEMS(26, "Manage Suspense Items"),
+    ROLE_MAPPING(27, "Role Mapping");
 
     public final long id;
 

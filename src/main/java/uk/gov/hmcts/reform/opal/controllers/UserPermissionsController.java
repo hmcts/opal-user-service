@@ -61,7 +61,7 @@ public class UserPermissionsController {
 
         if (!SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser()
             .hasPermission(Permissions.ROLE_MAPPING.getDescriptor())) {
-            throw new PermissionNotAllowedException();
+            throw new PermissionNotAllowedException(Permissions.ROLE_MAPPING.getDescriptor());
         }
 
         return buildResponse(userRoleUploadService.validateAndUploadRoleMappingCsv(file));

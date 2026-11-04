@@ -59,7 +59,8 @@ public class UserPermissionsController {
             throw new FeatureDisabledException("Only accessible in legacy mode");
         }
 
-        if (!SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser().hasPermission(Permissions.ROLE_MAPPING.getDescriptor())) {
+        if (!SecurityUtil.getOpalJwtAuthenticationTokenForCurrentUser()
+            .hasPermission(Permissions.ROLE_MAPPING.getDescriptor())) {
             throw new PermissionNotAllowedException();
         }
 

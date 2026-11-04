@@ -55,7 +55,8 @@ class UserRoleUploadServiceTest {
     @Test
     void validateAndUploadRoleMappingCsv_doesNotUploadWhenEmailsAreInvalid() throws IOException {
         MockMultipartFile csv = csvFile();
-        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of("bad@example.com"), Set.of());
+        MappingFileProcessingResult result = new MappingFileProcessingResult(
+            List.of(), Set.of("bad@example.com"), Set.of());
         given(userRoleMappingParser.parse(any())).willReturn(result);
 
         MappingFileProcessingResult actual = service.validateAndUploadRoleMappingCsv(csv);

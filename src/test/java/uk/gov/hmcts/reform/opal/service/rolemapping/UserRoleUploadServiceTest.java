@@ -66,6 +66,18 @@ class UserRoleUploadServiceTest {
     }
 
     @Test
+    void validateAndUploadRoleMappingCsv_doesNotUploadWhenThereAreNoValidUsers() throws IOException {
+        MockMultipartFile csv = csvFile();
+        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of(), Set.of());
+        given(userRoleMappingParser.parse(any())).willReturn(result);
+
+        MappingFileProcessingResult actual = service.validateAndUploadRoleMappingCsv(csv);
+
+        assertSame(result, actual);
+        verify(blobClient, never()).upload(any(), anyLong(), eq(true));
+    }
+
+    @Test
     void validateAndUploadRoleMappingCsv_doesNotUploadWhenRowsAreSkipped() throws IOException {
         MockMultipartFile csv = csvFile();
         MappingFileProcessingResult result = new MappingFileProcessingResult(

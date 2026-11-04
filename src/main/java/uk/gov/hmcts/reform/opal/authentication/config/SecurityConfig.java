@@ -82,8 +82,6 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(AUTH_WHITELIST)
                     .permitAll()
-//                    .requestMatchers(HttpMethod.POST, "/users/role-mapping/upload")
-//                    .hasAuthority("SCOPE_role_mapping")
                     .anyRequest().authenticated()
             )
             .exceptionHandling(exceptionHandling ->

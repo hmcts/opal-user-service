@@ -93,7 +93,8 @@ class UserRoleMappingRefreshServiceTest {
                     Map.of("R4", Set.of("BU4"))
                 )
             ),
-            Set.of("baduser@test.com")
+            Set.of("baduser@test.com"),
+            Set.of()
         );
 
         when(parser.parse(any(Reader.class))).thenReturn(mappingResult);
@@ -154,6 +155,7 @@ class UserRoleMappingRefreshServiceTest {
                     Map.of("R2", Set.of("BU2"))
                 )
             ),
+            Set.of(),
             Set.of()
         );
 
@@ -203,6 +205,7 @@ class UserRoleMappingRefreshServiceTest {
                     Map.of("R1", Set.of("BU1"))
                 )
             ),
+            Set.of(),
             Set.of()
         );
 

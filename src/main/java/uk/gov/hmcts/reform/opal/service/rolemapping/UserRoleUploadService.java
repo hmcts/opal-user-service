@@ -30,7 +30,7 @@ public class UserRoleUploadService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to parse role mapping file", e);
         }
 
-        if (roleMappingResponseDto.invalidEmails().isEmpty()) {
+        if (roleMappingResponseDto.invalidEmails().isEmpty() && roleMappingResponseDto.skippedRows().isEmpty()) {
             try {
                 blobClient.upload(csv.getInputStream(), csv.getSize(), true);
             } catch (IOException e) {

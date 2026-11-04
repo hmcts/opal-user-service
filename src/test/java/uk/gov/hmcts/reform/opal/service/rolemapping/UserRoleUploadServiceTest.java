@@ -42,7 +42,7 @@ class UserRoleUploadServiceTest {
     @Test
     void validateAndUploadRoleMappingCsv_uploadsFileWhenAllEmailsAreValid() throws IOException {
         MockMultipartFile csv = csvFile();
-        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of());
+        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of(), Set.of());
         given(userRoleMappingParser.parse(any())).willReturn(result);
 
         MappingFileProcessingResult actual = service.validateAndUploadRoleMappingCsv(csv);
@@ -54,7 +54,7 @@ class UserRoleUploadServiceTest {
     @Test
     void validateAndUploadRoleMappingCsv_doesNotUploadWhenEmailsAreInvalid() throws IOException {
         MockMultipartFile csv = csvFile();
-        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of("bad@example.com"));
+        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of("bad@example.com"), Set.of());
         given(userRoleMappingParser.parse(any())).willReturn(result);
 
         MappingFileProcessingResult actual = service.validateAndUploadRoleMappingCsv(csv);
@@ -82,7 +82,7 @@ class UserRoleUploadServiceTest {
         given(csv.getInputStream())
             .willReturn(new ByteArrayInputStream(new byte[0]))
             .willThrow(new IOException("storage error"));
-        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of());
+        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of(), Set.of());
         given(userRoleMappingParser.parse(any())).willReturn(result);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,

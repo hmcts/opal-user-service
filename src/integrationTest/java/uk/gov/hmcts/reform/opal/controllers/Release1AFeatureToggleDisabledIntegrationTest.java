@@ -1,15 +1,19 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,21 +26,25 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.RequestBuilder;
 import uk.gov.hmcts.opal.common.controllers.advice.OpalGlobalExceptionHandler;
 import uk.gov.hmcts.opal.common.launchdarkly.FeatureToggleAspect;
-import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.launchdarkly.service.FeatureToggleApi;
+import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.user.authentication.model.AccessTokenResponse;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authorisation.client.service.UserStateClientService;
 import uk.gov.hmcts.reform.opal.authentication.service.TestingSupportAccessTokenService;
+import uk.gov.hmcts.reform.opal.config.LegacyModeConfiguration;
 import uk.gov.hmcts.reform.opal.service.UserPermissionsService;
 import uk.gov.hmcts.reform.opal.service.opal.UserService;
+import uk.gov.hmcts.reform.opal.service.rolemapping.MappingFileProcessingResult;
+import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleUploadService;
 
 @WebMvcTest
 @ActiveProfiles({"integration"})
@@ -78,6 +86,15 @@ class Release1AFeatureToggleDisabledIntegrationTest {
     @MockitoBean
     private SecurityEventLoggingService securityEventLoggingService;
 
+    @MockitoBean
+    private LegacyModeConfiguration legacyModeConfiguration;
+
+    @MockitoBean
+    private UserRoleUploadService userRoleUploadService;
+
+    private static final MockMultipartFile ROLE_MAPPING_FILE =
+        new MockMultipartFile("file", "roles.csv", "text/csv", "role,data\n".getBytes());
+
     @BeforeEach
     void setUpFeatureDisabled() {
         when(featureToggleApi.isFeatureEnabledWithPropertyValueDefault(anyString(), anyString(), anyBoolean()))
@@ -86,6 +103,9 @@ class Release1AFeatureToggleDisabledIntegrationTest {
         when(testingSupportAccessTokenService.getTestUserToken()).thenReturn(accessTokenResponse);
         when(testingSupportAccessTokenService.getTestUserToken(anyString())).thenReturn(accessTokenResponse);
         when(accessTokenService.extractPreferredUsername(anyString())).thenReturn("test-user@dev.platform.hmcts.net");
+        when(legacyModeConfiguration.isLegacyMode()).thenReturn(true);
+        when(userRoleUploadService.validateAndUploadRoleMappingCsv(any()))
+            .thenReturn(new MappingFileProcessingResult(new ArrayList<>(), Set.of(), Set.of()));
     }
 
     static Stream<Arguments> release1aEndpoints() {
@@ -99,6 +119,9 @@ class Release1AFeatureToggleDisabledIntegrationTest {
             args("PUT /users", put("/users")
                 .header(AUTHORIZATION, AUTHORIZATION_VALUE)
                 .header(IF_MATCH, IF_MATCH_VALUE)),
+            args("POST /users/role-mapping/upload", multipart("/users/role-mapping/upload")
+                .file(ROLE_MAPPING_FILE)
+                .header(AUTHORIZATION, AUTHORIZATION_VALUE)),
             args("PUT /users/{userId}", put("/users/500000002")
                 .header(AUTHORIZATION, AUTHORIZATION_VALUE)
                 .header(IF_MATCH, IF_MATCH_VALUE)),
@@ -109,7 +132,7 @@ class Release1AFeatureToggleDisabledIntegrationTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("release1aEndpoints")
     void shouldReturnFeatureDisabledWhenRelease1aIsDisabled(String description,
-                                                            MockHttpServletRequestBuilder request)
+                                                            RequestBuilder request)
         throws Exception {
         mockMvc.perform(request)
             .andExpect(status().isNotFound())
@@ -118,7 +141,7 @@ class Release1AFeatureToggleDisabledIntegrationTest {
             .andExpect(jsonPath("$.detail").value("The requested feature is not currently available"));
     }
 
-    private static Arguments args(String description, MockHttpServletRequestBuilder request) {
+    private static Arguments args(String description, RequestBuilder request) {
         return Arguments.of(description, request);
     }
 

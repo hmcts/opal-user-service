@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +43,7 @@ class UserRoleUploadServiceTest {
     @Test
     void validateAndUploadRoleMappingCsv_uploadsFileWhenAllEmailsAreValid() throws IOException {
         MockMultipartFile csv = csvFile();
-        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of(), Set.of());
+        MappingFileProcessingResult result = validMappingResult();
         given(userRoleMappingParser.parse(any())).willReturn(result);
 
         MappingFileProcessingResult actual = service.validateAndUploadRoleMappingCsv(csv);
@@ -82,7 +83,7 @@ class UserRoleUploadServiceTest {
         given(csv.getInputStream())
             .willReturn(new ByteArrayInputStream(new byte[0]))
             .willThrow(new IOException("storage error"));
-        MappingFileProcessingResult result = new MappingFileProcessingResult(List.of(), Set.of(), Set.of());
+        MappingFileProcessingResult result = validMappingResult();
         given(userRoleMappingParser.parse(any())).willReturn(result);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
@@ -95,10 +96,18 @@ class UserRoleUploadServiceTest {
 
     private MockMultipartFile csvFile() {
         return new MockMultipartFile(
-            "csv",
+            "file",
             "mappings.csv",
             "text/csv",
             "email_address,business_unit_id,role_id".getBytes(StandardCharsets.UTF_8)
         );
+    }
+
+    private MappingFileProcessingResult validMappingResult() {
+        ParsedUserMapping userMapping = new ParsedUserMapping(
+            "valid@example.com",
+            Map.of("ROLE_MAPPING", Set.of("BUSINESS_UNIT"))
+        );
+        return new MappingFileProcessingResult(List.of(userMapping), Set.of(), Set.of());
     }
 }

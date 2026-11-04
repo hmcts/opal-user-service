@@ -429,8 +429,8 @@ class UserStateMapperTest {
             .satisfies(businessUnitUserDto -> assertThat(businessUnitUserDto.getPermissions())
                 .extracting("permissionId", "permissionName")
                 .containsExactly(
-                    tuple(24L, "View Suspense Items"),
-                    tuple(25L, "Manage Suspense Items")
+                    tuple(25L, "View Suspense Items"),
+                    tuple(26L, "Manage Suspense Items")
                 ));
     }
 

@@ -52,7 +52,7 @@ public class UserPermissionsController {
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(feature = RELEASE_1A_1_2, defaultValueProperty = RELEASE_1A_1_2_ENABLED_PROPERTY)
-    public ResponseEntity<MappingFileProcessingResult> uploadRoleMapping(@RequestPart("csv") MultipartFile csv) {
+    public ResponseEntity<MappingFileProcessingResult> uploadRoleMapping(@RequestPart("file") MultipartFile file) {
         log.debug(":POST:uploadRoleMapping:");
 
         if (!legacyModeConfiguration.isLegacyMode()) {
@@ -63,7 +63,7 @@ public class UserPermissionsController {
             throw new PermissionNotAllowedException();
         }
 
-        return buildResponse(userRoleUploadService.validateAndUploadRoleMappingCsv(csv));
+        return buildResponse(userRoleUploadService.validateAndUploadRoleMappingCsv(file));
     }
 
     @PutMapping("/{userId}")

@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.service.rolemapping;
 
 import com.azure.storage.blob.BlobClient;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -22,17 +23,17 @@ public class UserRoleUploadService {
     private final UserRoleMappingParser userRoleMappingParser;
 
     @Transactional
-    public MappingFileProcessingResult validateAndUploadRoleMappingCsv(MultipartFile csv) {
+    public MappingFileProcessingResult validateAndUploadRoleMappingCsv(MultipartFile file) {
         MappingFileProcessingResult roleMappingResponseDto;
-        try (Reader reader = new InputStreamReader(csv.getInputStream(), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
             roleMappingResponseDto = userRoleMappingParser.parse(reader);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to parse role mapping file", e);
         }
 
         if (roleMappingResponseDto.invalidEmails().isEmpty() && roleMappingResponseDto.skippedRows().isEmpty()) {
-            try {
-                blobClient.upload(csv.getInputStream(), csv.getSize(), true);
+            try (InputStream inputStream = file.getInputStream()) {
+                blobClient.upload(inputStream, file.getSize(), true);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to upload role mapping file", e);
             }

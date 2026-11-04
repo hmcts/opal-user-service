@@ -9,11 +9,11 @@ Feature: Suspense permissions in user state
   Scenario: View Suspense permission is returned in the assigned business units
     When I fetch the current V2 user state
     Then The response returns the status code 200
-    And The user state contains permission 24 named "View Suspense Items" in business unit 73
-    And The user state contains permission 24 named "View Suspense Items" in business unit 77
+    And The user state contains permission 25 named "View Suspense Items" in business unit 73
+    And The user state contains permission 25 named "View Suspense Items" in business unit 77
 
   Scenario: Manage Suspense permission is returned in the assigned business units
     When I fetch the current V2 user state
     Then The response returns the status code 200
-    And The user state contains permission 25 named "Manage Suspense Items" in business unit 73
-    And The user state contains permission 25 named "Manage Suspense Items" in business unit 77
+    And The user state contains permission 26 named "Manage Suspense Items" in business unit 73
+    And The user state contains permission 26 named "Manage Suspense Items" in business unit 77

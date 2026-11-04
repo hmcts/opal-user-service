@@ -63,8 +63,14 @@ class PermissionsTest {
 
     @Test
     void suspensePermissions_haveExpectedDescriptorsAndCanBeResolved() {
-        assertPermission(Permissions.VIEW_SUSPENSE_ITEMS, 24L, "View Suspense Items");
-        assertPermission(Permissions.MANAGE_SUSPENSE_ITEMS, 25L, "Manage Suspense Items");
+        assertPermission(Permissions.VIEW_SUSPENSE_ITEMS, 25L, "View Suspense Items");
+        assertPermission(Permissions.MANAGE_SUSPENSE_ITEMS, 26L, "Manage Suspense Items");
+    }
+
+    @Test
+    void alternatePaymentReferences_hasExpectedDescriptorAndCanBeResolved() {
+        assertPermission(Permissions.MANAGE_ALTERNATE_PAYMENT_REFERENCES, 24L,
+            "Manage Alternate Payment References");
     }
 
     @Test

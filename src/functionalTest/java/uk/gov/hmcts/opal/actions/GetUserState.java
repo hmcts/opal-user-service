@@ -13,7 +13,7 @@ import static uk.gov.hmcts.opal.utils.ContentDigestUtils.contentDigestHeaderForE
  * Provides reusable API calls for the current-user state endpoint.
  */
 public class GetUserState {
-    public static final String USER_STATE_URI = "/users/state";
+    public static final String USER_STATE_URI = "/v2/users/0/state";
     private static final String CONTENT_DIGEST = "Content-Digest";
 
     /**
@@ -28,6 +28,7 @@ public class GetUserState {
             Map.of(
                 "Content-Type", "application/json",
                 "Authorization", "Bearer " + getToken(),
+                "X-New-Login", "false",
                 CONTENT_DIGEST, contentDigestHeaderForEmptyBody()
             )
         );

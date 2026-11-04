@@ -2,7 +2,7 @@ package uk.gov.hmcts.reform.opal.mappers;
 
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.Mockito.when;
 
 import java.math.BigInteger;
@@ -15,14 +15,15 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
+import uk.gov.hmcts.opal.common.user.authorisation.client.dto.PermissionV2Dto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
@@ -69,26 +70,6 @@ class UserStateMapperTest {
         when(user.getUsername()).thenReturn("username");
         when(user.getVersion()).thenReturn(BigInteger.valueOf(321L));
         when(user.getStatusFromTime(nowUtc)).thenReturn(UserStatus.ACTIVE);
-    }
-
-    @Test
-    void toUserStateDto_mapsUserFieldsAndBusinessUnitUsers() {
-
-        // Arrange
-        BusinessUnitUserDto buu1 = mock(BusinessUnitUserDto.class);
-        BusinessUnitUserDto buu2 = mock(BusinessUnitUserDto.class);
-        List<BusinessUnitUserDto> businessUnitUsers = List.of(buu1, buu2);
-
-        // Act
-        UserStateDto dto = mapper.toUserStateDto(user, businessUnitUsers, clock);
-
-        // Assert
-        assertThat(dto.getUserId()).isEqualTo(123L);
-        assertThat(dto.getUsername()).isEqualTo("username");
-        assertThat(dto.getName()).isEqualTo("token");
-        assertThat(dto.getVersion()).isEqualTo(BigInteger.valueOf(321L));
-        assertThat(dto.getStatus()).isEqualTo("active");
-        assertThat(dto.getBusinessUnitUsers()).containsExactly(buu1, buu2);
     }
 
     @Test
@@ -413,6 +394,40 @@ class UserStateMapperTest {
                     org.assertj.core.groups.Tuple.tuple("CREATE_INTERFACE_FILES", "Create Interface Files"),
                     org.assertj.core.groups.Tuple.tuple("VIEW_INTERFACE_FILES", "View Interface Files")
                 ));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "CREATE_MANAGE_DRAFT_CASEFILES",
+        "CHECK_VALIDATE_DRAFT_CASEFILES",
+        "PUBLISH_FIXED_PENALTIES",
+        "VIEW_SUSPENSE_ITEMS",
+        "MANAGE_SUSPENSE_ITEMS"
+    })
+    void toUserStateV2Dto_retainsMigratedPermissions(String permissionCode) {
+        PermissionV2 permission = PermissionV2.fromPermissionCode(permissionCode);
+        assertThat(permission).as("Common-lib must define %s", permissionCode).isNotNull();
+
+        RoleEntity role = buildRole("migrated-role", List.of(permissionCode));
+        when(user.getBusinessUnitUsers()).thenReturn(Set.of(
+            buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role))
+        ));
+
+        UserStateV2 state = mapper.toUserStateV2(user, clock);
+
+        assertThat(state.getDomains().get(Domain.FINES).getBusinessUnitUsers())
+            .singleElement()
+            .satisfies(membership -> assertThat(membership.getPermissions())
+                .extracting(PermissionV2::getPermissionCode)
+                .containsExactly(permissionCode));
+
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(state);
+
+        assertThat(dto.getDomains().get(Domain.FINES).getBusinessUnitUsers())
+            .singleElement()
+            .satisfies(membership -> assertThat(membership.getPermissions())
+                .extracting(PermissionV2Dto::getPermissionCode, PermissionV2Dto::getPermissionName)
+                .containsExactly(tuple(permissionCode, permission.getPermissionName())));
     }
 
     // ===== Helpers =====

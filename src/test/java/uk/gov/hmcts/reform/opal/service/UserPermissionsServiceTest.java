@@ -21,7 +21,6 @@ import uk.gov.hmcts.opal.common.logging.SecurityEventLoggingService;
 import uk.gov.hmcts.opal.common.spring.security.OpalJwtAuthenticationToken;
 import uk.gov.hmcts.opal.common.user.authentication.service.AccessTokenService;
 import uk.gov.hmcts.opal.common.user.authentication.service.TokenValidator;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.reform.opal.dto.UserDto;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
@@ -93,7 +92,6 @@ class UserPermissionsServiceTest {
     private static final String TOKEN_NAME = "John Smith";
     private static final String TOKEN_SUBJECT = "hcv732JFVWhf3Fd";
     private UserEntity userEntity;
-    private UserStateDto userDto;
 
     @BeforeEach
     void setUp() {
@@ -103,11 +101,6 @@ class UserPermissionsServiceTest {
             .tokenName(TOKEN_NAME)
             .tokenSubject(TOKEN_SUBJECT)
             .versionNumber(4L)
-            .build();
-
-        userDto = UserStateDto.builder()
-            .userId(USER_ID)
-            .username(TOKEN_PREFERRED_USERNAME)
             .build();
     }
 

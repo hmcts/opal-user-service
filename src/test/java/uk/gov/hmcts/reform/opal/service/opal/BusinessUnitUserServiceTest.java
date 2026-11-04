@@ -11,7 +11,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.reform.opal.dto.search.BusinessUnitUserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
@@ -98,14 +98,18 @@ class BusinessUnitUserServiceTest {
         BusinessUnitUserEntity businessUnitUserEntity = BusinessUnitUserEntity.builder()
             .businessUnitUserId("BUUserABCD").businessUnit(bue).build();
         List<BusinessUnitUserEntity> list = List.of(businessUnitUserEntity);
-        when(businessUnitUserRepository.findAllByUser_UserId(any())).thenReturn(list);
+        when(businessUnitUserRepository.findAllByUser_UserId(0L)).thenReturn(list);
 
         // Act
-        Set<BusinessUnitUser> result = businessUnitUserService.getLimitedBusinessUnitPermissionsByUserId(0L);
+        Set<BusinessUnitUserV2> result = businessUnitUserService.getLimitedBusinessUnitPermissionsByUserId(0L);
 
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
+        BusinessUnitUserV2 membership = result.iterator().next();
+        assertEquals("BUUserABCD", membership.getBusinessUnitUserId());
+        assertEquals((short) 100, membership.getBusinessUnitId());
+        assertEquals(Set.of(), membership.getPermissions());
 
     }
 

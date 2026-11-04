@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.reform.opal.dto.search.BusinessUnitUserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
@@ -51,17 +51,15 @@ public class BusinessUnitUserService implements BusinessUnitUserServiceInterface
     }
 
     /**
-     * Return a Set of 'cut down' Authorisation Business Unit Permissions mapped from Business Unit Users keyed on the
-     * user id. This method is assuming that there are no Permissions for the Business Unit Users and so skips
-     * performing the additional repository queries that <i>do</i> get performed in the method above.
+     * Return business unit memberships for the user without loading roles or permissions.
      */
-    public Set<BusinessUnitUser> getLimitedBusinessUnitPermissionsByUserId(Long userId) {
+    public Set<BusinessUnitUserV2> getLimitedBusinessUnitPermissionsByUserId(Long userId) {
         List<BusinessUnitUserEntity> buuList = businessUnitUserRepository.findAllByUser_UserId(userId);
 
-        return buuList.stream().map(buu -> BusinessUnitUser.builder()
+        return buuList.stream().map(buu -> BusinessUnitUserV2.builder()
             .businessUnitUserId(buu.getBusinessUnitUserId())
             .businessUnitId(buu.getBusinessUnit().getBusinessUnitId())
-            .permissions(Collections.emptySet()) // Assuming that Permissions exist for BusinessUnitUser.
+            .permissions(Collections.emptySet())
             .build()).collect(Collectors.toSet());
 
     }

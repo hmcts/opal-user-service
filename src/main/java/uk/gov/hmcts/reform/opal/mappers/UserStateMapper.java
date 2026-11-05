@@ -1,13 +1,12 @@
 package uk.gov.hmcts.reform.opal.mappers;
 
-import org.mapstruct.AnnotateWith;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+import org.mapstruct.factory.Mappers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.mapper.CommonUserStateMapper;
 import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
@@ -32,14 +31,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@AnnotateWith(Primary.class)
 @Mapper(componentModel = "spring")
-public interface UserStateMapper extends CommonUserStateMapper {
+public interface UserStateMapper {
 
     Logger log = LoggerFactory.getLogger(UserStateMapper.class);
 
+    CommonUserStateMapper commonUserStateMapper = Mappers.getMapper(CommonUserStateMapper.class);
+
     default UserStateV2Dto toUserStateV2Dto(UserEntity userEntity, @Context Clock clock) {
-        return toUserStateV2Dto(toUserStateV2(userEntity, clock));
+        return commonUserStateMapper.toUserStateV2Dto(toUserStateV2(userEntity, clock));
     }
 
 
@@ -78,7 +78,7 @@ public interface UserStateMapper extends CommonUserStateMapper {
             .filter(Objects::nonNull)
             .filter(buu -> buu.getBusinessUnit() != null)
             .filter(buu -> buu.getBusinessUnit().getDomain() != null)
-            .filter(buu -> toDomainOrNull(buu.getBusinessUnit().getDomain().getName()) != null)
+            .filter(buu -> commonUserStateMapper.toDomainOrNull(buu.getBusinessUnit().getDomain().getName()) != null)
             .collect(Collectors.groupingBy(BusinessUnitUserEntity::getBusinessUnitId));
 
         Set<Short> duplicatedBusinessUnitIds = groupedByBusinessUnitId.entrySet().stream()
@@ -110,7 +110,8 @@ public interface UserStateMapper extends CommonUserStateMapper {
         // Group BU users by domain.
         Map<Domain, List<BusinessUnitUserEntity>> groupedByDomain = new EnumMap<>(Domain.class);
         businessUnitUsers.forEach(businessUnitUser -> {
-            Domain mappedDomain = toDomainOrNull(businessUnitUser.getBusinessUnit().getDomain().getName());
+            Domain mappedDomain = commonUserStateMapper
+                .toDomainOrNull(businessUnitUser.getBusinessUnit().getDomain().getName());
             if (mappedDomain != null) {
                 groupedByDomain.computeIfAbsent(mappedDomain, ignored -> new java.util.ArrayList<>())
                     .add(businessUnitUser);

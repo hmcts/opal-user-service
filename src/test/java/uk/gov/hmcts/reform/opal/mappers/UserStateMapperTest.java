@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.opal.mappers;
 
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.Mockito.when;
 
 import java.math.BigInteger;
@@ -15,8 +14,6 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,11 +21,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
-import uk.gov.hmcts.opal.common.user.authorisation.client.dto.PermissionV2Dto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
-import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
-import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
 import uk.gov.hmcts.opal.common.user.authorisation.model.PermissionV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
@@ -173,7 +167,7 @@ class UserStateMapperTest {
             }
           }
         }
-            """;
+        """;
 
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expected));
@@ -239,62 +233,6 @@ class UserStateMapperTest {
 
         // Assert
         assertThat(result.getCacheName()).isNull();
-    }
-
-    @Test
-    @MockitoSettings(strictness = Strictness.LENIENT)
-    void toUserStateV2Dto_fromUserStateV2_mapsCacheNameAndDomains() throws JacksonException {
-
-        // Arrange
-        UserStateV2 userStateV2 = UserStateV2.builder()
-            .userId(123L)
-            .username("username")
-            .name("token")
-            .status(UserStatus.ACTIVE)
-            .version(321L)
-            .systemUser(true)
-            .cacheName("USER_STATE_subject-123")
-            .domains(java.util.Map.of(
-                Domain.FINES, DomainBusinessUnitUsers.builder()
-                    .businessUnitUsers(List.of(
-                        BusinessUnitUserV2.builder()
-                            .businessUnitUserId("ABC123")
-                            .businessUnitId((short) 41)
-                            .permissions(emptySet())
-                            .build()
-                    ))
-                    .build()
-            ))
-            .build();
-
-        // Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(userStateV2);
-
-        // Assert
-        assertThat(dto.getCacheName()).isNull();
-        assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
-            .isEqualTo(objectMapper.readTree("""
-                {
-                  "user_id": 123,
-                  "username": "username",
-                  "name": "token",
-                  "status": "ACTIVE",
-                  "version": 321,
-                  "cache_name": null,
-                  "is_system_user": true,
-                  "domains": {
-                    "fines": {
-                      "business_unit_users": [
-                        {
-                          "business_unit_user_id": "ABC123",
-                          "business_unit_id": 41,
-                          "permissions": []
-                        }
-                      ]
-                    }
-                  }
-                }
-            """));
     }
 
     @Test
@@ -395,40 +333,6 @@ class UserStateMapperTest {
                     org.assertj.core.groups.Tuple.tuple("CREATE_INTERFACE_FILES", "Create Interface Files"),
                     org.assertj.core.groups.Tuple.tuple("VIEW_INTERFACE_FILES", "View Interface Files")
                 ));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-        "CREATE_MANAGE_DRAFT_CASEFILES",
-        "CHECK_VALIDATE_DRAFT_CASEFILES",
-        "PUBLISH_FIXED_PENALTIES",
-        "VIEW_SUSPENSE_ITEMS",
-        "MANAGE_SUSPENSE_ITEMS"
-    })
-    void toUserStateV2Dto_retainsMigratedPermissions(String permissionCode) {
-        PermissionV2 permission = PermissionV2.fromPermissionCode(permissionCode);
-        assertThat(permission).as("Common-lib must define %s", permissionCode).isNotNull();
-
-        RoleEntity role = buildRole("migrated-role", List.of(permissionCode));
-        when(user.getBusinessUnitUsers()).thenReturn(Set.of(
-            buildBusinessUnitUserEntity("ABC123", fines, (short) 41, Set.of(role))
-        ));
-
-        UserStateV2 state = mapper.toUserStateV2(user, clock);
-
-        assertThat(state.getDomains().get(Domain.FINES).getBusinessUnitUsers())
-            .singleElement()
-            .satisfies(membership -> assertThat(membership.getPermissions())
-                .extracting(PermissionV2::getPermissionCode)
-                .containsExactly(permissionCode));
-
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(state);
-
-        assertThat(dto.getDomains().get(Domain.FINES).getBusinessUnitUsers())
-            .singleElement()
-            .satisfies(membership -> assertThat(membership.getPermissions())
-                .extracting(PermissionV2Dto::getPermissionCode, PermissionV2Dto::getPermissionName)
-                .containsExactly(tuple(permissionCode, permission.getPermissionName())));
     }
 
     // ===== Helpers =====

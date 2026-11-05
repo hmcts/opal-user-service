@@ -105,7 +105,7 @@ class Release1AFeatureToggleDisabledIntegrationTest {
         when(accessTokenService.extractPreferredUsername(anyString())).thenReturn("test-user@dev.platform.hmcts.net");
         when(legacyModeConfiguration.isLegacyMode()).thenReturn(true);
         when(userRoleUploadService.validateAndUploadRoleMappingCsv(any()))
-            .thenReturn(new MappingFileProcessingResult(new ArrayList<>(), Set.of(), Set.of()));
+            .thenReturn(new MappingFileProcessingResult(new ArrayList<>(), Set.of()));
     }
 
     static Stream<Arguments> release1aEndpoints() {

@@ -27,7 +27,6 @@ public class UserRoleMappingParser {
 
         Map<String, ParsedUserMappingBuilder> userMappings = new LinkedHashMap<>();
         Set<String> nonContiguousEmails = new LinkedHashSet<>();
-        Set<Long> skippedRows = new LinkedHashSet<>();
 
         try (CSVParser parser = CSVFormat.DEFAULT
             .builder()
@@ -43,7 +42,6 @@ public class UserRoleMappingParser {
                 // --- Skip malformed rows ---
                 if (record.size() != 3) {
                     log.warn("Skipping malformed CSV row {}: {}", record.getRecordNumber(), record);
-                    skippedRows.add(record.getRecordNumber());
                     continue;
                 }
 
@@ -81,8 +79,7 @@ public class UserRoleMappingParser {
             userMappings.values().stream()
                 .map(ParsedUserMappingBuilder::build)
                 .toList(),
-            nonContiguousEmails,
-            skippedRows
+            nonContiguousEmails
         );
     }
 

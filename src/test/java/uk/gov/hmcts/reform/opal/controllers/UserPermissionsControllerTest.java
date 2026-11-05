@@ -99,7 +99,7 @@ class UserPermissionsControllerTest {
     @Test
     void uploadRoleMapping_uploadsFileForAuthorizedUser() {
         MockMultipartFile file = new MockMultipartFile("file", "roles.csv", "text/csv", "".getBytes());
-        MappingFileProcessingResult expected = new MappingFileProcessingResult(List.of(), Set.of(), Set.of());
+        MappingFileProcessingResult expected = new MappingFileProcessingResult(List.of(), Set.of());
         given(legacyModeConfiguration.isLegacyMode()).willReturn(true);
         setCurrentUserPermission(true);
         given(userRoleUploadService.validateAndUploadRoleMappingCsv(file)).willReturn(expected);

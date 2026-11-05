@@ -5,7 +5,6 @@ import java.util.Set;
 
 public record MappingFileProcessingResult(
     List<ParsedUserMapping> validUsers,
-    Set<String> invalidEmails,
-    Set<Long> skippedRows
+    Set<String> invalidEmails
 ) {
 }

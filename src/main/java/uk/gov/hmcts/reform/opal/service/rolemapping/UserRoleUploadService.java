@@ -32,8 +32,7 @@ public class UserRoleUploadService {
         }
 
         if (!roleMappingResponseDto.validUsers().isEmpty()
-            && roleMappingResponseDto.invalidEmails().isEmpty()
-            && roleMappingResponseDto.skippedRows().isEmpty()) {
+            && roleMappingResponseDto.invalidEmails().isEmpty()) {
             try (InputStream inputStream = file.getInputStream()) {
                 blobClient.upload(inputStream, file.getSize(), true);
             } catch (IOException e) {

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -41,7 +42,7 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 @ExtendWith(MockitoExtension.class)
 class UserStateMapperTest {
 
-    private final UserStateMapper mapper = new UserStateMapperImplementation();
+    private final UserStateMapper mapper = Mappers.getMapper(UserStateMapper.class);
     private final Clock clock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC);
     private final ObjectMapper objectMapper = new ObjectMapper();
 

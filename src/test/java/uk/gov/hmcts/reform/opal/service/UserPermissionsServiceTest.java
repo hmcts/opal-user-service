@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -26,7 +27,6 @@ import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserMapper;
 import uk.gov.hmcts.reform.opal.mappers.UserMapperImpl;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
-import uk.gov.hmcts.reform.opal.mappers.UserStateMapperImplementation;
 import uk.gov.hmcts.reform.opal.repository.BusinessUnitUserRepository;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
 import uk.gov.hmcts.reform.opal.service.rolemapping.UserRoleMappingRefreshService;
@@ -63,7 +63,7 @@ class UserPermissionsServiceTest {
     private UserRepository userRepository;
 
     @Spy
-    private UserStateMapper userStateMapper = new UserStateMapperImplementation();
+    private UserStateMapper userStateMapper = Mappers.getMapper(UserStateMapper.class);
 
     @Spy
     private UserMapper userMapper = new UserMapperImpl();

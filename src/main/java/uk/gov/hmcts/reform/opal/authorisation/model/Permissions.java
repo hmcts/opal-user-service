@@ -30,7 +30,8 @@ public enum Permissions {
     PUBLISH_FIXED_PENALTIES(23, "Publish Fixed Penalties"),
     MANAGE_ALTERNATE_PAYMENT_REFERENCES(24, "Manage Alternate Payment References"),
     VIEW_SUSPENSE_ITEMS(25, "View Suspense Items"),
-    MANAGE_SUSPENSE_ITEMS(26, "Manage Suspense Items");
+    MANAGE_SUSPENSE_ITEMS(26, "Manage Suspense Items"),
+    ROLE_MAPPING(27, "Role Mapping");
 
     public final long id;
 

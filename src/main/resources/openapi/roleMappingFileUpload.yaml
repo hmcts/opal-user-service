@@ -12,7 +12,8 @@ paths:
       summary: Upload Rolemapping File
       description: >
         Uploads and validates a Rolemapping CSV file,
-        returning valid and invalid email addresses.
+        returning valid user mappings, invalid email addresses,
+        and row numbers skipped due to malformed CSV rows.
       tags:
         - User Management
 
@@ -107,17 +108,43 @@ components:
       type: object
       additionalProperties: false
       required:
-        - validEmails
+        - validUsers
         - invalidEmails
+        - skippedRows
       properties:
-        validEmails:
+        validUsers:
           type: array
-          description: Email addresses that passed validation.
+          description: User role mappings that passed validation.
           items:
-            type: string
+            $ref: '#/components/schemas/RoleMappingUser'
         invalidEmails:
           type: array
-          description: Email addresses that failed validation.
+          description: Email addresses that appear in non-contiguous CSV rows.
           uniqueItems: true
           items:
             type: string
+        skippedRows:
+          type: array
+          description: CSV row numbers skipped because they did not contain three columns.
+          uniqueItems: true
+          items:
+            type: integer
+            format: int64
+
+    RoleMappingUser:
+      type: object
+      additionalProperties: false
+      required:
+        - emailAddress
+        - roleToBusinessUnits
+      properties:
+        emailAddress:
+          type: string
+          description: Normalized email address associated with the role mappings.
+        roleToBusinessUnits:
+          type: object
+          description: Business unit identifiers grouped by role identifier.
+          additionalProperties:
+            type: array
+            items:
+              type: string

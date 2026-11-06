@@ -167,7 +167,7 @@ class UserStateMapperTest {
             }
           }
         }
-        """;
+            """;
 
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expected));

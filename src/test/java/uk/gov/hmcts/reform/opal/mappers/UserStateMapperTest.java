@@ -24,12 +24,12 @@ import tools.jackson.databind.ObjectMapper;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.UserStateV2Dto;
-import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUser;
+import uk.gov.hmcts.opal.common.user.authorisation.model.BusinessUnitUserV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.Domain;
 import uk.gov.hmcts.opal.common.user.authorisation.model.DomainBusinessUnitUsers;
-import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
+import uk.gov.hmcts.opal.common.user.authorisation.model.PermissionV2;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserStatus;
-import uk.gov.hmcts.reform.opal.authorisation.model.Permissions;
+import uk.gov.hmcts.opal.common.user.authorisation.model.UserStateV2;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserEntity;
 import uk.gov.hmcts.reform.opal.entity.BusinessUnitUserRoleEntity;
@@ -47,14 +47,14 @@ class UserStateMapperTest {
     private final DomainEntity fines = DomainEntity.builder().name("fines").build();
     private final DomainEntity confiscations = DomainEntity.builder().name("confiscation").build();
 
-    String permAE = Permissions.ACCOUNT_ENQUIRY.description;
-    String permAEN = Permissions.ACCOUNT_ENQUIRY_NOTES.description;
-    String permCVDA = Permissions.CHECK_VALIDATE_DRAFT_ACCOUNTS.description;
-    String permCO = Permissions.COLLECTION_ORDER.description;
-    String permSAVA = Permissions.SEARCH_AND_VIEW_ACCOUNTS.description;
-    String permVIF = Permissions.VIEW_INTERFACE_FILES.description;
-    String permCIF = Permissions.CREATE_INTERFACE_FILES.description;
-    String permAMMC = Permissions.ACCOUNT_MAINTENANCE_MINOR_CREDITOR.description;
+    String permAE = PermissionV2.ACCOUNT_ENQUIRY.getPermissionName();
+    String permAEN = PermissionV2.ACCOUNT_ENQUIRY_NOTES.getPermissionName();
+    String permCVDA = PermissionV2.CHECK_VALIDATE_DRAFT_ACCOUNTS.getPermissionName();
+    String permCO = PermissionV2.COLLECTION_ORDER.getPermissionName();
+    String permSAVA = PermissionV2.SEARCH_AND_VIEW_ACCOUNTS.getPermissionName();
+    String permVIF = PermissionV2.VIEW_INTERFACE_FILES.getPermissionName();
+    String permCIF = PermissionV2.CREATE_INTERFACE_FILES.getPermissionName();
+    String permAMMC = PermissionV2.ACCOUNT_MAINTENANCE_MINOR_CREDITOR.getPermissionName();
     String permBadName = "BAD_NAME";
 
     private final LocalDateTime nowUtc = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
@@ -78,6 +78,7 @@ class UserStateMapperTest {
         BusinessUnitUserDto buu1 = mock(BusinessUnitUserDto.class);
         BusinessUnitUserDto buu2 = mock(BusinessUnitUserDto.class);
         List<BusinessUnitUserDto> businessUnitUsers = List.of(buu1, buu2);
+
         // Act
         UserStateDto dto = mapper.toUserStateDto(user, businessUnitUsers, clock);
 
@@ -122,28 +123,6 @@ class UserStateMapperTest {
           "cache_name": null,
           "is_system_user": false,
           "domains": {
-            "confiscation": {
-              "business_unit_users": [
-                {
-                  "business_unit_user_id": "GHI789",
-                  "business_unit_id": 51,
-                  "permissions": [
-                    {
-                      "permission_id": 3,
-                      "permission_name": "Account Enquiry"
-                    },
-                    {
-                      "permission_id": 6,
-                      "permission_name": "Search and view accounts"
-                    },
-                    {
-                      "permission_id": 20,
-                      "permission_name": "Account Maintenance - Minor Creditor"
-                    }
-                  ]
-                }
-              ]
-            },
             "fines": {
               "business_unit_users": [
                 {
@@ -151,20 +130,20 @@ class UserStateMapperTest {
                   "business_unit_id": 41,
                   "permissions": [
                     {
-                      "permission_id": 2,
-                      "permission_name": "Account Enquiry - Account Notes"
-                    },
-                    {
-                      "permission_id": 3,
+                      "permission_code": "ACCOUNT_ENQUIRY",
                       "permission_name": "Account Enquiry"
                     },
                     {
-                      "permission_id": 4,
-                      "permission_name": "Collection Order"
+                      "permission_code": "ACCOUNT_ENQUIRY_NOTES",
+                      "permission_name": "Account Enquiry - Account Notes"
                     },
                     {
-                      "permission_id": 5,
+                      "permission_code": "CHECK_VALIDATE_DRAFT_ACCOUNTS",
                       "permission_name": "Check and Validate Draft Accounts"
+                    },
+                    {
+                      "permission_code": "COLLECTION_ORDER",
+                      "permission_name": "Collection Order"
                     }
                   ]
                 },
@@ -173,15 +152,37 @@ class UserStateMapperTest {
                   "business_unit_id": 42,
                   "permissions": [
                     {
-                      "permission_id": 2,
+                      "permission_code": "ACCOUNT_ENQUIRY_NOTES",
                       "permission_name": "Account Enquiry - Account Notes"
                     },
                     {
-                      "permission_id": 4,
+                      "permission_code": "COLLECTION_ORDER",
                       "permission_name": "Collection Order"
                     },
                     {
-                      "permission_id": 6,
+                      "permission_code": "SEARCH_AND_VIEW_ACCOUNTS",
+                      "permission_name": "Search and view accounts"
+                    }
+                  ]
+                }
+              ]
+            },
+            "confiscation": {
+              "business_unit_users": [
+                {
+                  "business_unit_user_id": "GHI789",
+                  "business_unit_id": 51,
+                  "permissions": [
+                    {
+                      "permission_code": "ACCOUNT_ENQUIRY",
+                      "permission_name": "Account Enquiry"
+                    },
+                    {
+                        "permission_code":"ACCOUNT_MAINTENANCE_MINOR_CREDITOR",
+                        "permission_name":"Account Maintenance Minor Creditor"
+                    },
+                    {
+                      "permission_code": "SEARCH_AND_VIEW_ACCOUNTS",
                       "permission_name": "Search and view accounts"
                     }
                   ]
@@ -194,6 +195,7 @@ class UserStateMapperTest {
 
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expected));
+
         assertThat(expected).doesNotContain(permBadName);
     }
 
@@ -232,7 +234,7 @@ class UserStateMapperTest {
                           "business_unit_id": 51,
                           "permissions": [
                             {
-                              "permission_id": 6,
+                              "permission_code": "SEARCH_AND_VIEW_ACCOUNTS",
                               "permission_name": "Search and view accounts"
                             }
                           ]
@@ -273,7 +275,7 @@ class UserStateMapperTest {
             .domains(java.util.Map.of(
                 Domain.FINES, DomainBusinessUnitUsers.builder()
                     .businessUnitUsers(List.of(
-                        BusinessUnitUser.builder()
+                        BusinessUnitUserV2.builder()
                             .businessUnitUserId("ABC123")
                             .businessUnitId((short) 41)
                             .permissions(emptySet())
@@ -344,8 +346,14 @@ class UserStateMapperTest {
                           "business_unit_user_id": "ABC123",
                           "business_unit_id": 41,
                           "permissions": [
-                            {"permission_id": 2, "permission_name": "Account Enquiry - Account Notes"},
-                            {"permission_id": 3, "permission_name": "Account Enquiry"}
+                            {
+                              "permission_code": "ACCOUNT_ENQUIRY",
+                              "permission_name": "Account Enquiry"
+                            },
+                            {
+                              "permission_code": "ACCOUNT_ENQUIRY_NOTES",
+                              "permission_name": "Account Enquiry - Account Notes"
+                            }
                           ]
                         }
                       ]
@@ -400,10 +408,10 @@ class UserStateMapperTest {
         assertThat(dto.getDomains().get(Domain.FINES).getBusinessUnitUsers())
             .singleElement()
             .satisfies(businessUnitUserDto -> assertThat(businessUnitUserDto.getPermissions())
-                .extracting("permissionId", "permissionName")
+                .extracting("permissionCode", "permissionName")
                 .containsExactly(
-                    org.assertj.core.groups.Tuple.tuple(18L, "View Interface Files"),
-                    org.assertj.core.groups.Tuple.tuple(19L, "Create Interface Files")
+                    org.assertj.core.groups.Tuple.tuple("CREATE_INTERFACE_FILES", "Create Interface Files"),
+                    org.assertj.core.groups.Tuple.tuple("VIEW_INTERFACE_FILES", "View Interface Files")
                 ));
     }
 

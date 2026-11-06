@@ -56,7 +56,7 @@ class SynchroniseRolesServiceIntegrationTest extends AbstractIntegrationTest {
         UserEntity user = userRepository.findById(USER_WITH_EXISTING_ROLE).orElseThrow();
         when(userPermissionsService.getAuthenticatedUserId()).thenReturn(USER_WITH_EXISTING_ROLE);
 
-        String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
+        String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getEmail();
         redisTemplate.opsForValue().set(cacheKey, objectMapper.writeValueAsString(Map.of(
             "2", Set.of("68", "73"),
             "3", Set.of("68", "70")

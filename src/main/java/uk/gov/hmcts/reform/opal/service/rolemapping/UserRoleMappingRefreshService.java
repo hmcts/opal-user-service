@@ -5,13 +5,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
-import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.reform.opal.entity.UserEntity;
-import uk.gov.hmcts.reform.opal.repository.UserRepository;
 
 @Slf4j
 @Service
@@ -21,7 +18,6 @@ public class UserRoleMappingRefreshService {
     private final MappingFileClient mappingFileClient;
     private final UserRoleMappingParser parser;
     private final UserRoleMappingCacheService cacheService;
-    private final UserRepository userRepository;
 
     public void refreshMappings() throws IOException {
 
@@ -52,33 +48,15 @@ public class UserRoleMappingRefreshService {
 
             // --- Process valid users ---
             for (ParsedUserMapping userMapping : mappingResult.validUsers()) {
-
-                Optional<UserEntity> userOpt =
-                    userRepository.findByUsernameIgnoreCase(userMapping.emailAddress());
-
-                if (userOpt.isEmpty()) {
-                    log.error("No user found in DB for email {}, skipping", userMapping.emailAddress());
-                    failureCount++;
-                    continue;
-                }
-
-                String tokenSubject = userOpt.get().getTokenSubject();
-
-                if (tokenSubject == null || tokenSubject.isBlank()) {
-                    log.error("User {} has blank token_subject, skipping", userMapping.emailAddress());
-                    failureCount++;
-                    continue;
-                }
-
                 try {
-                    cacheService.putUserMapping(tokenSubject, userMapping.roleToBusinessUnits());
-                    refreshedSubjects.add(tokenSubject);
+                    String email = userMapping.emailAddress();
+                    cacheService.putUserMapping(email, userMapping.roleToBusinessUnits());
+                    refreshedSubjects.add(email);
 
                 } catch (Exception e) {
                     log.error(
-                        "Failed to cache mapping for user {} (subject {}), skipping",
+                        "Failed to cache mapping for user {}, skipping",
                         userMapping.emailAddress(),
-                        tokenSubject,
                         e
                     );
                     failureCount++;
@@ -87,28 +65,11 @@ public class UserRoleMappingRefreshService {
 
             // --- Handle invalid users ---
             for (String invalidEmail : mappingResult.invalidEmails()) {
-
-                userRepository.findByUsernameIgnoreCase(invalidEmail)
-                    .ifPresentOrElse(user -> {
-                        String tokenSubject = user.getTokenSubject();
-
-                        if (tokenSubject != null && !tokenSubject.isBlank()) {
-                            cacheService.deleteUserMapping(tokenSubject);
-
-                            log.warn(
-                                "Invalid CSV structure for email {}, cache entry removed",
-                                invalidEmail
-                            );
-                        } else {
-                            log.warn(
-                                "Invalid CSV structure for email {}, token_subject missing",
-                                invalidEmail
-                            );
-                        }
-                    }, () -> log.warn(
-                        "Invalid CSV structure for email {}, user not found in DB",
-                        invalidEmail
-                    ));
+                cacheService.deleteUserMapping(invalidEmail);
+                log.warn(
+                    "Invalid CSV structure for email {}, cache entry removed",
+                    invalidEmail
+                );
             }
 
             // --- Cleanup ---

@@ -181,7 +181,7 @@ public class TestHelperService {
 
     public void setRoleMappingCache(UserEntity user, Map<Long, Set<Short>> roleMapping, String roleMappingUserPrefix)
         throws JacksonException {
-        String cacheKey = roleMappingUserPrefix + user.getTokenSubject();
+        String cacheKey = roleMappingUserPrefix + user.getEmail();
         redisTemplate.opsForValue().set(
             cacheKey,
             objectMapper.writeValueAsString(TestHelperUtil.toCacheRoleMapping(roleMapping))
@@ -193,7 +193,7 @@ public class TestHelperService {
         Map<Long, Set<Short>> expectedRoleMapping,
         String roleMappingUserPrefix
     ) throws JacksonException {
-        String cacheKey = roleMappingUserPrefix + user.getTokenSubject();
+        String cacheKey = roleMappingUserPrefix + user.getEmail();
         String actualRoleMappingCacheValue = redisTemplate.opsForValue().get(cacheKey);
         assertThat(actualRoleMappingCacheValue).isNotNull();
         assertThat(objectMapper.readTree(actualRoleMappingCacheValue)).isEqualTo(

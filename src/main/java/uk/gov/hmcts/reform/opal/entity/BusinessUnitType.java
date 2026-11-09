@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum BusinessUnitType {
     ACCOUNTING_DIVISION("Accounting Division"),
-    AREA("Area");
+    AREA("Area"),
+    ADMIN("Admin");
 
     private final String value;
 

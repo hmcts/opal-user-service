@@ -39,6 +39,11 @@ RESULT_TEXT = {
 }
 
 
+def is_aborted(build):
+    """Jenkins records an aborted build as a GitHub error with a description."""
+    return build["state"] == "error" and "aborted" in (build.get("description") or "").lower()
+
+
 def api(path):
     """Read GitHub's JSON API using the token supplied by the Action."""
     result = subprocess.run(["gh", "api", path], check=True, capture_output=True, text=True)
@@ -113,6 +118,14 @@ def message_for(build, previous_numbered, previous_completed, report_all=False):
     An unknown earlier result is not called GREEN, and a successful rebuild is
     not described as a confirmed fix to the underlying problem.
     """
+    if is_aborted(build):
+        return ("Master build was ABORTED; no completed result is available. "
+                "Check master before routine merges and decide whether to rerun the build.")
+    if previous_completed and is_aborted(previous_completed):
+        state = "GREEN" if build["state"] == "success" else "RED"
+        instruction = ("Check the latest master result before routine merges." if state == "GREEN" else
+                       "Check master before routine merges and coordinate investigation.")
+        return f"Master is {state} following an aborted build. {instruction}"
     failed = build["state"] in ("failure", "error")
     was_red = previous_completed and previous_completed["state"] in ("failure", "error")
     new_code_since_result = previous_completed and build["sha"] != previous_completed["sha"]
@@ -131,10 +144,10 @@ def message_for(build, previous_numbered, previous_completed, report_all=False):
     elif previous_numbered["state"] == "pending":
         if not failed and not was_red:
             state = "is GREEN"
-        if failed and new_code_since_result:
-            result = f"Master {state} after new code was built; the preceding build is still running."
+        if failed and new_code_since_result and not same_code:
+            result = f"Master {state} after new code was built; the preceding build has no final GitHub status."
         else:
-            result = f"Master {state} while the preceding build is still running."
+            result = f"Master {state}; the preceding build has no final GitHub status."
     else:
         result = RESULT_TEXT[(failed, bool(was_red), bool(same_code))]
     instruction = ("Check master before routine merges and coordinate investigation." if failed else
@@ -170,7 +183,7 @@ def card_for(message, build, merged_pr=None, new_code=False):
     """
     number = MASTER_BUILD.match(build["target_url"]).group(1)
     failed = build["state"] in ("failure", "error")
-    status = build["state"].upper()
+    status = "ABORTED" if is_aborted(build) else build["state"].upper()
     build_url = f"{MASTER_JOB}{number}/"
     actions = [
         {"type": "Action.OpenUrl", "title": "Latest master", "url": MASTER_JOB},
@@ -256,8 +269,9 @@ def main():
     webhook = os.environ.get("TEAMS_WEBHOOK_URL")
     if not webhook:
         sys.exit("OPAL_MASTER_ALERT_TEAMS_WEBHOOK is not configured.")
-    new_code = (previous_numbered is not None and previous_numbered["sha"] != sha or
-                previous_completed is not None and previous_completed["sha"] != sha)
+    # A same-commit rebuild is not another PR merge, even if the previous build
+    # never published a final status and the last completed build used older code.
+    new_code = previous_numbered is not None and previous_numbered["sha"] != sha
     merged_pr = merged_pr_for_commit(sha) if new_code else None
     # The webhook accepts a POST before Teams displays the card; inspect its run
     # history if delivery fails after this call succeeds.

@@ -52,6 +52,30 @@ class MasterAlertTest(unittest.TestCase):
         self.assertIn("remains RED after new code",
                       alert.message_for(red, previous_red, previous_red, report_all=True))
 
+    def test_aborted_build_has_own_alert_and_does_not_claim_recovery(self):
+        aborted = status(746, "error", 20)
+        aborted["description"] = "The build of this commit was aborted"
+        previous_red = status(745, "failure", 19, "old")
+
+        message = alert.message_for(aborted, previous_red, previous_red)
+        self.assertIn("ABORTED; no completed result", message)
+        self.assertNotIn("after new code", message)
+        card = alert.card_for(message, aborted)
+        self.assertIn("#746 · ABORTED", card["body"][0]["items"][0]["text"])
+        self.assertEqual("attention", card["body"][0]["style"])
+        self.assertIn("Console output", [action["title"] for action in card["actions"]])
+
+        next_green = status(747, "success", 21)
+        self.assertIn("GREEN following an aborted build",
+                      alert.message_for(next_green, aborted, aborted))
+
+    def test_other_github_errors_are_not_called_aborted(self):
+        error = status(746, "error", 20)
+        error["description"] = "Could not report the build result"
+
+        self.assertFalse(alert.is_aborted(error))
+        self.assertIn("#746 · ERROR", alert.card_for("Master is RED.", error)["body"][0]["items"][0]["text"])
+
     def test_transition_mode_only_sends_first_red_and_recovery(self):
         red = status(420, "error", 20)
         green = status(419, "success", 19, "old")
@@ -88,8 +112,9 @@ class MasterAlertTest(unittest.TestCase):
         last_green = status(418, "success", 18, "old")
 
         message = alert.message_for(current, previous_pending, last_green, report_all=True)
-        self.assertIn("preceding build is still running", message)
+        self.assertIn("preceding build has no final GitHub status", message)
         self.assertNotIn("unchanged code", message)
+        self.assertNotIn("after new code", message)
 
     def test_only_exact_merge_commit_is_attributed_to_a_pr(self):
         associated = [{"number": 346, "merged_at": "2026-11-13T15:19:21Z",
@@ -159,6 +184,35 @@ class MasterAlertTest(unittest.TestCase):
         self.assertIn("remains GREEN after new code", card["body"][1]["text"])
         self.assertIn("Merged PR #346 by @RustyHMCTS", card["body"][2]["text"])
         self.assertEqual(detail["html_url"], card["actions"][-1]["url"])
+
+    def test_rebuild_does_not_repeat_pr_attribution_when_previous_status_is_pending(self):
+        current = status(748, "success", 23)
+        previous_pending = status(747, "pending", 22)
+        last_completed = status(746, "success", 21, "old")
+
+        def fake_api(path):
+            if path.endswith("/commits/head/statuses?per_page=100"):
+                return [current, previous_pending]
+            if path.endswith("/commits/old/statuses?per_page=100"):
+                return [last_completed]
+            if path.endswith("/commits/head"):
+                return {"sha": "head", "parents": [{"sha": "old"}]}
+            if path.endswith("/commits/old"):
+                return {"sha": "old", "parents": []}
+            self.fail(f"Unexpected API path: {path}")
+
+        environment = {"STATUS_ID": "23", "STATUS_URL": current["target_url"],
+                       "STATUS_SHA": "head", "REPORT_ALL_BUILDS": "true",
+                       "TEAMS_WEBHOOK_URL": "https://example.invalid/webhook"}
+        with patch.dict("os.environ", environment), patch.object(alert, "api", side_effect=fake_api), \
+                patch.object(alert, "send_card") as send:
+            alert.main()
+
+        card = send.call_args.args[0]
+        self.assertIn("preceding build has no final GitHub status", card["body"][1]["text"])
+        self.assertEqual(2, len(card["body"]))
+        self.assertEqual([alert.MASTER_JOB, f"{alert.MASTER_JOB}748/"],
+                         [action["url"] for action in card["actions"]])
 
     def test_report_all_ignores_pending_and_superseded_statuses(self):
         pending = status(418, "pending", 18)

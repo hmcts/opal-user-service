@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.entity;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -127,5 +128,13 @@ public class UserEntity implements Versioned {
 
     private boolean isPending(LocalDateTime nowUtc) {
         return activationDate == null || activationDate.isAfter(nowUtc);
+    }
+
+    //Username is treated as email address in the system, so we can use it as email address
+    //If azure aad preferred_username is not email address, then this will be a problem,
+    // but for now we can use it as email address
+    //We are actively reviewing this under PO-10558
+    public String getEmail() {
+        return username.toLowerCase(Locale.ROOT);
     }
 }

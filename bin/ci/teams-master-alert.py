@@ -19,6 +19,8 @@ import re
 import subprocess
 import sys
 
+from teams_card import commit_action, jenkins_actions, make_card, send_card
+
 
 REPO = "opal-user-service"
 BASE = f"repos/hmcts/{REPO}"
@@ -184,14 +186,7 @@ def card_for(message, build, merged_pr=None, new_code=False):
     number = MASTER_BUILD.match(build["target_url"]).group(1)
     failed = build["state"] in ("failure", "error")
     status = "ABORTED" if is_aborted(build) else build["state"].upper()
-    build_url = f"{MASTER_JOB}{number}/"
-    actions = [
-        {"type": "Action.OpenUrl", "title": "Latest master", "url": MASTER_JOB},
-        {"type": "Action.OpenUrl", "title": f"Build #{number}", "url": build_url},
-    ]
-    if failed:
-        actions.append({"type": "Action.OpenUrl", "title": "Console output",
-                        "url": f"{build_url}console"})
+    actions = jenkins_actions(MASTER_JOB, number, "Latest master", console=failed)
     details = []
     if merged_pr:
         pr_number = merged_pr["number"]
@@ -207,34 +202,9 @@ def card_for(message, build, merged_pr=None, new_code=False):
         short_sha = build["sha"][:7]
         details.append({"type": "TextBlock", "text": f"Commit {short_sha}; no merged PR verified.",
                         "wrap": True, "size": "Small", "spacing": "Small"})
-        actions.append({"type": "Action.OpenUrl", "title": f"Commit {short_sha}",
-                        "url": f"https://github.com/hmcts/{REPO}/commit/{build['sha']}"})
-    return {
-        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-        "type": "AdaptiveCard",
-        "version": "1.2",
-        "body": [
-            {"type": "Container", "style": "attention" if failed else "good", "items": [
-                {"type": "TextBlock", "text": f"{'🔴' if failed else '🟢'} User Service master · #{number} · {status}",
-                 "size": "Large", "weight": "Bolder", "wrap": True},
-            ]},
-            {"type": "TextBlock", "text": message, "wrap": True, "separator": True,
-             "spacing": "Medium"},
-        ] + details,
-        "actions": actions,
-    }
-
-
-def send_card(card, webhook):
-    """Post an Adaptive Card envelope to the existing Teams workflow webhook."""
-    payload = {
-        "type": "message",
-        "attachments": [{"contentType": "application/vnd.microsoft.card.adaptive", "content": card}],
-    }
-    subprocess.run(["curl", "--fail-with-body", "--silent", "--show-error",
-                    "--retry", "2", "--retry-delay", "2", "-H", "Content-Type: application/json",
-                    "--data", json.dumps(payload), "--output", "/dev/null", webhook], check=True)
-    print("Webhook accepted the card; check the Teams workflow run for delivery.")
+        actions.append(commit_action(REPO, build["sha"]))
+    heading = f"{'🔴' if failed else '🟢'} User Service master · #{number} · {status}"
+    return make_card(heading, message, "attention" if failed else "good", actions, details)
 
 
 def main():

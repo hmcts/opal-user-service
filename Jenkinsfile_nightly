@@ -1,5 +1,7 @@
 #!groovy
 
+import groovy.json.JsonOutput
+
 properties([
   // H allow predefined but random minute see https://en.wikipedia.org/wiki/Cron#Non-standard_characters
   pipelineTriggers([cron('H 07 * * 1-5')])
@@ -8,13 +10,38 @@ properties([
 @Library("Infrastructure@2.13.6")
 
 def type = "java"
-def product = "rpe"
-def component = "spring-boot-template"
+def product = "opal"
+def component = "user-service"
 
-withNightlyPipeline(type, product, component) {
-
+try {
+  withNightlyPipeline(type, product, component) {
     onMaster {
-        enableSlackNotifications('#opal-nightly-builds')
+      enableSlackNotifications('#opal-nightly-builds')
     }
-
+  }
+} finally {
+  // Send the final result as a separate event so nightly failures do not make
+  // the master commit's regular build status appear RED in GitHub.
+  if (env.GIT_CREDENTIALS_ID) {
+    def result = currentBuild.currentResult
+    try {
+      httpRequest(
+        url: 'https://api.github.com/repos/hmcts/opal-user-service/dispatches',
+        httpMode: 'POST',
+        authentication: env.GIT_CREDENTIALS_ID,
+        contentType: 'APPLICATION_JSON',
+        requestBody: JsonOutput.toJson([
+          event_type: 'opal-nightly-build',
+          client_payload: [result: result, build_url: env.BUILD_URL, sha: env.GIT_COMMIT ?: '']
+        ]),
+        quiet: true,
+        timeout: 15,
+        validResponseCodes: '204'
+      )
+    } catch (err) {
+      echo "Unable to dispatch nightly result to GitHub: ${err.message}"
+    }
+  } else {
+    echo 'Nightly result not dispatched: GitHub credentials were not established.'
+  }
 }

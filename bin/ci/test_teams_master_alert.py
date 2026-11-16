@@ -2,6 +2,7 @@
 
 import importlib.util
 from pathlib import Path
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -174,8 +175,8 @@ class MasterAlertTest(unittest.TestCase):
             self.fail(f"Unexpected API path: {path}")
 
         environment = {"STATUS_ID": "20", "STATUS_URL": current["target_url"],
-                       "STATUS_SHA": "head", "REPORT_ALL_BUILDS": "true",
-                       "TEAMS_WEBHOOK_URL": "https://example.invalid/webhook"}
+                       "STATUS_SHA": "head", "ALERTS_WEBHOOK_URL": "https://example.invalid/alerts",
+                       "BUILDS_WEBHOOK_URL": "https://example.invalid/builds", "REPORT_ALL_BUILDS": "false"}
         with patch.dict("os.environ", environment), patch.object(alert, "api", side_effect=fake_api), \
                 patch.object(alert, "send_card") as send:
             alert.main()
@@ -184,6 +185,8 @@ class MasterAlertTest(unittest.TestCase):
         self.assertIn("remains GREEN after new code", card["body"][1]["text"])
         self.assertIn("Merged PR #346 by @RustyHMCTS", card["body"][2]["text"])
         self.assertEqual(detail["html_url"], card["actions"][-1]["url"])
+        send.assert_called_once()
+        self.assertEqual("https://example.invalid/builds", send.call_args.args[1])
 
     def test_rebuild_does_not_repeat_pr_attribution_when_previous_status_is_pending(self):
         current = status(748, "success", 23)
@@ -202,8 +205,8 @@ class MasterAlertTest(unittest.TestCase):
             self.fail(f"Unexpected API path: {path}")
 
         environment = {"STATUS_ID": "23", "STATUS_URL": current["target_url"],
-                       "STATUS_SHA": "head", "REPORT_ALL_BUILDS": "true",
-                       "TEAMS_WEBHOOK_URL": "https://example.invalid/webhook"}
+                       "STATUS_SHA": "head", "ALERTS_WEBHOOK_URL": "https://example.invalid/alerts",
+                       "BUILDS_WEBHOOK_URL": "https://example.invalid/builds", "REPORT_ALL_BUILDS": "false"}
         with patch.dict("os.environ", environment), patch.object(alert, "api", side_effect=fake_api), \
                 patch.object(alert, "send_card") as send:
             alert.main()
@@ -211,8 +214,77 @@ class MasterAlertTest(unittest.TestCase):
         card = send.call_args.args[0]
         self.assertIn("preceding build has no final GitHub status", card["body"][1]["text"])
         self.assertEqual(2, len(card["body"]))
+        send.assert_called_once()
         self.assertEqual([alert.MASTER_JOB, f"{alert.MASTER_JOB}748/"],
                          [action["url"] for action in card["actions"]])
+
+    def test_first_red_sends_the_same_card_to_both_channels(self):
+        current = status(420, "failure", 20)
+        previous = status(419, "success", 19, "old")
+        environment = {"STATUS_ID": "20", "STATUS_URL": current["target_url"], "STATUS_SHA": "head",
+                       "ALERTS_WEBHOOK_URL": "https://example.invalid/alerts",
+                       "BUILDS_WEBHOOK_URL": "https://example.invalid/builds", "REPORT_ALL_BUILDS": "false"}
+        with patch.dict("os.environ", environment), patch.object(alert, "status_for_event", return_value=current), \
+                patch.object(alert, "previous_builds", return_value=(previous, previous)), \
+                patch.object(alert, "completed_builds", return_value=[current]), \
+                patch.object(alert, "merged_pr_for_commit", return_value=None), \
+                patch.object(alert, "send_card") as send:
+            alert.main()
+
+        self.assertEqual(2, send.call_count)
+        self.assertIs(send.call_args_list[0].args[0], send.call_args_list[1].args[0])
+        self.assertEqual(["https://example.invalid/alerts", "https://example.invalid/builds"],
+                         [call.args[1] for call in send.call_args_list])
+
+    def test_superseded_red_only_goes_to_build_history(self):
+        current = status(420, "failure", 20)
+        newer = status(421, "success", 21)
+        previous = status(419, "success", 19, "old")
+        environment = {"STATUS_ID": "20", "STATUS_URL": current["target_url"], "STATUS_SHA": "head",
+                       "ALERTS_WEBHOOK_URL": "https://example.invalid/alerts",
+                       "BUILDS_WEBHOOK_URL": "https://example.invalid/builds", "REPORT_ALL_BUILDS": "false"}
+        with patch.dict("os.environ", environment), patch.object(alert, "status_for_event", return_value=current), \
+                patch.object(alert, "previous_builds", return_value=(previous, previous)), \
+                patch.object(alert, "completed_builds", return_value=[newer]), \
+                patch.object(alert, "merged_pr_for_commit", return_value=None), \
+                patch.object(alert, "send_card") as send:
+            alert.main()
+
+        send.assert_called_once()
+        self.assertEqual("https://example.invalid/builds", send.call_args.args[1])
+
+    def test_failed_alert_delivery_still_attempts_build_history(self):
+        current = status(420, "failure", 20)
+        previous = status(419, "success", 19, "old")
+        environment = {"STATUS_ID": "20", "STATUS_URL": current["target_url"], "STATUS_SHA": "head",
+                       "ALERTS_WEBHOOK_URL": "https://example.invalid/alerts",
+                       "BUILDS_WEBHOOK_URL": "https://example.invalid/builds", "REPORT_ALL_BUILDS": "false"}
+        with patch.dict("os.environ", environment), patch.object(alert, "status_for_event", return_value=current), \
+                patch.object(alert, "previous_builds", return_value=(previous, previous)), \
+                patch.object(alert, "completed_builds", return_value=[current]), \
+                patch.object(alert, "merged_pr_for_commit", return_value=None), \
+                patch.object(alert, "send_card", side_effect=[subprocess.CalledProcessError(22, "curl"), None]) as send:
+            with self.assertRaises(SystemExit):
+                alert.main()
+
+        self.assertEqual(["https://example.invalid/alerts", "https://example.invalid/builds"],
+                         [call.args[1] for call in send.call_args_list])
+
+    def test_report_all_sends_ordinary_green_to_both_channels(self):
+        current = status(420, "success", 20)
+        previous = status(419, "success", 19, "old")
+        environment = {"STATUS_ID": "20", "STATUS_URL": current["target_url"], "STATUS_SHA": "head",
+                       "ALERTS_WEBHOOK_URL": "https://example.invalid/alerts",
+                       "BUILDS_WEBHOOK_URL": "https://example.invalid/builds", "REPORT_ALL_BUILDS": "true"}
+        with patch.dict("os.environ", environment), patch.object(alert, "status_for_event", return_value=current), \
+                patch.object(alert, "previous_builds", return_value=(previous, previous)), \
+                patch.object(alert, "merged_pr_for_commit", return_value=None), \
+                patch.object(alert, "send_card") as send:
+            alert.main()
+
+        self.assertIs(send.call_args_list[0].args[0], send.call_args_list[1].args[0])
+        self.assertEqual(["https://example.invalid/alerts", "https://example.invalid/builds"],
+                         [call.args[1] for call in send.call_args_list])
 
     def test_report_all_ignores_pending_and_superseded_statuses(self):
         pending = status(418, "pending", 18)

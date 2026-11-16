@@ -30,5 +30,6 @@ jobs:
           STATUS_URL: ${{ github.event.target_url }}
           STATUS_SHA: ${{ github.event.sha }}
           REPORT_ALL_BUILDS: ${{ vars.OPAL_MASTER_ALERT_REPORT_ALL_BUILDS }}
-          TEAMS_WEBHOOK_URL: ${{ secrets.OPAL_MASTER_ALERT_TEAMS_WEBHOOK }}
+          ALERTS_WEBHOOK_URL: ${{ secrets.OPAL_MASTER_ALERT_TEAMS_WEBHOOK }}
+          BUILDS_WEBHOOK_URL: ${{ secrets.OPAL_MASTER_BUILDS_TEAMS_WEBHOOK }}
         run: python3 bin/ci/teams-master-alert.py

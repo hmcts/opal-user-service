@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Send user-service master build results to the pilot Teams channel.
+"""Send user-service master build results to the two Teams channels.
 
 Jenkins posts a GitHub commit status when a build starts and finishes. The GitHub
 Action passes that status to this script. We accept only the regular user-service
 ``master`` job; PR, nightly and environment jobs are ignored.
 
-With REPORT_ALL_BUILDS=true, report each completed build, including successful
-ones. With it false, report the first RED build, a new-code build that remains
-RED, and the next GREEN recovery.
+The Builds channel receives every completed build. With REPORT_ALL_BUILDS=true,
+the Alerts channel also receives every completed build. Otherwise it receives
+the first RED build, a new-code build that remains RED, and GREEN recovery.
 Pending builds never send a message. Compare build SHAs to distinguish new code
 from a repeated build; compare completed results to identify recovery. Neither
 comparison proves why a build failed or whether a merge was appropriate.
@@ -84,7 +84,7 @@ def completed_builds():
 
 
 def status_for_event(sha, event_id, event_url):
-    """In every-build mode, confirm this is the final status for that build.
+    """Confirm this is the final status for that build.
 
     Jenkins can post multiple pending statuses before a final result. The event
     ID must match the latest status for its build, so pending or superseded
@@ -244,38 +244,52 @@ def main():
     report_all_setting = (os.environ.get("REPORT_ALL_BUILDS") or "true").lower()
     if report_all_setting not in ("true", "false"):
         sys.exit("OPAL_MASTER_ALERT_REPORT_ALL_BUILDS must be true or false.")
-    report_all = report_all_setting == "true"
+    report_all_alerts = report_all_setting == "true"
     if not MASTER_BUILD.match(event_url):
         print("Ignoring a non-master Jenkins status.")
         return
     sha = os.environ["STATUS_SHA"]
     current = status_for_event(sha, event_id, event_url)
     if not current:
-        print("No completed master build result to report in this mode.")
+        print("No final master build result to report.")
         return
     current = {**current, "sha": sha}
-    if not report_all:
-        builds = completed_builds()
-        if not builds or builds[0]["id"] != event_id or builds[0]["target_url"] != event_url:
-            print("A newer completed master build superseded this event.")
-            return
     number = int(MASTER_BUILD.match(event_url).group(1))
     previous_numbered, previous_completed = previous_builds(sha, number)
-    message = message_for(current, previous_numbered, previous_completed, report_all)
-    if not message:
-        print("No completed master build result to report in this mode.")
-        return
+    message = message_for(current, previous_numbered, previous_completed, report_all=True)
     print(message)
-    webhook = os.environ.get("TEAMS_WEBHOOK_URL")
-    if not webhook:
-        sys.exit("OPAL_MASTER_ALERT_TEAMS_WEBHOOK is not configured.")
+    alerts_webhook = os.environ.get("ALERTS_WEBHOOK_URL")
+    builds_webhook = os.environ.get("BUILDS_WEBHOOK_URL")
+    if not alerts_webhook or not builds_webhook:
+        sys.exit("Both OPAL_MASTER_ALERT_TEAMS_WEBHOOK and OPAL_MASTER_BUILDS_TEAMS_WEBHOOK must be configured.")
     # A same-commit rebuild is not another PR merge, even if the previous build
     # never published a final status and the last completed build used older code.
     new_code = previous_numbered is not None and previous_numbered["sha"] != sha
     merged_pr = merged_pr_for_commit(sha) if new_code else None
     # The webhook accepts a POST before Teams displays the card; inspect its run
     # history if delivery fails after this call succeeds.
-    send_card(card_for(message, current, merged_pr, new_code), webhook)
+    card = card_for(message, current, merged_pr, new_code)
+    alert_message = message_for(current, previous_numbered, previous_completed, report_all_alerts)
+    destinations = [("Builds", builds_webhook)]
+    if alert_message:
+        if report_all_alerts:
+            destinations.insert(0, ("Alerts", alerts_webhook))
+        else:
+            builds = completed_builds()
+            if builds and builds[0]["id"] == event_id and builds[0]["target_url"] == event_url:
+                destinations.insert(0, ("Alerts", alerts_webhook))
+            else:
+                print("A newer completed master build superseded this event for Alerts.")
+    failed = []
+    for name, webhook in destinations:
+        try:
+            send_card(card, webhook)
+            print(f"Sent to {name} channel.")
+        except subprocess.CalledProcessError:
+            print(f"Failed to send to {name} channel.", file=sys.stderr)
+            failed.append(name)
+    if failed:
+        sys.exit(f"Teams delivery failed for: {', '.join(failed)}.")
 
 
 if __name__ == "__main__":

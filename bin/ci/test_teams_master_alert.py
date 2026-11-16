@@ -286,6 +286,50 @@ class MasterAlertTest(unittest.TestCase):
         self.assertEqual(["https://example.invalid/alerts", "https://example.invalid/builds"],
                          [call.args[1] for call in send.call_args_list])
 
+    def test_missing_webhook_still_attempts_other_channel(self):
+        previous = status(419, "success", 19, "old")
+        for missing in ("ALERTS_WEBHOOK_URL", "BUILDS_WEBHOOK_URL"):
+            with self.subTest(missing=missing):
+                current = status(420, "success" if missing == "ALERTS_WEBHOOK_URL" else "failure", 20)
+                environment = {"STATUS_ID": "20", "STATUS_URL": current["target_url"], "STATUS_SHA": "head",
+                               "ALERTS_WEBHOOK_URL": "https://example.invalid/alerts",
+                               "BUILDS_WEBHOOK_URL": "https://example.invalid/builds",
+                               "REPORT_ALL_BUILDS": "false"}
+                del environment[missing]
+                with patch.dict("os.environ", environment, clear=True), \
+                        patch.object(alert, "status_for_event", return_value=current), \
+                        patch.object(alert, "previous_builds", return_value=(previous, previous)), \
+                        patch.object(alert, "completed_builds", return_value=[current]), \
+                        patch.object(alert, "merged_pr_for_commit", return_value=None), \
+                        patch.object(alert, "send_card") as send:
+                    with self.assertRaises(SystemExit):
+                        alert.main()
+
+                expected = "https://example.invalid/builds" if missing == "ALERTS_WEBHOOK_URL" else \
+                    "https://example.invalid/alerts"
+                send.assert_called_once()
+                self.assertEqual(expected, send.call_args.args[1])
+
+    def test_missing_or_invalid_report_all_uses_quiet_alerts(self):
+        current = status(420, "success", 20)
+        previous = status(419, "success", 19, "old")
+        for setting in (None, "maybe"):
+            with self.subTest(setting=setting):
+                environment = {"STATUS_ID": "20", "STATUS_URL": current["target_url"], "STATUS_SHA": "head",
+                               "ALERTS_WEBHOOK_URL": "https://example.invalid/alerts",
+                               "BUILDS_WEBHOOK_URL": "https://example.invalid/builds"}
+                if setting is not None:
+                    environment["REPORT_ALL_BUILDS"] = setting
+                with patch.dict("os.environ", environment, clear=True), \
+                        patch.object(alert, "status_for_event", return_value=current), \
+                        patch.object(alert, "previous_builds", return_value=(previous, previous)), \
+                        patch.object(alert, "merged_pr_for_commit", return_value=None), \
+                        patch.object(alert, "send_card") as send:
+                    alert.main()
+
+                send.assert_called_once()
+                self.assertEqual("https://example.invalid/builds", send.call_args.args[1])
+
     def test_report_all_ignores_pending_and_superseded_statuses(self):
         pending = status(418, "pending", 18)
         complete = status(418, "success", 19)

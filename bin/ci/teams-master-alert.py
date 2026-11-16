@@ -241,9 +241,9 @@ def main():
     """Select the status, find earlier builds, then send its Adaptive Card."""
     event_id = int(os.environ["STATUS_ID"])
     event_url = os.environ.get("STATUS_URL", "")
-    report_all_setting = (os.environ.get("REPORT_ALL_BUILDS") or "true").lower()
-    if report_all_setting not in ("true", "false"):
-        sys.exit("OPAL_MASTER_ALERT_REPORT_ALL_BUILDS must be true or false.")
+    report_all_setting = (os.environ.get("REPORT_ALL_BUILDS") or "").strip().lower()
+    if report_all_setting not in ("true", "false", ""):
+        print("Invalid OPAL_MASTER_ALERT_REPORT_ALL_BUILDS; using false.", file=sys.stderr)
     report_all_alerts = report_all_setting == "true"
     if not MASTER_BUILD.match(event_url):
         print("Ignoring a non-master Jenkins status.")
@@ -260,8 +260,7 @@ def main():
     print(message)
     alerts_webhook = os.environ.get("ALERTS_WEBHOOK_URL")
     builds_webhook = os.environ.get("BUILDS_WEBHOOK_URL")
-    if not alerts_webhook or not builds_webhook:
-        sys.exit("Both OPAL_MASTER_ALERT_TEAMS_WEBHOOK and OPAL_MASTER_BUILDS_TEAMS_WEBHOOK must be configured.")
+    webhooks = {"Alerts": alerts_webhook, "Builds": builds_webhook}
     # A same-commit rebuild is not another PR merge, even if the previous build
     # never published a final status and the last completed build used older code.
     new_code = previous_numbered is not None and previous_numbered["sha"] != sha
@@ -280,8 +279,12 @@ def main():
                 destinations.insert(0, ("Alerts", alerts_webhook))
             else:
                 print("A newer completed master build superseded this event for Alerts.")
-    failed = []
+    failed = [name for name, webhook in webhooks.items() if not webhook]
+    for name in failed:
+        print(f"{name} webhook is not configured.", file=sys.stderr)
     for name, webhook in destinations:
+        if not webhook:
+            continue
         try:
             send_card(card, webhook)
             print(f"Sent to {name} channel.")

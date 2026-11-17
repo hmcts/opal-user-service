@@ -11,8 +11,8 @@ paths:
       operationId: uploadRoleMappingFile
       summary: Upload Rolemapping File
       description: >
-        Uploads a Rolemapping CSV file to Azure Blob Storage
-        for processing by the Tactical User Management service.
+        Uploads and validates a Rolemapping CSV file,
+        returning valid and invalid email addresses.
       tags:
         - User Management
 
@@ -27,8 +27,12 @@ paths:
                 contentType: text/csv
 
       responses:
-        '204':
-          description: File successfully uploaded
+        '200':
+          description: File uploaded and validated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleMappingUploadResponse'
 
         '400':
           description: Invalid request or CSV file
@@ -45,7 +49,7 @@ paths:
                 $ref: './common.yaml#/components/schemas/ProblemDetail'
 
         '403':
-          description: User does not have the role_mapping permission
+          description: Forbidden
           content:
             application/json+problem:
               schema:
@@ -97,6 +101,23 @@ components:
         file:
           type: string
           format: binary
-          description: >
-            CSV file containing user Roles and
-            Business Unit assignments.
+          description: Rolemapping CSV file.
+
+    RoleMappingUploadResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - validEmails
+        - invalidEmails
+      properties:
+        validEmails:
+          type: array
+          description: Email addresses that passed validation.
+          items:
+            type: string
+        invalidEmails:
+          type: array
+          description: Email addresses that failed validation.
+          uniqueItems: true
+          items:
+            type: string

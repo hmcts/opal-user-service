@@ -7,6 +7,8 @@ public final class FeatureFlags {
     public static final String RELEASE_1A_ENABLED_PROPERTY = DEFAULT_VALUE_PROPERTY_PREFIX + RELEASE_1A;
     public static final String RELEASE_1A_1_1 = "release-1a-1-1";
     public static final String RELEASE_1A_1_1_ENABLED_PROPERTY = DEFAULT_VALUE_PROPERTY_PREFIX + RELEASE_1A_1_1;
+    public static final String RELEASE_1A_1_2 = "release-1a-1-2";
+    public static final String RELEASE_1A_1_2_ENABLED_PROPERTY = DEFAULT_VALUE_PROPERTY_PREFIX + RELEASE_1A_1_2;
     public static final String IS_LEGACY_MODE = "is-legacy-mode";
     public static final String IS_LEGACY_MODE_PROPERTY = DEFAULT_VALUE_PROPERTY_PREFIX + IS_LEGACY_MODE;
 

@@ -1,6 +1,8 @@
 package uk.gov.hmcts.reform.opal.authentication.config;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Clock;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
@@ -33,9 +35,6 @@ import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthConfi
 import uk.gov.hmcts.reform.opal.authentication.config.internal.InternalAuthProviderConfigurationProperties;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 import uk.gov.hmcts.reform.opal.repository.UserRepository;
-
-import java.time.Clock;
-import java.util.Map;
 
 @Slf4j(topic = "opal.SecurityConfig")
 @Configuration

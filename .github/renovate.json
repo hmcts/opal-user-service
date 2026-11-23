@@ -23,12 +23,6 @@
       "allowedVersions": "<2.0.0"
     },
     {
-      "description": "Keep Spring Boot on 4.1.x until the Spring Cloud release train supports 4.2.x",
-      "matchManagers": ["gradle"],
-      "matchPackageNames": ["org.springframework.boot"],
-      "allowedVersions": "<4.2.0"
-    },
-    {
       "matchPackageNames": ["postgres"],
       "enabled": false
     },

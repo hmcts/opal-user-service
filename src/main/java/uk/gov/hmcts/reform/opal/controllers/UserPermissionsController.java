@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.opal.controllers;
 
 import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A;
-import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_1_2;
-import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_1_2_ENABLED_PROPERTY;
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_1_3;
+import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_1_3_ENABLED_PROPERTY;
 import static uk.gov.hmcts.reform.opal.util.FeatureFlags.RELEASE_1A_ENABLED_PROPERTY;
 import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildCreatedResponse;
 import static uk.gov.hmcts.reform.opal.util.HttpUtil.buildResponse;
@@ -51,7 +51,7 @@ public class UserPermissionsController {
     @PostMapping(value = "role-mapping/upload",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @FeatureToggle(feature = RELEASE_1A_1_2, defaultValueProperty = RELEASE_1A_1_2_ENABLED_PROPERTY)
+    @FeatureToggle(feature = RELEASE_1A_1_3, defaultValueProperty = RELEASE_1A_1_3_ENABLED_PROPERTY)
     public ResponseEntity<MappingFileProcessingResult> uploadRoleMapping(@RequestPart("file") MultipartFile file) {
         log.debug(":POST:uploadRoleMapping:");
 

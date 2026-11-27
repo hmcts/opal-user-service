@@ -64,7 +64,7 @@ class SynchronisePermissionsServiceIntegrationTest extends AbstractLegacyWireMoc
         legacyWireMockXmlStubHelper.registerSystemUserLookupStub(List.of("123"));
         legacyWireMockXmlStubHelper.registerBusinessUnitUserLookupStub(legacyBusinessUnitUsersForTargetUser());
         TestHelperUtil.setAuthenticatedUser(user);
-        String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getTokenSubject();
+        String cacheKey = ROLE_MAPPING_USER_PREFIX + user.getEmail();
         redisTemplate.opsForValue().set(
             cacheKey,
             objectMapper.writeValueAsString(roleMappingWithSingleRoleAddition())
